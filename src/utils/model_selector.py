@@ -17,13 +17,38 @@ import logging
 import boto3
 
 
-def get_model(
+def get_embedding_model(
+    provider: str, deployment: str | None = None, model: str = "text-embedding-3-large"
+) -> AzureOpenAIEmbeddings | OpenAIEmbeddings:
+    """Get an embedding model based on the provider
+
+    Args:
+        provider (str): The provider of the model (openai or azure)
+        deployment (str | None, optional): The deployment of the model. Defaults to None.
+        model (str, optional): The model name. Defaults to "text-embedding-ada-002".
+
+    Returns:
+        OpenAIEmbeddings | AzureOpenAIEmbeddings: An embedding model instance
+    """
+    if provider == "openai":
+        return OpenAIEmbeddings(model=model)
+    elif provider == "azure":
+        return AzureOpenAIEmbeddings(
+            azure_endpoint=os.environ.get("AZURE_BASE_URL"),
+            azure_deployment=deployment,
+        )
+    else:
+        logging.getLogger("logger").error("Wrong model provider!")
+        raise KeyError(f"Unsupported provider for embedding model: {provider}")
+
+
+def get_conversation_model(
     provider: str,
     deployment: str | None = None,
     model: str = "gpt-4o-mini",
-    type: str = "completions",
+    type: str = "chat",
     temperature: float = 0,
-):
+) -> OpenAI | AzureOpenAI | ChatOpenAI | AzureChatOpenAI | ChatAnthropic | ChatBedrock:
     """Get the model based on the provider and the type of the model
 
     Args:
@@ -36,6 +61,8 @@ def get_model(
     Returns:
         OpenAI | AzureOpenAI | ChatOpenAI | AzureChatOpenAI | ChatAnthropic | ChatBedrock modell class
     """
+    if type == "embedding":
+        return get_embedding_model(provider, deployment, model)
 
     if type == "completions":
         if provider == "openai":
@@ -74,18 +101,7 @@ def get_model(
             )
         else:
             logging.getLogger("logger").error("Wrong model provider!")
-            raise KeyError("Wrong model provider!")
-    elif type == "embedding":
-        if provider == "openai":
-            return OpenAIEmbeddings(model=model)
-        elif provider == "azure":
-            return AzureOpenAIEmbeddings(
-                azure_endpoint=os.environ.get("AZURE_BASE_URL"),
-                azure_deployment=deployment,
-            )
-        else:
-            logging.getLogger("logger").error("Wrong model provider!")
-            raise KeyError("Wrong model provider!")
+            raise KeyError(f"Unsupported provider for chat model: {provider}")
     else:
         logging.getLogger("logger").error("Wrong model type!")
-        raise KeyError("Wrong model type!")
+        raise KeyError(f"Unsupported model type: {type}")

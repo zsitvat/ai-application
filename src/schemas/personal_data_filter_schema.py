@@ -7,6 +7,7 @@ class PersonalDataFilterConfigSchema(BaseModel):
     sensitive_words: list[str] | None = None
     regex_patterns: list[str] | None = None
     model: Model | None = None
+    prompt: str | None = None
 
 
 class PersonalDataFilterRequestSchema(BaseModel):
@@ -17,3 +18,5 @@ class PersonalDataFilterRequestSchema(BaseModel):
 class PersonalDataFilterResponseSchema(BaseModel):
     filtered_text: str
     original_text: str
+    
+class PersonalDataFilterConfig(BaseModel):

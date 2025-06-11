@@ -1,6 +1,9 @@
 import logging
+import os
 
-from src.utils.model_selector import get_conversation_model
+from utils.model_selector import get_conversation_model
+from utils.get_prompt import get_prompt_by_type
+from schemas.personal_data_filter_schema import PersonalDataFilterConfigSchema
 
 
 class PersonalDataFilterService:
@@ -11,7 +14,9 @@ class PersonalDataFilterService:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
 
-    async def filter_personal_data(self, text: str, config:) -> str:
+    async def filter_personal_data(
+        self, text: str, config: PersonalDataFilterConfigSchema
+    ) -> str:
         """
         Filter personal data from text using AI.
 
@@ -20,8 +25,15 @@ class PersonalDataFilterService:
         Returns:
             tuple[str, str]: (filtered_text, original_text)
         """
-        
-        
-        
-        
-        
+
+        model = get_conversation_model(
+            provider=config.model.provider,
+            model_name=config.model.name,
+            deployment=config.model.deployment,
+        )
+
+        prompt = get_prompt_by_type(
+            config.prompt,
+            tracer_type=os.getenv("TRACER_TYPE", "langsmith"),
+            cache_ttl=os.getenv("CACHE_TTL", "60"),
+        )

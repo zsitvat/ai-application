@@ -35,6 +35,8 @@ beautifulsoup4 = "*"
 sentence-transformers = "*"
 redis = "*"
 psutil = "*"
+boto3 = "*"
+
 
 [tool.poetry.group.dev.dependencies]
 pytest = "*"

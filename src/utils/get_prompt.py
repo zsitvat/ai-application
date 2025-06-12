@@ -1,9 +1,10 @@
 from langchain import hub
 from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
 from langfuse import Langfuse
+import asyncio
 
 
-def get_prompt_by_type(prompt_id, tracer_type, cache_ttl=60):
+async def get_prompt_by_type(prompt_id, tracer_type, cache_ttl=60):
 
     if tracer_type == "langfuse":
 
@@ -11,12 +12,16 @@ def get_prompt_by_type(prompt_id, tracer_type, cache_ttl=60):
         if ":" in prompt_id:
             prompt_id, label = prompt_id.split(":")
 
-        if is_integer(label):
-            langfuse_prompt = Langfuse().get_prompt(
-                name=prompt_id, version=int(label), cache_ttl_seconds=cache_ttl
+        if await is_integer(label):
+            langfuse_prompt = await asyncio.to_thread(
+                Langfuse().get_prompt,
+                name=prompt_id,
+                version=int(label),
+                cache_ttl_seconds=cache_ttl,
             )
         else:
-            langfuse_prompt = Langfuse().get_prompt(
+            langfuse_prompt = await asyncio.to_thread(
+                Langfuse().get_prompt,
                 name=prompt_id,
                 label="latest" if label is None else label,
                 cache_ttl_seconds=cache_ttl,
@@ -31,10 +36,10 @@ def get_prompt_by_type(prompt_id, tracer_type, cache_ttl=60):
             )
 
     else:
-        return hub.pull(prompt_id)
+        return await asyncio.to_thread(hub.pull, prompt_id)
 
 
-def is_integer(value):
+async def is_integer(value):
     try:
         if value is None:
             return False

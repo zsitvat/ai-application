@@ -15,9 +15,10 @@ from langchain_aws import ChatBedrock
 import os
 import logging
 import boto3
+import asyncio
 
 
-def get_embedding_model(
+async def get_embedding_model(
     provider: str, deployment: str | None = None, model: str = "text-embedding-3-large"
 ) -> AzureOpenAIEmbeddings | OpenAIEmbeddings:
     """Get an embedding model based on the provider
@@ -42,7 +43,7 @@ def get_embedding_model(
         raise KeyError(f"Unsupported provider for embedding model: {provider}")
 
 
-def get_conversation_model(
+async def get_conversation_model(
     provider: str,
     deployment: str | None = None,
     model: str = "gpt-4o-mini",
@@ -61,8 +62,6 @@ def get_conversation_model(
     Returns:
         OpenAI | AzureOpenAI | ChatOpenAI | AzureChatOpenAI | ChatAnthropic | ChatBedrock modell class
     """
-    if type == "embedding":
-        return get_embedding_model(provider, deployment, model)
 
     if type == "completions":
         if provider == "openai":
@@ -105,3 +104,28 @@ def get_conversation_model(
     else:
         logging.getLogger("logger").error("Wrong model type!")
         raise KeyError(f"Unsupported model type: {type}")
+
+
+async def get_model(
+    provider: str,
+    deployment: str | None = None,
+    model: str = "gpt-4o-mini",
+    type: str = "chat",
+    temperature: float = 0,
+) -> (
+    OpenAI
+    | AzureOpenAI
+    | ChatOpenAI
+    | AzureChatOpenAI
+    | ChatAnthropic
+    | ChatBedrock
+    | OpenAIEmbeddings
+    | AzureOpenAIEmbeddings
+):
+    """Alias for get_conversation_model for backward compatibility."""
+    if type == "embedding":
+        return await get_embedding_model(provider, deployment, model)
+    else:
+        return await get_conversation_model(
+            provider, deployment, model, type, temperature
+        )

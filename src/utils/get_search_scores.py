@@ -1,4 +1,4 @@
-def create_score_string(doc, index):
+async def create_score_string(doc, index):
     """Create a formatted string for a document and its score.
     Args:
         doc (tuple): A tuple containing the document and its score.
@@ -12,7 +12,7 @@ def create_score_string(doc, index):
     return "Doc" + str(index) + " " + str(doc[1]) + "\n"
 
 
-def get_scores_as_string(docs):
+async def get_scores_as_string(docs):
     """Convert a list of documents with scores into a formatted string.
     Args:
         docs (list): List of tuples where each tuple contains a document and its score.
@@ -25,5 +25,5 @@ def get_scores_as_string(docs):
 
     scores = ""
     for i, doc in enumerate(docs):
-        scores += create_score_string(doc, i + 1)
+        scores += await create_score_string(doc, i + 1)
     return scores

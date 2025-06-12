@@ -26,14 +26,27 @@ class PersonalDataFilterService:
             tuple[str, str]: (filtered_text, original_text)
         """
 
-        model = get_conversation_model(
+        self.logger.info(f"Filtering personal data from text: {text[:50]}...")
+
+        model = await get_conversation_model(
             provider=config.model.provider,
             model_name=config.model.name,
             deployment=config.model.deployment,
         )
 
-        prompt = get_prompt_by_type(
+        prompt = await get_prompt_by_type(
             config.prompt,
             tracer_type=os.getenv("TRACER_TYPE", "langsmith"),
             cache_ttl=os.getenv("CACHE_TTL", "60"),
         )
+
+        prompt.append(
+            {
+                "role": "user",
+                "content": text,
+            }
+        )
+
+        response = await model.invoke(prompt)
+
+        return response.content, text

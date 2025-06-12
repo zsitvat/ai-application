@@ -36,6 +36,7 @@ sentence-transformers = "*"
 redis = "*"
 psutil = "*"
 boto3 = "*"
+aiofiles = "*"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -48,6 +49,8 @@ flake8 = "*"
 mypy = "*"
 pre-commit = "*"
 httpx = "*"
+safety = "*"
+bandit = "*"
 
 [tool.poetry.scripts]
 start = "src.app:main"

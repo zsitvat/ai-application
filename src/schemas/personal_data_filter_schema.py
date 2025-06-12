@@ -18,5 +18,3 @@ class PersonalDataFilterRequestSchema(BaseModel):
 class PersonalDataFilterResponseSchema(BaseModel):
     filtered_text: str
     original_text: str
-    
-class PersonalDataFilterConfig(BaseModel):

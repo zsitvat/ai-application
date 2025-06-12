@@ -4,9 +4,7 @@ import uvicorn
 import os
 
 from services.logger.logger_service import LoggerService
-from config import Config
 from langfuse import Langfuse
-import langsmith
 
 from routes.graph_routes import router as graph_router
 from routes.personal_data_filter_routes import router as personal_data_filter_router
@@ -44,7 +42,7 @@ def create_app():
     app.include_router(dataset_router)
     app.include_router(system_router)
 
-    LoggerService().setup_logger(Config.LOG_LEVEL)
+    LoggerService().setup_logger(os.getenv("LOG_LEVEL", "INFO"))
 
     default_limit = int(os.getenv("RATELIMIT", "5"))
     paths_to_limit = [
@@ -63,4 +61,6 @@ def create_app():
 app = create_app()
 
 if __name__ == "__main__":
-    uvicorn.run("app:app", reload=False, port=int(Config.PORT), host="0.0.0.0")
+    uvicorn.run(
+        "app:app", reload=False, port=int(os.getenv("PORT", 5000)), host="0.0.0.0"
+    )

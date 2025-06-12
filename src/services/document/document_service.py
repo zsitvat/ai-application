@@ -234,7 +234,7 @@ class DocumentService:
         """
         try:
 
-            embeddings_model = get_embedding_model(
+            embeddings_model = await get_embedding_model(
                 provider=model.provider.value,
                 deployment=model.deployment,
                 model=model.name,
@@ -407,7 +407,7 @@ class DocumentService:
             Retriever: LangChain retriever object
         """
         try:
-            embeddings_model = get_embedding_model(
+            embeddings_model = await get_embedding_model(
                 provider=model.provider.value,
                 deployment=model.deployment,
                 model=model.name,

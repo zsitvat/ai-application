@@ -1,0 +1,193 @@
+{
+    "info": {
+        "_postman_id": "b1e1e1e1-1111-2222-3333-444444444444",
+        "name": "Recruiter AI App API",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+        "description": "Postman collection a Recruiter AI App FastAPI végpontjaihoz."
+    },
+    "item": [
+        {
+            "name": "Health Check",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "http://localhost:5000/api/health-check",
+                    "protocol": "http",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "5000",
+                    "path": [
+                        "api",
+                        "health-check"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Vektor DB létrehozás",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"db_path\": \"deeplake_databases/deeplake_db_pdf\",\n  \"db_type\": \"deeplake\",\n  \"documents\": [\"files/file.pdf\"],\n  \"sheet_name\": \"pharagraph-dataset\",\n  \"chunk_size\": 3000,\n  \"chunk_overlap\": 200,\n  \"overwrite\": true,\n  \"model\": {\n    \"name\": \"text-embedding-3-large\",\n    \"provider\": \"openai\"\n  }\n}"
+                },
+                "url": {
+                    "raw": "http://localhost:5000/api/vector_db/create",
+                    "protocol": "http",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "5000",
+                    "path": [
+                        "api",
+                        "vector_db",
+                        "create"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "AI válasz (graph)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"prompt\": \"kérdés\",\n  \"user_input\": \"Mit tudsz a wifiről?\",\n  \"model\": {\n    \"name\": \"gpt-4o-mini\",\n    \"type\": \"chat\",\n    \"deployment\": null,\n    \"provider\": \"openai\",\n    \"temperature\": 0\n  },\n  \"tools\": [\n    {\n      \"name\": \"retriver_tool\",\n      \"vector_db_path\": \"deeplake_databases/deeplake_db_pdf\",\n      \"model\": {\n        \"name\": \"text-embedding-3-large\",\n        \"type\": \"embedding\",\n        \"deployment\": null,\n        \"provider\": \"openai\"\n      },\n      \"search_kwargs\": {\n        \"k\": 5,\n        \"threshold\": 0.5,\n        \"search_type\": \"similarity\"\n      }\n    },\n    {\n      \"name\": \"web_search_tool\",\n      \"engine\": \"google\"\n    }\n  ]\n}"
+                },
+                "url": {
+                    "raw": "http://localhost:5000/api/graph",
+                    "protocol": "http",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "5000",
+                    "path": [
+                        "api",
+                        "graph"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Dataset létrehozás",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"dataset_names\": \"teszt_dataset\",\n  \"description\": \"Teszt dataset leírása\",\n  \"test_cases\": [\n    {\n      \"input\": \"Mit tudsz a wifiről?\",\n      \"expected_output\": \"A wifi egy vezeték nélküli hálózati technológia...\"\n    }\n  ]\n}"
+                },
+                "url": {
+                    "raw": "http://localhost:5000/api/dataset",
+                    "protocol": "http",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "5000",
+                    "path": [
+                        "api",
+                        "dataset"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Dataset lekérdezés",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "http://localhost:5000/api/dataset/teszt_dataset",
+                    "protocol": "http",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "5000",
+                    "path": [
+                        "api",
+                        "dataset",
+                        "teszt_dataset"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Dataset frissítés",
+            "request": {
+                "method": "PATCH",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"description\": \"Frissített leírás\",\n  \"test_cases\": [\n    {\n      \"input\": \"Mit tudsz a wifiről?\",\n      \"expected_output\": \"A wifi egy vezeték nélküli hálózati technológia...\"\n    }\n  ]\n}"
+                },
+                "url": {
+                    "raw": "http://localhost:5000/api/dataset/teszt_dataset",
+                    "protocol": "http",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "5000",
+                    "path": [
+                        "api",
+                        "dataset",
+                        "teszt_dataset"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Dataset futtatás",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"config\": {\n    \"param1\": \"value1\"\n  }\n}"
+                },
+                "url": {
+                    "raw": "http://localhost:5000/api/dataset/teszt_dataset/run",
+                    "protocol": "http",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "5000",
+                    "path": [
+                        "api",
+                        "dataset",
+                        "teszt_dataset",
+                        "run"
+                    ]
+                }
+            }
+        }
+    ]
+}

@@ -4,7 +4,6 @@ from urllib.parse import urlparse
 from typing import Optional
 from pathlib import Path
 from datetime import datetime
-from twisted.internet import defer
 from scrapy.crawler import CrawlerRunner
 from scrapy.utils.project import get_project_settings
 from scrapy.spiders import CrawlSpider, Rule
@@ -77,7 +76,9 @@ class ScrapySpider(CrawlSpider):
 
     async def start(self):
         """Generate initial requests."""
+        self._custom_logger.info(f"Starting spider with URLs: {self.start_urls}")
         for url in self.start_urls:
+            self._custom_logger.info(f"Creating request for URL: {url}")
             yield Request(
                 url=url,
                 callback=self.parse_page,
@@ -89,13 +90,19 @@ class ScrapySpider(CrawlSpider):
         """Parse a single page and extract content."""
         current_depth = response.meta.get("depth", 0)
 
+        self._custom_logger.info(
+            f"Processing page: {response.url} (status: {response.status}, depth: {current_depth})"
+        )
+
         content = self._extract_content(response)
         self.scraped_data[response.url] = content
 
+        self._custom_logger.info(
+            f"Extracted {len(content)} characters from {response.url}"
+        )
+
         if self.service_ref:
             self.service_ref._current_spider_data = self.scraped_data.copy()
-
-        self._custom_logger.debug(f"Scraped: {response.url} (depth: {current_depth})")
 
         if current_depth < self.max_depth:
             link_extractor = LinkExtractor(
@@ -129,15 +136,10 @@ class ScrapySpider(CrawlSpider):
         if self.service_ref:
             self.service_ref._current_spider_failed = self.failed_urls.copy()
 
-        error_class = failure.value.__class__.__name__
-        if error_class in ["ConnectionDone", "AlreadyNegotiating"]:
-            self._custom_logger.debug(
-                f"Connection issue for {failure.request.url}: {error_class}"
-            )
-        else:
-            self._custom_logger.error(
-                f"Request failed: {failure.request.url} - {failure.value}"
-            )
+        # Always log all errors for debugging
+        self._custom_logger.error(
+            f"Request failed: {failure.request.url} - {failure.value} (Type: {failure.value.__class__.__name__})"
+        )
 
     def _extract_content(self, response):
         """Extract readable text content from response."""
@@ -212,16 +214,18 @@ class ScrapyWebScrapingService:
             settings = get_project_settings()
             settings.update(
                 {
-                    "DOWNLOAD_DELAY": 0.25,
-                    "RANDOMIZE_DOWNLOAD_DELAY": 0.5,
-                    "CONCURRENT_REQUESTS": 16,
-                    "CONCURRENT_REQUESTS_PER_DOMAIN": 8,
-                    "AUTOTHROTTLE_ENABLED": True,
-                    "AUTOTHROTTLE_START_DELAY": 1,
-                    "AUTOTHROTTLE_MAX_DELAY": 5,
-                    "AUTOTHROTTLE_TARGET_CONCURRENCY": 2.0,
+                    "ROBOTSTXT_OBEY": False,
+                    "DOWNLOAD_DELAY": 0.1,
+                    "RANDOMIZE_DOWNLOAD_DELAY": 0.1,
+                    "CONCURRENT_REQUESTS": 32,
+                    "CONCURRENT_REQUESTS_PER_DOMAIN": 16,
+                    "AUTOTHROTTLE_ENABLED": False,
                     "USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-                    "LOG_LEVEL": "INFO",
+                    "LOG_LEVEL": "DEBUG",
+                    "COOKIES_ENABLED": True,
+                    "REDIRECT_ENABLED": True,
+                    "RETRY_ENABLED": True,
+                    "RETRY_TIMES": 5,
                 }
             )
 
@@ -308,16 +312,12 @@ class ScrapyWebScrapingService:
 
             deferred.addCallbacks(callback, errorback)
 
-            try:
-                result = await asyncio.wait_for(future, timeout=300)
-                return result
-            except asyncio.TimeoutError:
-                self.logger.error("Scrapy crawling timed out after 5 minutes")
-                raise
+            result = await future
+            return result
 
         except Exception as e:
             self.logger.error(f"Error in _run_scrapy_async: {str(e)}")
-            raise
+            raise e
 
     def _get_scraped_content(self, url: str) -> str:
         """Get scraped content for a specific URL."""

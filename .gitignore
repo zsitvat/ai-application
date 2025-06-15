@@ -4,8 +4,10 @@ deeplake_databases
 deeplake_databases/
 *deeplake*
 
-.vscode
-.vscode/
+.vscode/settings.json
+.vscode/extensions.json
+.vscode/c_cpp_properties.json
+.vscode/tasks.json
 venv/*
 myenv/*
 

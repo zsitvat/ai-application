@@ -15,7 +15,7 @@ from langchain_community.document_loaders import (
 )
 from langchain.schema import Document
 
-from schemas.agent_schema import Model
+from schemas.graph_schema import Model
 from utils.model_selector import get_embedding_model
 from .default_schema import DEFAULT_INDEX_SCHEMA
 

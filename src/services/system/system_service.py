@@ -3,7 +3,7 @@ import logging
 import time
 import psutil
 import os
-from typing import Dict, Any
+from typing import Any
 
 
 class SystemService:
@@ -62,7 +62,7 @@ class SystemService:
                 "error": str(e),
             }
 
-    async def _check_system_metrics(self) -> Dict[str, Any]:
+    async def _check_system_metrics(self) -> dict[str, Any]:
         """Check system resource metrics."""
         try:
             memory = psutil.virtual_memory()
@@ -109,7 +109,7 @@ class SystemService:
             self.logger.error(f"System metrics check failed: {str(e)}")
             return {"status": "unhealthy", "error": str(e)}
 
-    async def _check_environment_variables(self) -> Dict[str, Any]:
+    async def _check_environment_variables(self) -> dict[str, Any]:
         """Check required environment variables."""
         required_vars = ["OPENAI_API_KEY", "LANGCHAIN_API_KEY", "SERPAPI_API_KEY"]
 
@@ -140,7 +140,7 @@ class SystemService:
             "missing_optional": missing_optional,
         }
 
-    async def _check_external_services(self) -> Dict[str, Any]:
+    async def _check_external_services(self) -> dict[str, Any]:
         """Check external service connectivity."""
         services = {}
 
@@ -211,7 +211,7 @@ class SystemService:
                     "logs": [],
                     "total_count": 0,
                     "page": page,
-                    "limit": limit,
+                    "page_size": limit,
                     "message": "File logging not configured (LOG_FILE_PATH not set)",
                 }
 
@@ -221,7 +221,7 @@ class SystemService:
                     "logs": [],
                     "total_count": 0,
                     "page": page,
-                    "limit": limit,
+                    "page_size": limit,
                     "message": f"Log file not found: {log_file_path}",
                 }
 
@@ -263,7 +263,29 @@ class SystemService:
                                     except (ValueError, TypeError):
                                         pass
 
-                            logs.append(log_entry)
+                            formatted_entry = {
+                                "timestamp": log_entry.get("timestamp"),
+                                "level": log_entry.get("level", "INFO"),
+                                "message": log_entry.get("message", ""),
+                                "source": log_entry.get(
+                                    "name", log_entry.get("source")
+                                ),
+                                "details": {
+                                    k: v
+                                    for k, v in log_entry.items()
+                                    if k
+                                    not in [
+                                        "timestamp",
+                                        "level",
+                                        "message",
+                                        "name",
+                                        "source",
+                                    ]
+                                }
+                                or None,
+                            }
+
+                            logs.append(formatted_entry)
 
                         except json.JSONDecodeError:
                             continue
@@ -274,7 +296,7 @@ class SystemService:
                     "logs": [],
                     "total_count": 0,
                     "page": page,
-                    "limit": limit,
+                    "page_size": limit,
                     "error": f"Error reading log file: {str(e)}",
                 }
 
@@ -289,7 +311,7 @@ class SystemService:
                 "logs": paginated_logs,
                 "total_count": total_count,
                 "page": page,
-                "limit": limit,
+                "page_size": limit,
                 "total_pages": (total_count + limit - 1) // limit,
                 "has_next": end_idx < total_count,
                 "has_previous": page > 1,
@@ -301,6 +323,6 @@ class SystemService:
                 "logs": [],
                 "total_count": 0,
                 "page": page,
-                "limit": limit,
+                "page_size": limit,
                 "error": f"Error retrieving logs: {str(e)}",
             }

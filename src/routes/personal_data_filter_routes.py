@@ -9,7 +9,7 @@ from services.validators.personal_data.personal_data_filter_service import (
     PersonalDataFilterService,
 )
 
-router = APIRouter()
+router = APIRouter(tags=["Personal Data Filter"])
 
 
 def get_personal_data_filter_service():

@@ -9,7 +9,7 @@ from services.validators.topic_validator.topic_validator_service import (
     TopicValidatorService,
 )
 
-router = APIRouter()
+router = APIRouter(tags=["Topic Validation"])
 
 
 def get_topic_validator_service():

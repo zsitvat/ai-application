@@ -3,10 +3,10 @@ from datetime import datetime
 
 
 class LogEntry(BaseModel):
-    timestamp: datetime
+    timestamp: str
     level: str
     message: str
-    source: str
+    source: str | None = None
     details: dict | None = None
 
 

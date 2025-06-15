@@ -9,7 +9,7 @@ from schemas.dataset_schema import (
 )
 from services.dataset.dataset_service import DatasetService
 
-router = APIRouter()
+router = APIRouter(tags=["Dataset"])
 
 
 def get_dataset_service():

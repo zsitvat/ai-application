@@ -8,7 +8,7 @@ from schemas.system_schema import (
 )
 from services.system.system_service import SystemService
 
-router = APIRouter()
+router = APIRouter(tags=["System"])
 
 
 def get_system_service():

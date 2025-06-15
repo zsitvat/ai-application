@@ -1,19 +1,19 @@
 from fastapi import APIRouter, HTTPException, Depends
 import logging
 
-from schemas.graph_schema import GraphRequestSchema, GraphResponseSchema
+from schemas.graph_schema import RestOperationPostSchema
 from services.graph.graph_service import GraphService
 
-router = APIRouter()
+router = APIRouter(tags=["Graph"])
 
 
 def get_graph_service():
     return GraphService()
 
 
-@router.post("/api/graph", response_model=GraphResponseSchema)
+@router.post("/api/graph", response_model=str)
 async def execute_graph(
-    request: GraphRequestSchema,
+    request: RestOperationPostSchema,
     graph_service: GraphService = Depends(get_graph_service),
 ):
     "Execute multi-agent graph solution."
@@ -24,7 +24,7 @@ async def execute_graph(
             context=request.context,
         )
 
-        return GraphResponseSchema(result=result)
+        return result
 
     except Exception as ex:
         logging.getLogger("logger").error(f"Error in graph execution: {str(ex)}")

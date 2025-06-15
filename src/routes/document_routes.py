@@ -6,10 +6,10 @@ from schemas.document_schema import (
     DocumentIngestResponseSchema,
     DocumentDeleteResponseSchema,
 )
-from schemas.agent_schema import Model
+from schemas.graph_schema import Model
 from services.document.document_service import DocumentService
 
-router = APIRouter()
+router = APIRouter(tags=["Documents"])
 
 
 def get_document_service():

@@ -1,8 +1,8 @@
 import time
-from fastapi import  Request
+from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
-from typing import Dict
 import asyncio
+
 
 class TokenBucket:
     def __init__(self, capacity: int, refill_rate: float):
@@ -26,12 +26,13 @@ class TokenBucket:
             self.tokens = 0
             return wait_time
 
+
 class RateLimitMiddleware(BaseHTTPMiddleware):
     def __init__(self, app, capacity: int, refill_rate: float):
         super().__init__(app)
         self.capacity = capacity
         self.refill_rate = refill_rate
-        self.buckets: Dict[str, TokenBucket] = {}
+        self.buckets: dict[str, TokenBucket] = {}
 
     async def dispatch(self, request: Request, call_next):
         client_ip = request.client.host

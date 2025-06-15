@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from schemas.agent_schema import Model
+from schemas.graph_schema import Model
 
 
 class PersonalDataFilterConfigSchema(BaseModel):

@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.responses import RedirectResponse
 from dotenv.main import load_dotenv, find_dotenv
 import uvicorn
 import os
@@ -42,6 +43,10 @@ def create_app():
     app.include_router(dataset_router)
     app.include_router(system_router)
 
+    @app.get("/")
+    async def redirect_to_docs():
+        return RedirectResponse(url="/docs")
+
     LoggerService().setup_logger(os.getenv("LOG_LEVEL", "INFO"))
 
     default_limit = int(os.getenv("RATELIMIT", "5"))
@@ -59,6 +64,7 @@ def create_app():
 
 
 app = create_app()
+
 
 if __name__ == "__main__":
     uvicorn.run(

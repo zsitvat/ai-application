@@ -37,6 +37,11 @@ redis = "*"
 psutil = "*"
 boto3 = "*"
 aiofiles = "*"
+scrapy = "*"
+twisted = "*"
+python-docx = "*"
+reportlab = "*"
+scrapy-user-agents = "*"
 
 
 [tool.poetry.group.dev.dependencies]

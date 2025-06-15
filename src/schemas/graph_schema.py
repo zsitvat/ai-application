@@ -34,7 +34,7 @@ class ModelType(str, Enum):
 class Model(BaseModel):
     provider: ModelProviderType = ModelProviderType.OPENAI
     deployment: str | None = None
-    name: str | None = "gpt-3.5-turbo-0613"
+    name: str | None = "gpt-4o-mini"
     type: ModelType = ModelType.CHAT
 
 

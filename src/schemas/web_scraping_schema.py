@@ -15,7 +15,7 @@ class OutputType(str, Enum):
 class WebScrapingRequestSchema(BaseModel):
     urls: list[str]
     max_depth: int = 1
-    output_type: OutputType = OutputType.TEXT
+    output_type: OutputType = OutputType.STRING
     output_path: str | None = None
     vector_db_index: str | None = None
     allowed_domains: list[str] | None = None

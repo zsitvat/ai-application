@@ -6,7 +6,7 @@ from pathlib import Path
 from datetime import datetime
 from scrapy.crawler import CrawlerRunner
 from scrapy.utils.project import get_project_settings
-from scrapy.spiders import CrawlSpider, Rule
+from scrapy.spiders import Spider
 from scrapy.linkextractors import LinkExtractor
 from scrapy.http import Request
 
@@ -24,7 +24,7 @@ if "twisted.internet.reactor" not in sys.modules:
     twisted.internet.asyncioreactor.install()
 
 
-class ScrapySpider(CrawlSpider):
+class ScrapySpider(Spider):
     """
     Scrapy spider that respects domain restrictions and depth limits.
     """
@@ -51,53 +51,59 @@ class ScrapySpider(CrawlSpider):
         # Logger is a property of the spider, so instead of using `self.logger`, we use a custom logger
         self._custom_logger = logging.getLogger(__name__)
 
-        self.rules = (
-            Rule(
-                LinkExtractor(
-                    allow_domains=self.allowed_domains,
-                    deny_extensions=[
-                        "jpg",
-                        "jpeg",
-                        "png",
-                        "gif",
-                        "pdf",
-                        "doc",
-                        "docx",
-                        "zip",
-                        "exe",
-                    ],
-                ),
-                callback="parse_page",
-                follow=True,
-            ),
-        )
-
-        self._compile_rules()
-
-    async def start(self):
+    def start_requests(self):
         """Generate initial requests."""
-        self._custom_logger.info(f"Starting spider with URLs: {self.start_urls}")
+        self._custom_logger.info(f"Start URLs: {self.start_urls}")
+        self._custom_logger.info(f"Allowed domains: {self.allowed_domains}")
+        
         for url in self.start_urls:
-            self._custom_logger.info(f"Creating request for URL: {url}")
-            yield Request(
-                url=url,
-                callback=self.parse_page,
-                meta={"depth": 0},
-                errback=self.handle_error,
+            self._custom_logger.debug(f"Creating request for: {url}")
+            yield Request(url, self.parse)
+
+    def parse(self, response):
+        """Main parse method - simplified like working example."""
+        self._custom_logger.debug(f"Parsing: {response.url} (status: {response.status})")
+        
+        content = self._extract_content(response)
+        self.scraped_data[response.url] = content
+        
+        if self.service_ref:
+            self.service_ref._current_spider_data = self.scraped_data.copy()
+        
+        self._custom_logger.debug(f"Extracted {len(content)} characters from {response.url}")
+        
+        if self.max_depth > 0:
+            link_extractor = LinkExtractor(
+                allow_domains=self.allowed_domains,
+                deny_extensions=[
+                    "jpg", "jpeg", "png", "gif", "pdf", "doc", "docx", "zip", "exe"
+                ],
             )
+            
+            links = link_extractor.extract_links(response)
+            self._custom_logger.debug(f"Found {len(links)} links on {response.url}")
+            
+            for link in links:
+                self._custom_logger.debug(f"Following link: {link.url}")
+                yield Request(
+                    url=link.url,
+                    callback=self.parse_page,
+                    meta={"depth": 1},
+                    errback=self.handle_error,
+                )
 
     def parse_page(self, response):
         """Parse a single page and extract content."""
         current_depth = response.meta.get("depth", 0)
 
-        self._custom_logger.info(
+        self._custom_logger.debug(
             f"Processing page: {response.url} (status: {response.status}, depth: {current_depth})"
         )
 
         content = self._extract_content(response)
         self.scraped_data[response.url] = content
 
-        self._custom_logger.info(
+        self._custom_logger.debug(
             f"Extracted {len(content)} characters from {response.url}"
         )
 
@@ -121,7 +127,12 @@ class ScrapySpider(CrawlSpider):
             )
 
             links = link_extractor.extract_links(response)
+            self._custom_logger.debug(f"Found {len(links)} links on {response.url}")
+
             for link in links:
+                self._custom_logger.debug(
+                    f"Collecting link: {link.url} (depth: {current_depth + 1})"
+                )
                 yield Request(
                     url=link.url,
                     callback=self.parse_page,
@@ -136,7 +147,6 @@ class ScrapySpider(CrawlSpider):
         if self.service_ref:
             self.service_ref._current_spider_failed = self.failed_urls.copy()
 
-        # Always log all errors for debugging
         self._custom_logger.error(
             f"Request failed: {failure.request.url} - {failure.value} (Type: {failure.value.__class__.__name__})"
         )
@@ -214,17 +224,10 @@ class ScrapyWebScrapingService:
             settings = get_project_settings()
             settings.update(
                 {
-                    "ROBOTSTXT_OBEY": False,
                     "DOWNLOAD_DELAY": 0.1,
                     "RANDOMIZE_DOWNLOAD_DELAY": 0.1,
-                    "CONCURRENT_REQUESTS": 32,
-                    "CONCURRENT_REQUESTS_PER_DOMAIN": 16,
-                    "AUTOTHROTTLE_ENABLED": False,
                     "USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
                     "LOG_LEVEL": "DEBUG",
-                    "COOKIES_ENABLED": True,
-                    "REDIRECT_ENABLED": True,
-                    "RETRY_ENABLED": True,
                     "RETRY_TIMES": 5,
                 }
             )
@@ -275,7 +278,8 @@ class ScrapyWebScrapingService:
                     else None
                 )
 
-            self.logger.info(f"Scrapy crawling completed: {message}")
+            self.logger.info(f"=== SCRAPY CRAWLING COMPLETED ===")
+            self.logger.info(f"Results: {message}")
             return success, message, scraped_urls, self.failed_urls, content_string
 
         except Exception as e:
@@ -417,7 +421,7 @@ class ScrapyWebScrapingService:
                     doc.add_paragraph("")
 
         doc.save(filename)
-        self.logger.info(f"Successfully saved DOCX file: {filename}")
+        self.logger.debug(f"Successfully saved DOCX file: {filename}")
         return filename
 
     def _save_as_pdf(self, output_path, timestamp):
@@ -472,7 +476,7 @@ class ScrapyWebScrapingService:
             story.append(Spacer(1, 22))
 
         doc.build(story)
-        self.logger.info(f"Successfully saved PDF file: {filename}")
+        self.logger.debug(f"Successfully saved PDF file: {filename}")
         return filename
 
     def get_scraped_content_as_string(self) -> str:

@@ -298,9 +298,7 @@ class ScrapyWebScrapingService:
                             self.logger.debug(
                                 f"Twisted connection issue (expected): {failure.value}"
                             )
-                            future.set_result(
-                                None
-                            )  # Treat as success for these expected errors
+                            future.set_result(None)
                         else:
                             self.logger.error(f"Twisted error: {failure.value}")
                             future.set_exception(failure.value)
@@ -311,9 +309,7 @@ class ScrapyWebScrapingService:
             deferred.addCallbacks(callback, errorback)
 
             try:
-                result = await asyncio.wait_for(
-                    future, timeout=300
-                )  # 5 minutes timeout
+                result = await asyncio.wait_for(future, timeout=300)
                 return result
             except asyncio.TimeoutError:
                 self.logger.error("Scrapy crawling timed out after 5 minutes")

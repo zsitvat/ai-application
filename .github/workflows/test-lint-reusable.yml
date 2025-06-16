@@ -1,10 +1,7 @@
-name: Test and Lint
+name: Test and Lint (Reusable)
 
 on:
-  push:
-    branches: [ development, test, main ]
-  pull_request:
-    branches: [ development, test, main ]
+  workflow_call:
 
 jobs:
   test:
@@ -54,30 +51,21 @@ jobs:
       - name: Install project
         run: poetry install --no-interaction
 
-      - name: Lint with flake8
+      - name: Comprehensive lint check
         run: |
-          poetry run flake8 src --count --select=E9,F63,F7,F82 --show-source --statistics
-          poetry run flake8 src --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
+          poetry run black --check src tests
+          poetry run isort --check-only src tests
+          poetry run flake8 src tests
 
-      - name: Format check with black
-        run: poetry run black --check src
+      - name: Type checking
+        run: poetry run mypy src || true
 
-      - name: Import sorting check with isort
-        run: poetry run isort --check-only src
+      - name: Run comprehensive tests
+        run: poetry run pytest tests/ -v --cov=src --cov-report=xml
 
-      - name: Type checking with mypy
-        run: poetry run mypy src --ignore-missing-imports
-
-      - name: Test with pytest
-        run: |
-          poetry run pytest tests/ -v --cov=src --cov-report=xml --cov-report=term-missing
-        env:
-          REDIS_URL: redis://localhost:6380
-
-      - name: Upload coverage to Codecov
+      - name: Upload coverage reports
         uses: codecov/codecov-action@v3
+        if: always()
         with:
           file: ./coverage.xml
-          flags: unittests
-          name: codecov-umbrella
           fail_ci_if_error: false

@@ -1,9 +1,10 @@
-from datetime import datetime
 import logging
-import time
-import psutil
 import os
+import time
+from datetime import datetime
 from typing import Any
+
+import psutil
 
 
 class SystemService:

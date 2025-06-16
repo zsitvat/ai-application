@@ -1,7 +1,8 @@
-from pydantic import BaseModel
-from typing import Optional, Any
-from uuid import uuid4, UUID
 from enum import Enum
+from typing import Any, Optional
+from uuid import UUID
+
+from pydantic import BaseModel
 
 
 class ApplicationIdentifierSchema(BaseModel):

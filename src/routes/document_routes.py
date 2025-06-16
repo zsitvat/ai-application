@@ -1,10 +1,11 @@
-from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
 import logging
 
+from fastapi import APIRouter, Depends, HTTPException
+
 from schemas.document_schema import (
+    DocumentDeleteResponseSchema,
     DocumentIngestRequestSchema,
     DocumentIngestResponseSchema,
-    DocumentDeleteResponseSchema,
 )
 from schemas.graph_schema import Model
 from services.document.document_service import DocumentService

@@ -1,5 +1,6 @@
-from fastapi import APIRouter, HTTPException, Depends
 import logging
+
+from fastapi import APIRouter, Depends, HTTPException
 
 from schemas.personal_data_filter_schema import (
     PersonalDataFilterRequestSchema,

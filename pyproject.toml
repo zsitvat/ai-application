@@ -56,6 +56,7 @@ pre-commit = "*"
 httpx = "*"
 safety = "*"
 bandit = "*"
+autoflake = "^2.3.1"
 
 [tool.poetry.scripts]
 start = "src.app:main"
@@ -68,25 +69,10 @@ build-backend = "poetry.core.masonry.api"
 line-length = 88
 target-version = ['py311']
 include = '\.pyi?$'
-extend-exclude = '''
-/(
-  # directories
-  \.eggs
-  | \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | build
-  | dist
-)/
-'''
 
 [tool.isort]
 profile = "black"
-multi_line_output = 3
 line_length = 88
-known_first_party = ["src"]
 
 [tool.mypy]
 python_version = "3.11"

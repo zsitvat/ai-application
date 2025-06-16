@@ -1,5 +1,6 @@
-import tiktoken
 import asyncio
+
+import tiktoken
 
 
 async def token_counter(string: str, encoding_name: str) -> int:

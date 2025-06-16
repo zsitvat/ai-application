@@ -1,6 +1,5 @@
 from schemas.graph_schema import Model
-from schemas.tool_schema import SearchKwargs
-from schemas.tool_schema import Tool
+from schemas.tool_schema import SearchKwargs, Tool
 
 
 class RetriverTool(Tool):

@@ -9,9 +9,9 @@ def str2bool(v) -> bool:
         ValueError: If the string cannot be converted to a boolean
     """
 
-    if v == "True" or v == "true" or v == "TRUE" or v == True:
+    if v == "True" or v == "true" or v == "TRUE" or v is True:
         return True
-    elif v == "False" or v == "false" or v == "FALSE" or v == False or v == None:
+    elif v == "False" or v == "false" or v == "FALSE" or v is False or v is None:
         return False
     else:
         raise ValueError(

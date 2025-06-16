@@ -1,6 +1,7 @@
-from fastapi import APIRouter, HTTPException, Depends, Query
 import logging
 from datetime import datetime
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from schemas.system_schema import (
     HealthCheckResponseSchema,

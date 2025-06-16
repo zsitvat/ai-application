@@ -294,7 +294,7 @@ class ScrapyWebScrapingService:
                     else None
                 )
 
-            self.logger.info(f"=== SCRAPY CRAWLING COMPLETED ===")
+            self.logger.info("=== SCRAPY CRAWLING COMPLETED ===")
             self.logger.info(f"Results: {message}")
             return success, message, scraped_urls, self.failed_urls, content_string
 

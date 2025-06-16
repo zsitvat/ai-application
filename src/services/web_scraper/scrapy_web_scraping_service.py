@@ -55,41 +55,57 @@ class ScrapySpider(Spider):
         """Generate initial requests."""
         self._custom_logger.info(f"Start URLs: {self.start_urls}")
         self._custom_logger.info(f"Allowed domains: {self.allowed_domains}")
-        
+
+        if not self.start_urls:
+            self._custom_logger.error("No start URLs provided. Exiting.")
+            return
+
         for url in self.start_urls:
             self._custom_logger.debug(f"Creating request for: {url}")
-            yield Request(url, self.parse)
+            yield Request(url, self.parse, errback=self.handle_request_error)
 
     def parse(self, response):
         """Main parse method - simplified like working example."""
-        self._custom_logger.debug(f"Parsing: {response.url} (status: {response.status})")
-        
+        self._custom_logger.debug(
+            f"Parsing: {response.url} (status: {response.status})"
+        )
+
         content = self._extract_content(response)
         self.scraped_data[response.url] = content
-        
+
         if self.service_ref:
             self.service_ref._current_spider_data = self.scraped_data.copy()
-        
-        self._custom_logger.debug(f"Extracted {len(content)} characters from {response.url}")
-        
+
+        self._custom_logger.debug(
+            f"Extracted {len(content)} characters from {response.url}"
+        )
+
         if self.max_depth > 0:
             link_extractor = LinkExtractor(
                 allow_domains=self.allowed_domains,
                 deny_extensions=[
-                    "jpg", "jpeg", "png", "gif", "pdf", "doc", "docx", "zip", "exe"
+                    "jpg",
+                    "jpeg",
+                    "png",
+                    "gif",
+                    "pdf",
+                    "doc",
+                    "docx",
+                    "zip",
+                    "exe",
                 ],
             )
-            
+
             links = link_extractor.extract_links(response)
             self._custom_logger.debug(f"Found {len(links)} links on {response.url}")
-            
+
             for link in links:
                 self._custom_logger.debug(f"Following link: {link.url}")
                 yield Request(
                     url=link.url,
                     callback=self.parse_page,
                     meta={"depth": 1},
-                    errback=self.handle_error,
+                    errback=self.handle_request_error,
                 )
 
     def parse_page(self, response):
@@ -137,19 +153,16 @@ class ScrapySpider(Spider):
                     url=link.url,
                     callback=self.parse_page,
                     meta={"depth": current_depth + 1},
-                    errback=self.handle_error,
+                    errback=self.handle_request_error,
                 )
 
-    def handle_error(self, failure):
+    def handle_request_error(self, failure):
         """Handle request failures."""
         self.failed_urls.append(failure.request.url)
+        self._custom_logger.error(f"Request failed for URL: {failure.request.url}")
 
         if self.service_ref:
             self.service_ref._current_spider_failed = self.failed_urls.copy()
-
-        self._custom_logger.error(
-            f"Request failed: {failure.request.url} - {failure.value} (Type: {failure.value.__class__.__name__})"
-        )
 
     def _extract_content(self, response):
         """Extract readable text content from response."""
@@ -225,12 +238,14 @@ class ScrapyWebScrapingService:
             settings.update(
                 {
                     "DOWNLOAD_DELAY": 0.1,
-                    "RANDOMIZE_DOWNLOAD_DELAY": 0.1,
                     "USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
                     "LOG_LEVEL": "DEBUG",
                     "RETRY_TIMES": 5,
                 }
             )
+
+            self.logger.debug(f"Scrapy settings configured. URLs to crawl: {urls}")
+            self.logger.debug(f"Allowed domains: {allowed_domains}")
 
             runner = CrawlerRunner(settings)
 
@@ -245,8 +260,10 @@ class ScrapyWebScrapingService:
                 service_ref=self,
             )
 
-            def _extract_results(result):
+            self.logger.info(f"Spider crawl initiated. Deferred: {type(deferred)}")
 
+            def _extract_results(result):
+                self.logger.debug(f"Spider finished with result: {result}")
                 self.scraped_data = getattr(self, "_current_spider_data", {})
                 self.failed_urls = getattr(self, "_current_spider_failed", [])
                 return result

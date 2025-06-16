@@ -60,7 +60,7 @@ format-check:  ## Check if code is properly formatted (CI mode)
 	poetry run isort --check-only src tests
 
 security:  ## Run security checks
-	poetry run safety check
+	poetry run safety check --full-report
 	poetry run bandit -r src
 
 ci-full:  ## Run full CI pipeline locally (format, lint, security, test)
@@ -75,7 +75,7 @@ ci-full:  ## Run full CI pipeline locally (format, lint, security, test)
 	@echo "✅ Linting completed"
 	@echo ""
 	@echo "🔒 Running security checks..."
-	poetry run safety check || true
+	poetry run safety check --full-report || true
 	poetry run bandit -r src || true
 	@echo "✅ Security checks completed"
 	@echo ""

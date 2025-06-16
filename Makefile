@@ -91,3 +91,15 @@ ci-fix:  ## Fix formatting issues and run checks
 	@echo ""
 	@echo "🔍 Running checks..."
 	$(MAKE) ci-full
+
+autofix:  ## Automatically fix common code issues
+	@echo "🔧 Auto-fixing code issues..."
+	@echo "📝 Formatting code..."
+	poetry run black src tests
+	poetry run isort src tests
+	@echo "🧹 Removing unused imports..."
+	poetry run autoflake --remove-all-unused-imports --recursive --in-place src tests || echo "autoflake not installed, skipping unused import removal"
+	@echo "✅ Auto-fix completed!"
+	@echo ""
+	@echo "🔍 Running lint check to see remaining issues..."
+	poetry run flake8 src tests | head -20 || true

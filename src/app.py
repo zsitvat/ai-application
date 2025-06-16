@@ -1,21 +1,20 @@
-from fastapi import FastAPI
-from fastapi.responses import RedirectResponse
-from dotenv.main import load_dotenv, find_dotenv
-import uvicorn
 import os
 
-from services.logger.logger_service import LoggerService
+import uvicorn
+from dotenv.main import find_dotenv, load_dotenv
+from fastapi import FastAPI
+from fastapi.responses import RedirectResponse
 from langfuse import Langfuse
 
+from routes.dataset_routes import router as dataset_router
+from routes.document_routes import router as document_router
 from routes.graph_routes import router as graph_router
 from routes.personal_data_filter_routes import router as personal_data_filter_router
+from routes.system_routes import router as system_router
 from routes.topic_validation_routes import router as topic_validation_router
 from routes.web_scraping_routes import router as web_scraping_router
-from routes.document_routes import router as document_router
-from routes.dataset_routes import router as dataset_router
-from routes.system_routes import router as system_router
+from services.logger.logger_service import LoggerService
 from services.rate_limit.semaphore import SemaphoreMiddleware
-
 
 if os.getenv("TRACER_TYPE") == "langfuse":
     langfuse = Langfuse(

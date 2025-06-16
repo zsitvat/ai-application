@@ -54,3 +54,40 @@ docker-build:  ## Build Docker image
 
 docker-run:  ## Run Docker container
 	docker run -p 8000:8000 ai-app
+
+format-check:  ## Check if code is properly formatted (CI mode)
+	poetry run black --check src tests
+	poetry run isort --check-only src tests
+
+security:  ## Run security checks
+	poetry run safety check
+	poetry run bandit -r src
+
+ci-full:  ## Run full CI pipeline locally (format, lint, security, test)
+	@echo "🔍 Running format check..."
+	poetry run black --check src tests
+	poetry run isort --check-only src tests
+	@echo "✅ Format check completed"
+	@echo ""
+	@echo "🔧 Running linting..."
+	poetry run flake8 src tests
+	poetry run mypy src || true
+	@echo "✅ Linting completed"
+	@echo ""
+	@echo "🔒 Running security checks..."
+	poetry run safety check || true
+	poetry run bandit -r src || true
+	@echo "✅ Security checks completed"
+	@echo ""
+	@echo "🧪 Running tests..."
+	poetry run pytest tests/ -v --cov=src --cov-report=term
+	@echo "✅ All checks completed!"
+
+ci-fix:  ## Fix formatting issues and run checks
+	@echo "🔧 Fixing formatting..."
+	poetry run black src tests
+	poetry run isort src tests
+	@echo "✅ Formatting fixed"
+	@echo ""
+	@echo "🔍 Running checks..."
+	$(MAKE) ci-full

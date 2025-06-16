@@ -1,21 +1,20 @@
-import logging
 import asyncio
-from urllib.parse import urlparse
-from typing import Optional
-from pathlib import Path
+import logging
+import sys
 from datetime import datetime
-from scrapy.crawler import CrawlerRunner
-from scrapy.utils.project import get_project_settings
-from scrapy.spiders import Spider
-from scrapy.linkextractors import LinkExtractor
-from scrapy.http import Request
+from pathlib import Path
+from typing import Optional
+from urllib.parse import urlparse
 
 from docx import Document
 from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-
-import sys
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
+from scrapy.crawler import CrawlerRunner
+from scrapy.http import Request
+from scrapy.linkextractors import LinkExtractor
+from scrapy.spiders import Spider
+from scrapy.utils.project import get_project_settings
 
 # Install asyncio reactor before any Twisted-using modules are imported
 if "twisted.internet.reactor" not in sys.modules:

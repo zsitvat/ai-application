@@ -1,22 +1,24 @@
+import json
 import logging
 import os
+import tempfile
+from urllib.parse import urlparse
+
 import redis
 import requests
-import tempfile
-import json
-from urllib.parse import urlparse
-from langchain_redis import RedisConfig, RedisVectorStore
+from langchain.schema import Document
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import (
+    Docx2txtLoader,
     PyPDFLoader,
     TextLoader,
     UnstructuredExcelLoader,
-    Docx2txtLoader,
 )
-from langchain.schema import Document
+from langchain_redis import RedisConfig, RedisVectorStore
 
 from schemas.graph_schema import Model
 from utils.model_selector import get_embedding_model
+
 from .default_schema import DEFAULT_INDEX_SCHEMA
 
 

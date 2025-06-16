@@ -1,5 +1,6 @@
-from fastapi import APIRouter, HTTPException, Depends
 import logging
+
+from fastapi import APIRouter, Depends, HTTPException
 
 from schemas.graph_schema import RestOperationPostSchema
 from services.graph.graph_service import GraphService

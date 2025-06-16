@@ -1,7 +1,8 @@
+import asyncio
 import time
+
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
-import asyncio
 
 
 class TokenBucket:

@@ -1,0 +1,29 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ development, test, main ]
+  pull_request:
+    branches: [ development, test, main ]
+  schedule:
+    - cron: '0 3 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+  security-events: write
+
+jobs:
+  test-and-lint:
+    uses: ./.github/workflows/test-lint-reusable.yml
+    secrets: inherit
+
+  security-scan:
+    uses: ./.github/workflows/security-reusable.yml
+    secrets: inherit
+
+  docker-build:
+    needs: [test-and-lint, security-scan]
+    uses: ./.github/workflows/docker-reusable.yml
+    secrets: inherit

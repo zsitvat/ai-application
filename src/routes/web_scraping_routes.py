@@ -1,5 +1,6 @@
-from fastapi import APIRouter, HTTPException, Depends
 import logging
+
+from fastapi import APIRouter, Depends, HTTPException
 
 from schemas.web_scraping_schema import (
     WebScrapingRequestSchema,

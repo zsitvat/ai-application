@@ -1,9 +1,10 @@
-import boto3
+import asyncio
+import json
 import os
 import uuid
-import json
-import asyncio
+
 import aiofiles
+import boto3
 
 
 async def check_path(file_path: str):

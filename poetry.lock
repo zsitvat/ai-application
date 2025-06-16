@@ -255,6 +255,21 @@ files = [
 cryptography = "*"
 
 [[package]]
+name = "autoflake"
+version = "2.3.1"
+description = "Removes unused imports and unused variables"
+optional = false
+python-versions = ">=3.8"
+groups = ["dev"]
+files = [
+    {file = "autoflake-2.3.1-py3-none-any.whl", hash = "sha256:3ae7495db9084b7b32818b4140e6dc4fc280b712fb414f5b8fe57b0a8e85a840"},
+    {file = "autoflake-2.3.1.tar.gz", hash = "sha256:c98b75dc5b0a86459c4f01a1d32ac7eb4338ec4317a4469515ff1e687ecd909e"},
+]
+
+[package.dependencies]
+pyflakes = ">=3.0.0"
+
+[[package]]
 name = "automat"
 version = "25.4.16"
 description = "Self-service finite-state machines for the programmer on the go."
@@ -7116,4 +7131,4 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "2544af8b93a6968739ab75909e5abbc61dfa9237a30500b8f1c14712498430c1"
+content-hash = "6dd48326d6f9d2e5bfd8c74b8f7fd0ecb14494d3d6399edee78d0d9bde677391"

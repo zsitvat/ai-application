@@ -1,7 +1,8 @@
+import asyncio
+
 from langchain import hub
 from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
 from langfuse import Langfuse
-import asyncio
 
 
 async def get_prompt_by_type(prompt_id, tracer_type, cache_ttl=60):

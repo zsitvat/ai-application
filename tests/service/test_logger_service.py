@@ -1,7 +1,7 @@
-from src.services.logger.logger_service import LoggerService
-
 import logging
 from io import StringIO
+
+from src.services.logger.logger_service import LoggerService
 
 
 async def test_logger_service_output():

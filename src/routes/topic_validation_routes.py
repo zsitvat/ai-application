@@ -1,5 +1,6 @@
-from fastapi import APIRouter, HTTPException, Depends
 import logging
+
+from fastapi import APIRouter, Depends, HTTPException
 
 from schemas.topic_validation_schema import (
     TopicValidationRequestSchema,

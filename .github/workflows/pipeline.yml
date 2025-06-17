@@ -16,14 +16,14 @@ permissions:
 
 jobs:
   test-and-lint:
-    uses: .github/workflows/test-lint-reusable.yml
+    uses: zsitvat/diploma_munka/.github/workflows/test-lint-reusable.yml@development
     secrets: inherit
 
   security-scan:
-    uses: .github/workflows/security-reusable.yml
+    uses: zsitvat/diploma_munka/.github/workflows/security-reusable.yml@development
     secrets: inherit
 
   docker-build:
     needs: [test-and-lint, security-scan]
-    uses: .github/workflows/docker-reusable.yml
+    uses: zsitvat/diploma_munka/.github/workflows/docker-reusable.yml@development
     secrets: inherit

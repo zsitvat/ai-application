@@ -16,7 +16,7 @@ class PersonalDataFilterService:
 
     async def filter_personal_data(
         self, text: str, config: PersonalDataFilterConfigSchema
-    ) -> str:
+    ) -> tuple[str, str]:
         """
         Filter personal data from text using AI.
 

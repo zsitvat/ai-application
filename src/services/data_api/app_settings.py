@@ -7,8 +7,6 @@ import httpx
 class DataApiException(Exception):
     """Exception raised for errors in the Data API."""
 
-    pass
-
 
 class AppSettingsService:
 

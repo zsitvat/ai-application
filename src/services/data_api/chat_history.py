@@ -204,13 +204,10 @@ class HistoryData:
         )
         logging.getLogger("uvicorn").info("Creates llm history db connection!")
 
-        # save user message to history db
         history.add_user_message(question)
-        # save AI message to history db
         history.add_ai_message(answer)
 
-    @classmethod
-    def get_conversations(self, uuid: str):
+    async def get_conversations(self, uuid: str):
         """Get conversations from chat history db"""
         limit = 100
         page = 0
@@ -227,31 +224,33 @@ class HistoryData:
             "Content-Type": "application/json",
         }
 
-        try:
-            response = requests.get(url, headers=headers)
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url, headers=headers, timeout=30.0)
 
             if response.status_code == 200:
                 return response
+            else:
+                raise httpx.HTTPStatusError(
+                    f"Request failed with status {response.status_code}",
+                    request=response.request,
+                    response=response,
+                )
 
-        except Exception as ex:
-            raise ex
-
-    @classmethod
-    def get_messages_from_chat_history(self, uuid: str):
+    async def get_messages_from_chat_history(self, uuid: str):
         """Get messages from chat history db and return as list of dicts"""
-        response = self.get_conversations(uuid)
-        if response == None:
-            raise Exception("Error while getting messages from chat history db!")
-        response = response.json()
+        response = await self.get_conversations(uuid)
+        if response is None:
+            raise ValueError("Error while getting messages from chat history db!")
+        response_data = response.json()
 
         messages = []
         ignore_messages = os.environ.get("IGNORED_MESSAGES")
 
         ignore_messages = (
-            json.loads(ignore_messages) if ignore_messages != None else list("hi")
+            json.loads(ignore_messages) if ignore_messages is not None else list("hi")
         )
 
-        for object in response["content"]:
+        for object in response_data["content"]:
             if object["isOutgoingMessage"]:
                 answer_type = "ai"
             else:
@@ -292,7 +291,7 @@ class HistoryData:
             else:
                 message_as_text = object["messageAsText"]
 
-            if message_as_text != "" or message_as_text != None:
+            if message_as_text != "" or message_as_text is not None:
                 messages.append(
                     {
                         "type": answer_type,

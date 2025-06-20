@@ -6,21 +6,19 @@ from src.schemas.web_scraping_schema import (
     WebScrapingRequestSchema,
     WebScrapingResponseSchema,
 )
-from src.services.web_scraper.scrapy_web_scraping_service import (
-    ScrapyWebScrapingService,
-)
+from services.web_scraper.scrapy_web_scraping_service import ScrapySpider
 
 router = APIRouter(tags=["Web Scraping"])
 
 
 def get_web_scraping_service():
-    return ScrapyWebScrapingService()
+    return ScrapySpider()
 
 
 @router.post("/api/web-scraping", response_model=WebScrapingResponseSchema)
 async def scrape_websites(
     request: WebScrapingRequestSchema,
-    scraping_service: ScrapyWebScrapingService = Depends(get_web_scraping_service),
+    scraping_service: ScrapySpider = Depends(get_web_scraping_service),
 ):
     "Extract and process website content automatically."
 
@@ -33,6 +31,8 @@ async def scrape_websites(
                 output_path=request.output_path,
                 vector_db_index=request.vector_db_index,
                 allowed_domains=request.allowed_domains,
+                content_selectors=request.content_selectors,
+                excluded_selectors=request.excluded_selectors,
             )
         )
 

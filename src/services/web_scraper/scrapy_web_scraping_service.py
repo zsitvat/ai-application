@@ -22,6 +22,7 @@ from scrapy.spiders import Spider
 from src.schemas.web_scraping_schema import OutputType
 from src.services.web_scraper.scraper_config import (
     CONTENT_SELECTORS,
+    EXCLUDED_SELECTORS,
     IGNORED_EXTENSIONS,
 )
 
@@ -45,13 +46,23 @@ class ScrapySpider(Spider):
     name = "spider"
 
     def __init__(
-        self, start_urls=None, max_depth=1, allowed_domains=None, *args, **kwargs
+        self,
+        start_urls=None,
+        max_depth=1,
+        allowed_domains=None,
+        content_selectors=None,
+        excluded_selectors=None,
+        *args,
+        **kwargs,
     ):
         super(ScrapySpider, self).__init__(*args, **kwargs)
 
         self.start_urls = start_urls or []
         self.max_depth = max_depth
         self.allowed_domains = allowed_domains or []
+        
+        self.content_selectors = content_selectors or CONTENT_SELECTORS
+        self.excluded_selectors = excluded_selectors or EXCLUDED_SELECTORS
 
         self.scraped_data = {}
         self.failed_urls = set()
@@ -91,36 +102,64 @@ class ScrapySpider(Spider):
     def _extract_content(self, response):
         """
         Extract text content from the response and store it.
+        First get content from CONTENT_SELECTORS, then remove EXCLUDED_SELECTORS.
         """
         try:
             title = response.css("title::text").get()
             title = title.strip() if title else "No title"
 
-            content_parts = []
-
-            for selector in CONTENT_SELECTORS:
-                texts = response.css(f"{selector}::text").getall()
-                if texts:
-                    content_parts.extend(
-                        [text.strip() for text in texts if text.strip()]
-                    )
-                    break
-
-            if not content_parts:
-                all_text = response.css("*:not(script):not(style)::text").getall()
-                content_parts = [text.strip() for text in all_text if text.strip()]
+            content_parts = self._get_content_with_exclusions(response)
 
             full_content = f"Title: {title}\n\n"
             full_content += "Content:\n"
-            full_content += "\n".join(content_parts[:50])
+            full_content += "\n".join(content_parts[:200])
 
             self.scraped_data[response.url] = full_content
-
             self.logger.info(f"Successfully scraped content from: {response.url}")
 
         except Exception as e:
             self.logger.error(f"Error extracting content from {response.url}: {str(e)}")
             self.failed_urls.add(response.url)
+
+    def _get_content_with_exclusions(self, response):
+        """Helper method to extract content while excluding specified selectors."""
+        content_parts = []
+
+        self._extract_from_content_selectors(response, content_parts)
+
+        return content_parts
+
+    def _extract_from_content_selectors(self, response, content_parts):
+        """Extract content from the main content selectors."""
+        for selector in self.content_selectors:
+            if not response.css(selector):
+                continue
+
+            filtered_text = self._filter_excluded_text(
+                response, response.css(f"{selector} ::text").getall()
+            )
+
+            if filtered_text:
+                content_parts.extend(filtered_text)
+
+    def _filter_excluded_text(self, response, text_list):
+        """Filter out text that appears in excluded selectors."""
+        if not text_list:
+            return []
+
+        excluded_text = set()
+        for excluded_selector in self.excluded_selectors:
+            excluded_text.update(
+                text.strip()
+                for text in response.css(f"{excluded_selector} ::text").getall()
+                if text.strip()
+            )
+
+        return [
+            text.strip()
+            for text in text_list
+            if text.strip() and text.strip() not in excluded_text
+        ]
 
     def handle_error(self, failure):
         """
@@ -270,12 +309,10 @@ class ScrapySpider(Spider):
                 self.logger.error(f"Failed to create fonts directory: {str(e)}")
 
         if font_dir.exists():
-            # Check if any of the preferred fonts exist
             preferred_result = self._find_preferred_local_font(font_dir)
             if preferred_result:
                 return preferred_result
 
-            # Try any TTF in the directory
             for font_file in font_dir.glob("*.ttf"):
                 result = self._try_register_local_font(font_file.stem, font_file)
                 if result:
@@ -342,7 +379,6 @@ class ScrapySpider(Spider):
 
             normalized_text = unicodedata.normalize("NFC", line.strip())
 
-            # Properly escape XML special characters for ReportLab
             escaped_line = (
                 normalized_text.replace("&", "&amp;")
                 .replace("<", "&lt;")
@@ -359,7 +395,6 @@ class ScrapySpider(Spider):
                     if ord(char) < 128:
                         sanitized += char
                     else:
-                        # For non-ASCII, use XML entity if possible
                         try:
                             sanitized += f"&#{ord(char)};"
                         except Exception:
@@ -449,30 +484,51 @@ class ScrapySpider(Spider):
         """Get all scraped content as a single string."""
         return self._get_all_content()
 
+    def _prepare_scraping_config(
+        self, content_selectors=None, excluded_selectors=None
+    ):
+        """
+        Prepare a scraping configuration dictionary based on provided parameters.
 
-class ScrapyWebScrapingService:
-    """
-    Service class to handle web scraping using Scrapy.
-    """
+        Args:
+            content_selectors: Custom CSS selectors for content extraction
+            excluded_selectors: Custom CSS selectors to exclude
 
-    def __init__(self):
-        """Initialize the ScrapyWebScrapingService."""
-        pass
+        Returns:
+            dict: Configuration dictionary for the scraper
+        """
+        scraping_config = {}
+        
+        if content_selectors:
+            scraping_config["content_selectors"] = content_selectors
+            
+        if excluded_selectors:
+            scraping_config["excluded_selectors"] = excluded_selectors
+            
+        return scraping_config if scraping_config else None
 
     async def scrape_website(
         self,
         start_url: str,
         max_depth: int = 2,
         allowed_domains: Optional[list] = None,
+        scraping_config: Optional[dict] = None,
     ) -> dict:
         """
         Scrape a website starting from the given URL using a subprocess for event loop safety.
+        
+        Args:
+            start_url: URL to start scraping from
+            max_depth: Maximum depth to follow links
+            allowed_domains: List of allowed domains to scrape
+            scraping_config: Dictionary with content_selectors and excluded_selectors
         """
         try:
             return await self.scrape_website_subprocess(
                 start_url=start_url,
                 max_depth=max_depth,
                 allowed_domains=allowed_domains,
+                scraping_config=scraping_config,
             )
         except Exception as e:
             logging.error(f"Error during subprocess scraping: {str(e)}")
@@ -538,6 +594,8 @@ class ScrapyWebScrapingService:
         output_path: str = None,
         vector_db_index: str = None,
         allowed_domains: list[str] = None,
+        content_selectors: list[str] = None,
+        excluded_selectors: list[str] = None,
     ) -> tuple[bool, str, list[str], list[str], str | list]:
         """
         Scrape multiple websites and return results in the format expected by the API.
@@ -549,13 +607,19 @@ class ScrapyWebScrapingService:
             output_path: Path where to save files (optional)
             vector_db_index: Vector database index name (optional)
             allowed_domains: List of allowed domains to scrape (optional)
+            content_selectors: Custom CSS selectors for content extraction (optional)
+            excluded_selectors: Custom CSS selectors to exclude (optional)
 
         Returns:
             tuple: (success, message, scraped_urls, failed_urls, content)
         """
         try:
+            scraping_config = self._prepare_scraping_config(
+                content_selectors, excluded_selectors
+            )
+
             scraped_results = await self._process_multiple_urls(
-                urls, max_depth, allowed_domains
+                urls, max_depth, allowed_domains, scraping_config
             )
 
             content = self._generate_output(
@@ -581,7 +645,11 @@ class ScrapyWebScrapingService:
             return False, error_msg, [], urls, ""
 
     async def _process_multiple_urls(
-        self, urls: list[str], max_depth: int, allowed_domains: list[str]
+        self,
+        urls: list[str],
+        max_depth: int,
+        allowed_domains: list[str],
+        scraping_config: dict = None,
     ) -> dict:
         """Process multiple URLs and collect results."""
         all_scraped_data = {}
@@ -596,6 +664,7 @@ class ScrapyWebScrapingService:
                     start_url=url,
                     max_depth=max_depth,
                     allowed_domains=url_allowed_domains,
+                    scraping_config=scraping_config,
                 )
 
                 if result["success"]:
@@ -673,12 +742,14 @@ class ScrapyWebScrapingService:
         start_url: str,
         max_depth: int = 1,
         allowed_domains: Optional[list] = None,
+        scraping_config: Optional[dict] = None,
     ) -> dict:
         """
         Run the Scrapy spider in a subprocess for robust event loop isolation.
         """
         script_path = str(Path(__file__).parent / "scrapy_subprocess_runner.py")
         allowed_domains_str = "" if not allowed_domains else ",".join(allowed_domains)
+
         cmd = [
             sys.executable,
             script_path,
@@ -686,6 +757,15 @@ class ScrapyWebScrapingService:
             str(max_depth),
             allowed_domains_str,
         ]
+
+        if scraping_config:
+            import base64
+            import json
+
+            selectors_json = json.dumps(scraping_config)
+            selectors_b64 = base64.b64encode(selectors_json.encode("utf-8")).decode("utf-8")
+            cmd.append(selectors_b64)
+
         proc = await asyncio.create_subprocess_exec(
             *cmd,
             stdout=asyncio.subprocess.PIPE,

@@ -1,5 +1,4 @@
 from enum import Enum
-
 from pydantic import BaseModel
 
 
@@ -20,6 +19,8 @@ class WebScrapingRequestSchema(BaseModel):
     output_path: str | None = None
     vector_db_index: str | None = None
     allowed_domains: list[str] | None = None
+    content_selectors: list[str] | None = None
+    excluded_selectors: list[str] | None = None
 
 
 class WebScrapingResponseSchema(BaseModel):

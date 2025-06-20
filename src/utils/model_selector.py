@@ -81,7 +81,7 @@ async def get_conversation_model(
             )
         elif provider == "anthropic":
             return ChatAnthropic(
-                model_name=model, temperature=temperature, timeout=60, stop=None
+                name=model, temperature=temperature, timeout=60, stop=None
             )
         elif provider == "bedrock":
             client = boto3.client(

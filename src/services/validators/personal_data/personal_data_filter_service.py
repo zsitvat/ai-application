@@ -30,7 +30,7 @@ class PersonalDataFilterService:
 
         model = await get_conversation_model(
             provider=config.model.provider,
-            model_name=config.model.name,
+            model=config.model.name,
             deployment=config.model.deployment,
         )
 

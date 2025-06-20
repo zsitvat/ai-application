@@ -5,12 +5,12 @@ from pydantic import BaseModel
 
 class OutputType(str, Enum):
     DOCX = "docx"
-    DOC = "doc"
     PDF = "pdf"
     HTML = "html"
-    TEXT = "text"
+    TXT = "txt"
     VECTOR_DB = "vector_db"
     STRING = "string"
+    JSON = "json"
 
 
 class WebScrapingRequestSchema(BaseModel):

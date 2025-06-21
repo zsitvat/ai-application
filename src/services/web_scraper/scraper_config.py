@@ -1,10 +1,3 @@
-"""
-Scrapy settings configuration for the web scraping service.
-
-This file contains default settings that can be customized for different scraping scenarios.
-"""
-
-# Scrapy settings for web scraping
 DEFAULT_SCRAPY_SETTINGS = {
     # Obey robots.txt rules
     "ROBOTSTXT_OBEY": True,
@@ -15,10 +8,10 @@ DEFAULT_SCRAPY_SETTINGS = {
     "DOWNLOAD_DELAY": 1,
     "RANDOMIZE_DOWNLOAD_DELAY": 0.5,
     # User agent
-    "USER_AGENT": "ScrapyWebScraper (+http://www.yourdomain.com)",
+    "USER_AGENT": "ScrapyWebScraper",
     # Logging
     "LOG_LEVEL": "INFO",
-    # Disable telnet console (not needed for programmatic use)
+    # Disable telnet console
     "TELNETCONSOLE_ENABLED": False,
     # AutoThrottle extension settings
     "AUTOTHROTTLE_ENABLED": True,
@@ -28,7 +21,7 @@ DEFAULT_SCRAPY_SETTINGS = {
     "AUTOTHROTTLE_DEBUG": False,
     # Enable and configure HTTP caching
     "HTTPCACHE_ENABLED": True,
-    "HTTPCACHE_EXPIRATION_SECS": 3600,  # 1 hour
+    "HTTPCACHE_EXPIRATION_SECS": 3600,
     "HTTPCACHE_DIR": "httpcache",
     # Request timeout
     "DOWNLOAD_TIMEOUT": 30,
@@ -41,8 +34,8 @@ DEFAULT_SCRAPY_SETTINGS = {
     "REDIRECT_MAX_TIMES": 20,
 }
 
-# Settings for fast scraping (less polite)
-FAST_SCRAPING_SETTINGS = {
+
+NO_ROBOTTXT_SCRAPING_SETTINGS = {
     **DEFAULT_SCRAPY_SETTINGS,
     "ROBOTSTXT_OBEY": False,
     "DOWNLOAD_DELAY": 0.1,
@@ -50,7 +43,6 @@ FAST_SCRAPING_SETTINGS = {
     "CONCURRENT_REQUESTS_PER_DOMAIN": 16,
 }
 
-# Settings for polite scraping (more respectful)
 POLITE_SCRAPING_SETTINGS = {
     **DEFAULT_SCRAPY_SETTINGS,
     "ROBOTSTXT_OBEY": True,
@@ -60,7 +52,6 @@ POLITE_SCRAPING_SETTINGS = {
     "CONCURRENT_REQUESTS_PER_DOMAIN": 2,
 }
 
-# File extensions to ignore when following links
 IGNORED_EXTENSIONS = [
     # Documents
     "pdf",
@@ -132,7 +123,6 @@ IGNORED_EXTENSIONS = [
     "magnet",
 ]
 
-# Common CSS selectors for content extraction
 CONTENT_SELECTORS = [
     "main",
     "article",
@@ -145,7 +135,6 @@ CONTENT_SELECTORS = [
     "body",
 ]
 
-# CSS selectors to exclude (navigation, ads, etc.)
 EXCLUDED_SELECTORS = [
     "nav",
     "header",

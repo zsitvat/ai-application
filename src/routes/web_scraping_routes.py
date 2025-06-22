@@ -2,11 +2,11 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException
 
+from src.services.web_scraper.scrapy_web_scraping_service import ScrapySpider
 from src.schemas.web_scraping_schema import (
     WebScrapingRequestSchema,
     WebScrapingResponseSchema,
 )
-from services.web_scraper.scrapy_web_scraping_service import ScrapySpider
 
 router = APIRouter(tags=["Web Scraping"])
 

@@ -17,7 +17,7 @@ from langchain_community.document_loaders import (
 from langchain_redis import RedisConfig, RedisVectorStore
 
 from schemas.graph_schema import Model
-from utils.model_selector import get_embedding_model
+from utils.select_model import get_embedding_model
 
 from .default_schema import DEFAULT_INDEX_SCHEMA
 

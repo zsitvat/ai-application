@@ -15,7 +15,9 @@ from langchain_openai import (
 
 
 async def get_embedding_model(
-    provider: str, deployment: str | None = None, model: str = "text-embedding-3-large"
+    provider: str = "openai",
+    deployment: str | None = None,
+    model: str = "text-embedding-3-large",
 ) -> AzureOpenAIEmbeddings | OpenAIEmbeddings:
     """Get an embedding model based on the provider
 

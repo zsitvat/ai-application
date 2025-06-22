@@ -23,11 +23,13 @@ from scrapy.linkextractors import LinkExtractor
 from scrapy.spiders import Spider
 
 from src.schemas.web_scraping_schema import OutputType
+from src.schemas.graph_schema import Model
 from src.services.web_scraper.scraper_config import (
     CONTENT_SELECTORS,
     EXCLUDED_SELECTORS,
     IGNORED_EXTENSIONS,
 )
+from src.utils.select_model import get_embedding_model
 
 
 def install_reactor():
@@ -597,6 +599,7 @@ class ScrapySpider(Spider):
         allowed_domains: list[str] = None,
         content_selectors: list[str] = None,
         excluded_selectors: list[str] = None,
+        embedding_model_config: Model = None,
     ) -> tuple[bool, str, list[str], list[str], str | list]:
         """
         Scrape multiple websites and return results in the format expected by the API.
@@ -610,6 +613,7 @@ class ScrapySpider(Spider):
             allowed_domains: List of allowed domains to scrape (optional)
             content_selectors: Custom CSS selectors for content extraction (optional)
             excluded_selectors: Custom CSS selectors to exclude (optional)
+            embedding_model_config: Model configuration object for the embedding model (optional)
 
         Returns:
             tuple: (success, message, scraped_urls, failed_urls, content)
@@ -628,6 +632,7 @@ class ScrapySpider(Spider):
                 output_type,
                 output_path,
                 vector_db_index,
+                embedding_model_config,
             )
 
             message = self._generate_response_message(scraped_results)
@@ -702,6 +707,7 @@ class ScrapySpider(Spider):
         output_type: str,
         output_path: str,
         vector_db_index: str,
+        embedding_model_config: Model = None,
     ) -> str | list:
         """Generate output content based on the specified type."""
         if output_type.lower() == OutputType.STRING.value:
@@ -718,7 +724,9 @@ class ScrapySpider(Spider):
                     json_data.append({url: content})
                 return json_data
         elif output_type.lower() == OutputType.VECTOR_DB.value:
-            await self.save_to_vector_db(scraped_data, vector_db_index)
+            await self.save_to_vector_db(
+                scraped_data, vector_db_index, embedding_model_config
+            )
             return f"Content saved to vector database index: {vector_db_index or 'default'}"
         elif output_path and output_type.lower() in [
             OutputType.TXT.value,
@@ -814,6 +822,11 @@ class ScrapySpider(Spider):
             stderr=asyncio.subprocess.PIPE,
         )
         stdout, stderr = await proc.communicate()
+
+        logging.info(f"Subprocess return code: {proc.returncode}")
+        logging.info(f"Subprocess stdout: {stdout.decode()}")
+        logging.info(f"Subprocess stderr: {stderr.decode()}")
+
         if proc.returncode != 0:
             return {
                 "success": False,
@@ -824,7 +837,33 @@ class ScrapySpider(Spider):
             }
         try:
             decoded_stdout = stdout.decode().strip()
-            scraped_data = self._extract_json_from_output(decoded_stdout)
+
+            # First check if temp file exists at the specified location
+            temp_file_path = str(
+                Path(__file__).parent.parent.parent.parent / "files" / "temp_file.json"
+            )
+
+            if os.path.exists(temp_file_path):
+                logging.info(f"Reading scraped data from temp file: {temp_file_path}")
+                with open(temp_file_path, "r", encoding="utf-8") as temp_file:
+                    scraped_data = json.load(temp_file)
+                logging.info(
+                    f"Successfully read {len(scraped_data)} items from temp file"
+                )
+            elif decoded_stdout.endswith(".json"):
+                output_file_path = decoded_stdout
+                logging.info(
+                    f"Reading scraped data from output file: {output_file_path}"
+                )
+                with open(output_file_path, "r", encoding="utf-8") as output_file:
+                    scraped_data = json.load(output_file)
+
+                # Don't delete the file immediately - keep it for debugging
+                logging.info(
+                    f"Successfully read {len(scraped_data)} items from {output_file_path}"
+                )
+            else:
+                scraped_data = self._extract_json_from_output(decoded_stdout)
         except Exception as e:
             return {
                 "success": False,
@@ -847,6 +886,7 @@ class ScrapySpider(Spider):
         self,
         scraped_data: dict,
         vector_db_index: str,
+        embedding_model_config: Model = None,
     ) -> None:
         """
         Save scraped content to a Redis vector database.
@@ -854,11 +894,23 @@ class ScrapySpider(Spider):
         Args:
             scraped_data: Dictionary containing scraped content
             vector_db_index: Name of the Redis vector database index
+            embedding_model_config: Model configuration object for the embedding model (optional)
         """
         if not scraped_data or not vector_db_index:
             return
 
         REDIS_URL = f"redis://{os.getenv('REDIS_USER', 'default')}:{os.getenv('REDIS_PASSWORD', '')}@{os.getenv('REDIS_HOST', '172.17.0.1')}:{os.getenv('REDIS_PORT', '6380')}"
+
+        # Configure embedding model based on provided config or use defaults
+        if embedding_model_config:
+            provider = embedding_model_config.provider.value
+            deployment = embedding_model_config.deployment
+            model_name = embedding_model_config.name
+            embedding_model = await get_embedding_model(
+                provider=provider, deployment=deployment, model=model_name
+            )
+        else:
+            embedding_model = await get_embedding_model()
 
         redis_config = RedisConfig(
             index_name=vector_db_index,
@@ -870,7 +922,9 @@ class ScrapySpider(Spider):
             ],
         )
 
-        vector_store = RedisVectorStore(redis_config, index_name=vector_db_index)
+        vector_store = RedisVectorStore(
+            embedding_model, redis_config, index_name=vector_db_index
+        )
 
         for url, content in scraped_data.items():
             await vector_store.add_texts(

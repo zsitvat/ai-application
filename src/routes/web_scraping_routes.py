@@ -2,11 +2,11 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException
 
+from src.services.web_scraper.scrapy_web_scraping_service import ScrapySpider
 from src.schemas.web_scraping_schema import (
     WebScrapingRequestSchema,
     WebScrapingResponseSchema,
 )
-from services.web_scraper.scrapy_web_scraping_service import ScrapySpider
 
 router = APIRouter(tags=["Web Scraping"])
 
@@ -23,6 +23,10 @@ async def scrape_websites(
     "Extract and process website content automatically."
 
     try:
+        logging.getLogger("logger").debug(
+            f"Received web scraping request with parameters: {request.dict()}"
+        )
+
         success, message, scraped_urls, failed_urls, content = (
             await scraping_service.scrape_websites(
                 urls=request.urls,
@@ -33,7 +37,12 @@ async def scrape_websites(
                 allowed_domains=request.allowed_domains,
                 content_selectors=request.content_selectors,
                 excluded_selectors=request.excluded_selectors,
+                embedding_model_config=request.embedding_model,
             )
+        )
+
+        logging.getLogger("logger").debug(
+            f"Scraping completed. Success: {success}, Message: {message}, Scraped URLs: {scraped_urls}, Failed URLs: {failed_urls}"
         )
 
         return WebScrapingResponseSchema(

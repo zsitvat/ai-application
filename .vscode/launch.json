@@ -2,7 +2,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: FastAPI App with Reload",
+            "name": "FastAPI: Import without src prefix",
             "type": "debugpy",
             "request": "launch",
             "module": "uvicorn",
@@ -20,17 +20,6 @@
                 "PYTHONPATH": "${workspaceFolder}/src"
             },
             "justMyCode": true
-        },
-        {
-            "name": "Python: Current File",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${file}",
-            "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}/src",
-            "env": {
-                "PYTHONPATH": "${workspaceFolder}/src"
-            }
         }
     ]
 }

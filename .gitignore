@@ -3,13 +3,14 @@ deeplake
 deeplake_databases
 deeplake_databases/
 *deeplake*
-
+files/
 .vscode/settings.json
 .vscode/extensions.json
 .vscode/c_cpp_properties.json
 .vscode/tasks.json
 venv/*
 myenv/*
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -1,12 +1,15 @@
 import asyncio
 import json
 import logging
-import os
 import sys
+import os
+import base64
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
 from urllib.parse import urlparse
+
+from langchain_redis import RedisConfig, RedisVectorStore
 
 from docx import Document
 from reportlab.lib.fonts import addMapping
@@ -20,11 +23,13 @@ from scrapy.linkextractors import LinkExtractor
 from scrapy.spiders import Spider
 
 from src.schemas.web_scraping_schema import OutputType
+from src.schemas.graph_schema import Model
 from src.services.web_scraper.scraper_config import (
     CONTENT_SELECTORS,
     EXCLUDED_SELECTORS,
     IGNORED_EXTENSIONS,
 )
+from src.utils.select_model import get_embedding_model
 
 
 def install_reactor():
@@ -60,7 +65,7 @@ class ScrapySpider(Spider):
         self.start_urls = start_urls or []
         self.max_depth = max_depth
         self.allowed_domains = allowed_domains or []
-        
+
         self.content_selectors = content_selectors or CONTENT_SELECTORS
         self.excluded_selectors = excluded_selectors or EXCLUDED_SELECTORS
 
@@ -484,9 +489,7 @@ class ScrapySpider(Spider):
         """Get all scraped content as a single string."""
         return self._get_all_content()
 
-    def _prepare_scraping_config(
-        self, content_selectors=None, excluded_selectors=None
-    ):
+    def _prepare_scraping_config(self, content_selectors=None, excluded_selectors=None):
         """
         Prepare a scraping configuration dictionary based on provided parameters.
 
@@ -498,13 +501,13 @@ class ScrapySpider(Spider):
             dict: Configuration dictionary for the scraper
         """
         scraping_config = {}
-        
+
         if content_selectors:
             scraping_config["content_selectors"] = content_selectors
-            
+
         if excluded_selectors:
             scraping_config["excluded_selectors"] = excluded_selectors
-            
+
         return scraping_config if scraping_config else None
 
     async def scrape_website(
@@ -516,7 +519,7 @@ class ScrapySpider(Spider):
     ) -> dict:
         """
         Scrape a website starting from the given URL using a subprocess for event loop safety.
-        
+
         Args:
             start_url: URL to start scraping from
             max_depth: Maximum depth to follow links
@@ -596,6 +599,7 @@ class ScrapySpider(Spider):
         allowed_domains: list[str] = None,
         content_selectors: list[str] = None,
         excluded_selectors: list[str] = None,
+        embedding_model_config: Model = None,
     ) -> tuple[bool, str, list[str], list[str], str | list]:
         """
         Scrape multiple websites and return results in the format expected by the API.
@@ -609,6 +613,7 @@ class ScrapySpider(Spider):
             allowed_domains: List of allowed domains to scrape (optional)
             content_selectors: Custom CSS selectors for content extraction (optional)
             excluded_selectors: Custom CSS selectors to exclude (optional)
+            embedding_model_config: Model configuration object for the embedding model (optional)
 
         Returns:
             tuple: (success, message, scraped_urls, failed_urls, content)
@@ -622,11 +627,12 @@ class ScrapySpider(Spider):
                 urls, max_depth, allowed_domains, scraping_config
             )
 
-            content = self._generate_output(
+            content = await self._generate_output(
                 scraped_results["scraped_data"],
                 output_type,
                 output_path,
                 vector_db_index,
+                embedding_model_config,
             )
 
             message = self._generate_response_message(scraped_results)
@@ -668,8 +674,15 @@ class ScrapySpider(Spider):
                 )
 
                 if result["success"]:
-                    all_scraped_data.update(result["scraped_data"])
-                    all_scraped_urls.extend(result["scraped_data"].keys())
+                    scraped = result["scraped_data"]
+                    if isinstance(scraped, dict):
+                        all_scraped_data.update(scraped)
+                        all_scraped_urls.extend(scraped.keys())
+                    elif isinstance(scraped, list):
+                        for item in scraped:
+                            if isinstance(item, dict):
+                                all_scraped_data.update(item)
+                                all_scraped_urls.extend(item.keys())
                     all_failed_urls.extend(result["failed_urls"])
                 else:
                     all_failed_urls.append(url)
@@ -688,12 +701,13 @@ class ScrapySpider(Spider):
             "failed_urls": all_failed_urls,
         }
 
-    def _generate_output(
+    async def _generate_output(
         self,
         scraped_data: dict,
         output_type: str,
         output_path: str,
         vector_db_index: str,
+        embedding_model_config: Model = None,
     ) -> str | list:
         """Generate output content based on the specified type."""
         if output_type.lower() == OutputType.STRING.value:
@@ -710,7 +724,10 @@ class ScrapySpider(Spider):
                     json_data.append({url: content})
                 return json_data
         elif output_type.lower() == OutputType.VECTOR_DB.value:
-            return f"Vector DB integration planned for index: {vector_db_index or 'default'}"
+            await self.save_to_vector_db(
+                scraped_data, vector_db_index, embedding_model_config
+            )
+            return f"Content saved to vector database index: {vector_db_index or 'default'}"
         elif output_path and output_type.lower() in [
             OutputType.TXT.value,
             OutputType.HTML.value,
@@ -737,6 +754,39 @@ class ScrapySpider(Spider):
         else:
             return f"Failed to scrape any content. {total_failed} URL(s) failed"
 
+    def _extract_json_from_output(self, output: str):
+        """
+        Extract the first valid JSON object or array from a string that may contain extra log lines.
+        """
+        import json
+
+        # Try line-by-line parsing first
+        lines = output.splitlines()
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                return json.loads(line)
+            except Exception:
+                continue
+        # If not found, try bracket matching as fallback
+        for start_char, end_char in [("{", "}"), ("[", "]")]:
+            start = output.find(start_char)
+            if start != -1:
+                count = 0
+                for i in range(start, len(output)):
+                    if output[i] == start_char:
+                        count += 1
+                    elif output[i] == end_char:
+                        count -= 1
+                        if count == 0:
+                            try:
+                                return json.loads(output[start : i + 1])
+                            except Exception:
+                                break
+        raise ValueError("No valid JSON found in output")
+
     async def scrape_website_subprocess(
         self,
         start_url: str,
@@ -759,11 +809,11 @@ class ScrapySpider(Spider):
         ]
 
         if scraping_config:
-            import base64
-            import json
 
             selectors_json = json.dumps(scraping_config)
-            selectors_b64 = base64.b64encode(selectors_json.encode("utf-8")).decode("utf-8")
+            selectors_b64 = base64.b64encode(selectors_json.encode("utf-8")).decode(
+                "utf-8"
+            )
             cmd.append(selectors_b64)
 
         proc = await asyncio.create_subprocess_exec(
@@ -772,6 +822,11 @@ class ScrapySpider(Spider):
             stderr=asyncio.subprocess.PIPE,
         )
         stdout, stderr = await proc.communicate()
+
+        logging.info(f"Subprocess return code: {proc.returncode}")
+        logging.info(f"Subprocess stdout: {stdout.decode()}")
+        logging.info(f"Subprocess stderr: {stderr.decode()}")
+
         if proc.returncode != 0:
             return {
                 "success": False,
@@ -781,7 +836,34 @@ class ScrapySpider(Spider):
                 "total_pages": 0,
             }
         try:
-            scraped_data = json.loads(stdout.decode())
+            decoded_stdout = stdout.decode().strip()
+
+            # First check if temp file exists at the specified location
+            temp_file_path = str(
+                Path(__file__).parent.parent.parent.parent / "files" / "temp_file.json"
+            )
+
+            if os.path.exists(temp_file_path):
+                logging.info(f"Reading scraped data from temp file: {temp_file_path}")
+                with open(temp_file_path, "r", encoding="utf-8") as temp_file:
+                    scraped_data = json.load(temp_file)
+                logging.info(
+                    f"Successfully read {len(scraped_data)} items from temp file"
+                )
+            elif decoded_stdout.endswith(".json"):
+                output_file_path = decoded_stdout
+                logging.info(
+                    f"Reading scraped data from output file: {output_file_path}"
+                )
+                with open(output_file_path, "r", encoding="utf-8") as output_file:
+                    scraped_data = json.load(output_file)
+
+                # Don't delete the file immediately - keep it for debugging
+                logging.info(
+                    f"Successfully read {len(scraped_data)} items from {output_file_path}"
+                )
+            else:
+                scraped_data = self._extract_json_from_output(decoded_stdout)
         except Exception as e:
             return {
                 "success": False,
@@ -799,3 +881,52 @@ class ScrapySpider(Spider):
             "max_depth": max_depth,
             "allowed_domains": allowed_domains,
         }
+
+    async def save_to_vector_db(
+        self,
+        scraped_data: dict,
+        vector_db_index: str,
+        embedding_model_config: Model = None,
+    ) -> None:
+        """
+        Save scraped content to a Redis vector database.
+
+        Args:
+            scraped_data: Dictionary containing scraped content
+            vector_db_index: Name of the Redis vector database index
+            embedding_model_config: Model configuration object for the embedding model (optional)
+        """
+        if not scraped_data or not vector_db_index:
+            return
+
+        REDIS_URL = f"redis://{os.getenv('REDIS_USER', 'default')}:{os.getenv('REDIS_PASSWORD', '')}@{os.getenv('REDIS_HOST', '172.17.0.1')}:{os.getenv('REDIS_PORT', '6380')}"
+
+        # Configure embedding model based on provided config or use defaults
+        if embedding_model_config:
+            provider = embedding_model_config.provider.value
+            deployment = embedding_model_config.deployment
+            model_name = embedding_model_config.name
+            embedding_model = await get_embedding_model(
+                provider=provider, deployment=deployment, model=model_name
+            )
+        else:
+            embedding_model = await get_embedding_model()
+
+        redis_config = RedisConfig(
+            index_name=vector_db_index,
+            redis_url=REDIS_URL,
+            metadata_schema=[
+                {"name": "timestamp", "type": "datetime"},
+                {"name": "content", "type": "text"},
+                {"name": "source", "type": "string"},
+            ],
+        )
+
+        vector_store = RedisVectorStore(
+            embedding_model, redis_config, index_name=vector_db_index
+        )
+
+        for url, content in scraped_data.items():
+            await vector_store.add_texts(
+                [content], metadatas=[{"source": url, "timestamp": datetime.now()}]
+            )

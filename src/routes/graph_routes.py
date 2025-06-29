@@ -21,7 +21,7 @@ async def execute_graph(
     try:
         result = await graph_service.execute_graph(
             user_input=request.user_input,
-            user_id=str(request.user_id),
+            user_id=str(request.uuid),
             context=request.context,
         )
 

@@ -2,7 +2,7 @@ from enum import Enum
 from typing import Any, Optional
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import AliasChoices, BaseModel, Field
 
 
 class ApplicationIdentifierSchema(BaseModel):
@@ -14,7 +14,7 @@ class RestOperationPostSchema(BaseModel):
     uuid: UUID | str
     applicationIdentifier: ApplicationIdentifierSchema
     platform: str
-    userInput: str
+    user_input: str = Field(validation_alias=AliasChoices("user_input", "userInput"))
     context: Optional[dict[str, str]] = None
     parameters: Optional[dict[str, Any]] = None
 

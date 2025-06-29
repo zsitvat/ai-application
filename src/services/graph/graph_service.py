@@ -25,4 +25,4 @@ class GraphService:
         """
         # TODO: Implement multi-agent graph execution
         self.logger.info(f"Executing graph for user_input: {user_input}")
-        raise NotImplementedError("Graph execution not implemented yet")
+        return "This is a placeholder response from the multi-agent graph execution."

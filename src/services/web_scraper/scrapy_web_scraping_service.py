@@ -1,17 +1,16 @@
 import asyncio
+import base64
 import json
 import logging
-import sys
 import os
-import base64
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
 from urllib.parse import urlparse
 
-from langchain_redis import RedisConfig, RedisVectorStore
-
 from docx import Document
+from langchain_redis import RedisConfig, RedisVectorStore
 from reportlab.lib.fonts import addMapping
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
@@ -22,8 +21,8 @@ from scrapy.http import Request
 from scrapy.linkextractors import LinkExtractor
 from scrapy.spiders import Spider
 
-from src.schemas.web_scraping_schema import OutputType
 from src.schemas.graph_schema import Model
+from src.schemas.web_scraping_schema import OutputType
 from src.services.web_scraper.scraper_config import (
     CONTENT_SELECTORS,
     EXCLUDED_SELECTORS,

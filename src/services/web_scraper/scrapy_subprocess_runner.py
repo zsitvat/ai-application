@@ -1,8 +1,9 @@
-import sys
-import json
 import base64
+import json
+import sys
 import tempfile
 from pathlib import Path
+
 from scrapy.crawler import CrawlerProcess
 from scrapy.utils.project import get_project_settings
 

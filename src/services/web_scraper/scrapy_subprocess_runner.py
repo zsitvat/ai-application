@@ -1,7 +1,6 @@
 import base64
 import json
 import sys
-import tempfile
 from pathlib import Path
 
 from scrapy.crawler import CrawlerProcess
@@ -14,7 +13,6 @@ scraped_data = {}
 
 def main():
     """Main function for running the Scrapy spider in a subprocess."""
-    global scraped_data
     url = sys.argv[1]
     max_depth = int(sys.argv[2])
     allowed_domains = (

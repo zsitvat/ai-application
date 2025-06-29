@@ -15,7 +15,7 @@ from schemas.dataset_schema import (
     DatasetRunError,
     DatasetUpdateError,
 )
-from schemas.graph_schema import ApplicationIdentifierSchema, RestOperationPostSchema
+from schemas.graph_schema import RestOperationPostSchema
 
 
 class DatasetService:

@@ -11,12 +11,9 @@ from urllib.parse import urlparse
 
 from docx import Document
 from langchain_redis import RedisConfig, RedisVectorStore
-from reportlab.lib.fonts import addMapping
-from reportlab.lib.pagesizes import letter
-from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
+from reportlab.platypus import Paragraph, Spacer
 from scrapy.http import Request
 from scrapy.linkextractors import LinkExtractor
 from scrapy.spiders import Spider

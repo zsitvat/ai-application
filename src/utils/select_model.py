@@ -35,6 +35,7 @@ async def get_embedding_model(
         return AzureOpenAIEmbeddings(
             azure_endpoint=os.environ.get("AZURE_BASE_URL"),
             azure_deployment=deployment,
+            api_version=os.environ.get("AZURE_API_VERSION", "2023-09-01-preview"),
         )
     else:
         logging.getLogger("logger").error("Wrong model provider!")

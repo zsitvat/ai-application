@@ -21,7 +21,6 @@ def get_document_service():
 async def ingest_documents(
     request: DocumentIngestRequestSchema,
     document_service: DocumentService = Depends(get_document_service),
-    model: Model = Model(name="text-embedding-3-large", provider="openai"),
 ):
     "Process and ingest documents into vector database."
     try:
@@ -38,7 +37,7 @@ async def ingest_documents(
                 vector_db_index=request.vector_db_index,
                 chunk_size=request.chunk_size,
                 chunk_overlap=request.chunk_overlap,
-                model=model,
+                model=request.embedding_model,
                 index_schema=request.index_schema,
             )
         )

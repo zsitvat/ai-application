@@ -15,6 +15,7 @@ from langchain_community.document_loaders import (
     UnstructuredExcelLoader,
 )
 from langchain_redis import RedisConfig, RedisVectorStore
+from redisvl.schema import IndexSchema
 
 from schemas.graph_schema import Model
 from utils.select_model import get_embedding_model
@@ -29,7 +30,12 @@ class DocumentService:
 
     def __init__(self):
         self.logger = logging.getLogger(__name__)
-        self.redis_url = os.getenv("REDIS_URL")
+
+        self.redis_url = (
+            f"redis://{os.getenv('REDIS_USER')}:{os.getenv('REDIS_PASSWORD')}@{os.getenv('REDIS_HOST')}:{os.getenv('REDIS_PORT')}"
+            if os.getenv("REDIS_PASSWORD")
+            else f"redis://{os.getenv('REDIS_HOST')}:{os.getenv('REDIS_PORT')}"
+        )
 
     def _is_url(self, string: str) -> bool:
         """Check if a string is a valid URL."""
@@ -170,6 +176,60 @@ class DocumentService:
         loader = UnstructuredExcelLoader(file_path)
         return loader.load()
 
+    def _filter_metadata_by_schema(
+        self, documents: list[Document], schema_fields: list[dict]
+    ) -> list[Document]:
+        """Filter document metadata to only include fields defined in the schema.
+
+        Args:
+            documents: List of documents to filter
+            schema_fields: List of schema field definitions
+
+        Returns:
+            List of documents with filtered metadata
+        """
+        schema_field_names = set()
+        for field in schema_fields:
+            field_name = field.get("name")
+            if field_name and field.get("type") != "vector":
+                schema_field_names.add(field_name)
+
+        allowed_fields = schema_field_names
+
+        self.logger.info(f"Schema allows only these fields: {allowed_fields}")
+
+        filtered_documents = []
+        dropped_fields_count = 0
+
+        for doc in documents:
+            filtered_metadata = {}
+            original_metadata_keys = set(doc.metadata.keys())
+
+            for key, value in doc.metadata.items():
+                if key in allowed_fields:
+                    filtered_metadata[key] = value
+                else:
+                    dropped_fields_count += 1
+
+            dropped_fields_for_doc = original_metadata_keys - allowed_fields
+            if dropped_fields_for_doc:
+                self.logger.debug(
+                    f"Dropped metadata fields not in schema: {', '.join(dropped_fields_for_doc)}"
+                )
+
+            filtered_doc = Document(
+                page_content=doc.page_content,
+                metadata=filtered_metadata,
+            )
+            filtered_documents.append(filtered_doc)
+
+        if dropped_fields_count > 0:
+            self.logger.info(
+                f"Filtered metadata: dropped {dropped_fields_count} field instances not defined in schema"
+            )
+
+        return filtered_documents
+
     def _create_vector_store_and_ingest(
         self,
         documents: list[Document],
@@ -198,22 +258,38 @@ class DocumentService:
         split_documents = text_splitter.split_documents(documents)
 
         if index_schema is None:
-            index_schema = DEFAULT_INDEX_SCHEMA
+            fields = DEFAULT_INDEX_SCHEMA
+        else:
+            fields = index_schema
 
-        config = RedisConfig(
-            index_name=vector_db_index,
-            redis_url=self.redis_url,
-            index_schema=index_schema,
+        schema_dict = {
+            "index": {"name": vector_db_index, "storage_type": "hash"},
+            "fields": fields,
+        }
+        schema = IndexSchema.from_dict(schema_dict)
+        config = RedisConfig.from_schema(schema=schema, redis_url=self.redis_url)
+
+        self.logger.debug(
+            f"Filtering metadata according to schema with {len(fields)} fields"
         )
+        filtered_documents = self._filter_metadata_by_schema(split_documents, fields)
 
-        vector_store = RedisVectorStore(embeddings_model, config=config)
-        vector_store.add_documents(split_documents)
+        try:
+            vector_store = RedisVectorStore(embeddings_model, config=config)
 
-        return len(split_documents)
+            vector_store.add_documents(filtered_documents)
+
+        except Exception as e:
+            self.logger.error(
+                f"Error adding documents to vector store {vector_db_index}: {str(e)}"
+            )
+            raise e
+
+        return len(filtered_documents)
 
     async def ingest_documents(
         self,
-        model: Model,
+        model: Model | None,
         files: list[str],
         vector_db_index: str,
         chunk_size: int,
@@ -235,11 +311,39 @@ class DocumentService:
             tuple[bool, str, list[str], list[str]]: (success, message, processed_files, failed_files)
         """
         try:
+            self.logger.info(
+                f"Starting document ingestion for {len(files)} files into index '{vector_db_index}'"
+            )
+
+            deployment = (
+                model.deployment
+                if model and model.deployment
+                else os.getenv("EMBEDDING_DEPLOYMENT", None)
+            )
+            if deployment is not None:
+                provider = "azure"
+
+            else:
+                provider = (
+                    model.provider.value
+                    if model and model.provider
+                    else os.getenv("EMBEDDING_PROVIDER", "openai")
+                )
+
+            model_name = (
+                model.name
+                if model and model.name
+                else os.getenv("EMBEDDING_MODEL", "text-embedding-3-large")
+            )
+
+            self.logger.info(
+                f"Embedding configuration - Provider: {provider}, Model: {model_name}, Deployment: {deployment}"
+            )
 
             embeddings_model = await get_embedding_model(
-                provider=model.provider.value,
-                deployment=model.deployment,
-                model=model.name,
+                provider=provider,
+                deployment=deployment,
+                model=model_name,
             )
 
             processed_files = []
@@ -250,7 +354,7 @@ class DocumentService:
 
             for file_path in files:
                 try:
-                    current_file_path = file_path
+                    current_file_path = file_path.strip()
 
                     if self._is_url(file_path):
                         self.logger.debug(f"Downloading file from URL: {file_path}")
@@ -291,9 +395,6 @@ class DocumentService:
                         for doc in file_documents:
                             doc.metadata["filename"] = filename
                             doc.metadata["source"] = file_path
-                            doc.metadata["source_type"] = (
-                                "url" if self._is_url(file_path) else "file"
-                            )
 
                     documents.extend(file_documents)
                     processed_files.append(filename)
@@ -312,6 +413,13 @@ class DocumentService:
                     failed_files,
                 )
 
+            self.logger.info(
+                f"Successfully loaded {len(documents)} documents from {len(processed_files)} files"
+            )
+            self.logger.info(
+                f"Starting chunking with chunk_size={chunk_size}, chunk_overlap={chunk_overlap}"
+            )
+
             chunk_count = self._create_vector_store_and_ingest(
                 documents=documents,
                 embeddings_model=embeddings_model,
@@ -319,6 +427,10 @@ class DocumentService:
                 chunk_size=chunk_size,
                 chunk_overlap=chunk_overlap,
                 index_schema=index_schema,
+            )
+
+            self.logger.info(
+                f"Vector store ingestion completed: {chunk_count} chunks indexed"
             )
 
             for temp_file in temp_files_to_cleanup:
@@ -409,20 +521,39 @@ class DocumentService:
             Retriever: LangChain retriever object
         """
         try:
+            provider = (
+                model.provider.value
+                if model.provider
+                else os.getenv("EMBEDDING_PROVIDER", "openai")
+            )
+            deployment = (
+                model.deployment
+                if model.deployment
+                else os.getenv("EMBEDDING_DEPLOYMENT", None)
+            )
+            model_name = (
+                model.name
+                if model.name
+                else os.getenv("EMBEDDING_MODEL", "text-embedding-3-large")
+            )
+
             embeddings_model = await get_embedding_model(
-                provider=model.provider.value,
-                deployment=model.deployment,
-                model=model.name,
+                provider=provider,
+                deployment=deployment,
+                model=model_name,
             )
 
             if index_schema is None:
-                index_schema = DEFAULT_INDEX_SCHEMA
+                fields = DEFAULT_INDEX_SCHEMA
+            else:
+                fields = index_schema
 
-            config = RedisConfig(
-                index_name=index_name,
-                redis_url=self.redis_url,
-                index_schema=index_schema,
-            )
+            schema_dict = {
+                "index": {"name": index_name, "storage_type": "hash"},
+                "fields": fields,
+            }
+            schema = IndexSchema.from_dict(schema_dict)
+            config = RedisConfig.from_schema(schema, redis_url=self.redis_url)
 
             vector_store = RedisVectorStore(embeddings_model, config=config)
 

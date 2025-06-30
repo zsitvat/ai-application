@@ -26,7 +26,7 @@ class PersonalDataFilterService:
             tuple[str, str]: (filtered_text, original_text)
         """
 
-        self.logger.info(f"Filtering personal data from text: {text[:50]}...")
+        self.logger.info("Filtering personal data from text...")
 
         model = await get_conversation_model(
             provider=config.model.provider,

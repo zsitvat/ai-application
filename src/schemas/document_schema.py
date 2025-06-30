@@ -35,8 +35,6 @@ class DocumentIngestRequestSchema(BaseModel):
                     "datatype": "float32",
                 },
             },
-            {"name": "filename", "type": "tag"},
-            {"name": "department", "type": "tag"},
         ],
     )
 

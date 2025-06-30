@@ -7,7 +7,6 @@ from schemas.document_schema import (
     DocumentIngestRequestSchema,
     DocumentIngestResponseSchema,
 )
-from schemas.graph_schema import Model
 from services.document.document_service import DocumentService
 
 router = APIRouter(tags=["Documents"])

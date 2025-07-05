@@ -42,7 +42,7 @@ async def get_embedding_model(
         raise KeyError(f"Unsupported provider for embedding model: {provider}")
 
 
-async def get_conversation_model(
+async def get_chat_model(
     provider: str,
     deployment: str | None = None,
     model: str = "gpt-4o-mini",
@@ -121,10 +121,8 @@ async def get_model(
     | OpenAIEmbeddings
     | AzureOpenAIEmbeddings
 ):
-    """Alias for get_conversation_model for backward compatibility."""
+    """Alias for get_chat_model for backward compatibility."""
     if type == "embedding":
         return await get_embedding_model(provider, deployment, model)
     else:
-        return await get_conversation_model(
-            provider, deployment, model, type, temperature
-        )
+        return await get_chat_model(provider, deployment, model, type, temperature)

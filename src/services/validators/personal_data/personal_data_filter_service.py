@@ -3,7 +3,7 @@ import os
 
 from schemas.personal_data_filter_schema import PersonalDataFilterConfigSchema
 from utils.get_prompt import get_prompt_by_type
-from utils.select_model import get_conversation_model
+from utils.select_model import get_chat_model
 
 
 class PersonalDataFilterService:
@@ -28,7 +28,7 @@ class PersonalDataFilterService:
 
         self.logger.info("Filtering personal data from text...")
 
-        model = await get_conversation_model(
+        model = await get_chat_model(
             provider=config.model.provider,
             model=config.model.name,
             deployment=config.model.deployment,

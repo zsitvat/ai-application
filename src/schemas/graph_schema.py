@@ -1,13 +1,26 @@
 from enum import Enum
-from typing import Any, Optional
+from typing import Annotated, Any
 from uuid import UUID
 
+from langchain_core.messages import AnyMessage
+from langgraph.graph.message import add_messages
 from pydantic import AliasChoices, BaseModel, Field
+from typing_extensions import TypedDict
+
+
+class AgentState(TypedDict):
+    """State shared between agents in the graph."""
+
+    messages: Annotated[list[AnyMessage], add_messages]
+    next: str
+    user_input: str
+    context: dict[str, Any]
+    parameters: dict[str, Any]
 
 
 class ApplicationIdentifierSchema(BaseModel):
-    tenantIdentifier: int
-    applicationIdentifier: int
+    tenantIdentifier: int | str
+    applicationIdentifier: int | str
 
 
 class RestOperationPostSchema(BaseModel):
@@ -15,8 +28,8 @@ class RestOperationPostSchema(BaseModel):
     applicationIdentifier: ApplicationIdentifierSchema
     platform: str
     user_input: str = Field(validation_alias=AliasChoices("user_input", "userInput"))
-    context: Optional[dict[str, str]] = None
-    parameters: Optional[dict[str, Any]] = None
+    context: dict[str, str] | None = None
+    parameters: dict[str, Any] | None = None
 
 
 class ModelProviderType(str, Enum):
@@ -30,6 +43,12 @@ class ModelType(str, Enum):
     EMBEDDING = "embedding"
     CHAT = "chat"
     GENERAL = "general"
+
+
+class CheckpointerType(str, Enum):
+    MEMORY = "memory"
+    REDIS = "redis"
+    CUSTOM = "custom"
 
 
 class Model(BaseModel):
@@ -74,3 +93,6 @@ class GraphConfig(BaseModel):
     chat_memory_type: str = "redis"
     chat_history_max_length: int = 12
     tags: list[str] = []
+    enable_checkpointer: bool = True
+    checkpointer_type: CheckpointerType = CheckpointerType.MEMORY
+    allow_supervisor_finish: bool = True

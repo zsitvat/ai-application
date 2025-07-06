@@ -20,9 +20,18 @@ from schemas.graph_schema import (
     CheckpointerType,
     GraphConfig,
 )
-from services.data_api.app_settings import AppSettingsService
+from schemas.topic_validation_schema import TopicValidationRequestSchema
+from schemas.personal_data_filter_schema import PersonalDataFilterRequestSchema
 from services.chat_history.redis_chat_history import RedisChatHistoryService
+from services.data_api.app_settings import AppSettingsService
 from services.data_api.chat_history import DataChatHistoryService
+from services.validators.topic_validator.topic_validator_service import (
+    TopicValidatorService,
+)
+from services.validators.personal_data.personal_data_filter_service import (
+    PersonalDataFilterService,
+)
+from services.graph.personal_data_filter_checkpointer import PersonalDataFilterCheckpointer
 from utils.select_model import get_chat_model
 
 
@@ -172,7 +181,9 @@ Select one of: {available_options}"""
                 ]
 
                 if not enabled_agents:
-                    raise ValueError("No enabled agents available and supervisor finish is disabled")
+                    raise ValueError(
+                        "No enabled agents available and supervisor finish is disabled"
+                    )
 
                 available_options = enabled_agents[:]
                 if self.graph_config.allow_supervisor_finish:
@@ -221,17 +232,24 @@ Select one of: {available_options}"""
         """Build the LangGraph workflow with supervisor pattern."""
         workflow = StateGraph(AgentState)
 
-        supervisor_node = self._create_supervisor_node()
-        workflow.add_node("supervisor", supervisor_node)
+        workflow.add_node("topic_validator", self._topic_validator_node)
+
+        workflow.add_node("supervisor", self._create_supervisor_node())
+
+        if self.graph_config.exception_chain:
+            workflow.add_node("exception_chain", self._exception_chain_node)
 
         enabled_agents = {
             name: agent
             for name, agent in self.graph_config.agents.items()
-            if agent.enabled
+            if agent.enabled 
+            and not isinstance(agent, TopicValidationRequestSchema)
         }
 
         if not enabled_agents and not self.graph_config.allow_supervisor_finish:
-            raise ValueError("No enabled agents available and supervisor finish is disabled")
+            raise ValueError(
+                "No enabled agents available and supervisor finish is disabled"
+            )
 
         for agent_name, agent_config in enabled_agents.items():
             agent_node = partial(
@@ -242,10 +260,26 @@ Select one of: {available_options}"""
         for agent_name in enabled_agents.keys():
             workflow.add_edge(agent_name, "supervisor")
 
-        def should_continue(state: AgentState) -> Literal["FINISH"] | str:
+        if self.graph_config.exception_chain:
+            workflow.add_edge("exception_chain", END)
+
+        def should_continue_from_supervisor(
+            state: AgentState,
+        ) -> Literal["FINISH"] | str:
             if state["next"] == "FINISH":
                 return "FINISH"
             return state["next"]
+
+        def should_continue_from_topic_validator(
+            state: AgentState,
+        ) -> Literal["supervisor", "exception_chain", "FINISH"]:
+            next_step = state.get("next")
+            if next_step == "exception_chain":
+                return "exception_chain"
+            elif next_step == "FINISH":
+                return "FINISH"
+            else:
+                return "supervisor"
 
         conditional_mapping = {
             agent_name: agent_name for agent_name in enabled_agents.keys()
@@ -256,20 +290,33 @@ Select one of: {available_options}"""
 
         workflow.add_conditional_edges(
             "supervisor",
-            should_continue,
+            should_continue_from_supervisor,
             conditional_mapping,
         )
 
-        workflow.set_entry_point("supervisor")
+        topic_conditional_mapping = {
+            "supervisor": "supervisor",
+            "exception_chain": "exception_chain",
+            "FINISH": END,
+        }
+
+        workflow.add_conditional_edges(
+            "topic_validator",
+            should_continue_from_topic_validator,
+            topic_conditional_mapping,
+        )
+
+        workflow.set_entry_point("topic_validator")
 
         return workflow
 
     def _create_checkpointer(self):
         """Create checkpointer based on configuration."""
         checkpointer_type = self.graph_config.checkpointer_type
+        base_checkpointer = None
 
         if checkpointer_type == CheckpointerType.MEMORY:
-            return InMemorySaver()
+            base_checkpointer = InMemorySaver()
         elif checkpointer_type == CheckpointerType.REDIS:
             try:
                 redis_client = redis.Redis(
@@ -279,14 +326,14 @@ Select one of: {available_options}"""
                     password=os.getenv("REDIS_PASSWORD"),
                     decode_responses=True,
                 )
-                return RedisSaver(redis_client)
+                base_checkpointer = RedisSaver(redis_client)
             except Exception as ex:
                 self.logger.warning(
                     f"Failed to create Redis checkpointer: {ex}, falling back to memory"
                 )
-                return InMemorySaver()
+                base_checkpointer = InMemorySaver()
         elif checkpointer_type == CheckpointerType.DATA:
-            return DataChatHistoryService()
+            base_checkpointer = DataChatHistoryService()
         elif checkpointer_type == CheckpointerType.CUSTOM:
             if hasattr(self.graph_config, "custom_checkpointer_class"):
                 module_path, class_name = (
@@ -296,14 +343,27 @@ Select one of: {available_options}"""
                 module = importlib.import_module(module_path)
                 checkpointer_class = getattr(module, class_name)
 
-                return checkpointer_class()
+                base_checkpointer = checkpointer_class()
             else:
-                return RedisChatHistoryService()
+                base_checkpointer = RedisChatHistoryService()
         else:
             self.logger.warning(
                 f"Unknown checkpointer type: {checkpointer_type}, falling back to memory"
             )
-            return InMemorySaver()
+            base_checkpointer = InMemorySaver()
+
+        # Wrap with personal data filter if configured
+        personal_data_config = self._find_personal_data_filter_config()
+        if personal_data_config:
+            personal_data_service = PersonalDataFilterService()
+            return PersonalDataFilterCheckpointer(
+                base_checkpointer=base_checkpointer,
+                personal_data_service=personal_data_service,
+                personal_data_config=personal_data_config,
+                logger=self.logger
+            )
+        
+        return base_checkpointer
 
     async def execute_graph(
         self,
@@ -732,3 +792,127 @@ Select one of: {available_options}"""
         except Exception as ex:
             self.logger.error(f"Error generating LangGraph Studio config: {str(ex)}")
             raise
+
+    def _find_topic_validation_config(self):
+        """Find topic validation configuration from agents."""
+        for name, agent_config in self.graph_config.agents.items():
+            if (
+                name == "topic_validator"
+                and isinstance(agent_config, TopicValidationRequestSchema)
+                and agent_config.enabled
+            ):
+                return agent_config
+        return None
+
+    def _extract_user_input_from_state(self, state: AgentState) -> str:
+        """Extract user input from state."""
+        user_input = state.get("user_input", "")
+        if not user_input and state["messages"]:
+            for message in reversed(state["messages"]):
+                if hasattr(message, "type") and message.type == "human":
+                    user_input = message.content
+                    break
+        return user_input
+
+    def _handle_invalid_topic(self, state: AgentState, reason: str) -> AgentState:
+        """Handle when topic validation fails."""
+        if self.graph_config.exception_chain:
+            state["next"] = "exception_chain"
+            state["error_context"] = f"Topic validation failed: {reason}"
+            self.logger.debug(
+                f"Question rejected by topic validator, routing to exception chain. Reason: {reason}"
+            )
+        else:
+            error_message = AIMessage(
+                content="I can only help with work-related topics. Please ask questions about careers, job search, professional development, or workplace matters."
+            )
+            state["messages"] = add_messages(state["messages"], [error_message])
+            state["next"] = "FINISH"
+            self.logger.debug(
+                f"Question rejected by topic validator, no exception chain available. Reason: {reason}"
+            )
+        return state
+
+    def _find_personal_data_filter_config(self):
+        """Find personal data filter configuration from agents."""
+        for name, agent_config in self.graph_config.agents.items():
+            if (
+                name == "personal_data_filter"
+                and isinstance(agent_config, PersonalDataFilterRequestSchema)
+                and agent_config.enabled
+            ):
+                return agent_config
+        return None
+
+    async def _topic_validator_node(self, state: AgentState) -> AgentState:
+        """Topic validator node logic."""
+        try:
+            topic_validation_config = self._find_topic_validation_config()
+
+            if not topic_validation_config:
+                self.logger.debug("Topic validation is disabled, skipping validation")
+                return state
+
+            user_input = self._extract_user_input_from_state(state)
+
+            if not user_input:
+                self.logger.warning("No user input found for topic validation")
+                return state
+
+            topic_validator_service = TopicValidatorService()
+            is_valid, topic, reason = await topic_validator_service.validate_topic(
+                question=user_input
+            )
+
+            self.logger.debug(
+                f"Topic validation result: valid={is_valid}, topic={topic}, reason={reason}"
+            )
+
+            if not is_valid:
+                return self._handle_invalid_topic(state, reason)
+
+            self.logger.debug("Topic validation passed, proceeding to supervisor")
+            return state
+
+        except Exception as ex:
+            self.logger.error(f"Error in topic validator: {str(ex)}")
+            return state
+
+    async def _exception_chain_node(self, state: AgentState) -> AgentState:
+        """Exception chain node for handling errors and invalid inputs."""
+        try:
+            user_input = self._extract_user_input_from_state(state)
+            error_context = state.get("error_context", "General error occurred")
+            
+            llm = await get_chat_model(
+                provider=self.graph_config.exception_chain.chain.model.provider.value,
+                deployment=self.graph_config.exception_chain.chain.model.deployment,
+                model=self.graph_config.exception_chain.chain.model.name,
+            )
+
+            prompt = ChatPromptTemplate.from_messages(
+                [
+                    SystemMessage(
+                        content=f"{self.graph_config.exception_chain.chain.prompt}\n\nUser input: {user_input}\nContext: {error_context}"
+                    ),
+                    MessagesPlaceholder(variable_name="messages"),
+                ]
+            )
+
+            chain = prompt | llm
+            response = await chain.ainvoke({"messages": state["messages"]})
+            
+            state["messages"] = add_messages(state["messages"], [response])
+            state["next"] = "FINISH"
+            
+            self.logger.debug("Exception chain handled the error")
+            return state
+
+        except Exception as ex:
+            self.logger.error(f"Error in exception chain: {str(ex)}")
+            error_message = AIMessage(
+                content="I apologize, but I'm unable to process your request at this time. Please try again later."
+            )
+            state["messages"] = add_messages(state["messages"], [error_message])
+            state["next"] = "FINISH"
+            return state

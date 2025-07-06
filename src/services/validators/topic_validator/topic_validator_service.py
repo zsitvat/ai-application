@@ -9,9 +9,7 @@ class TopicValidatorService:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
 
-    async def validate_topic(
-        self, question: str, user_id: str
-    ) -> tuple[bool, str, str]:
+    async def validate_topic(self, question: str) -> tuple[bool, str, str]:
         """
         Validate if the question belongs to acceptable topics.
 

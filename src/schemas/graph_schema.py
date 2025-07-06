@@ -1,11 +1,14 @@
 from enum import Enum
 from typing import Annotated, Any
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from langchain_core.messages import AnyMessage
 from langgraph.graph.message import add_messages
 from pydantic import AliasChoices, BaseModel, Field
 from typing_extensions import TypedDict
+
+from schemas.personal_data_filter_schema import PersonalDataFilterRequestSchema
+from schemas.topic_validation_schema import TopicValidationRequestSchema
 
 
 class AgentState(TypedDict):
@@ -16,6 +19,7 @@ class AgentState(TypedDict):
     user_input: str
     context: dict[str, Any]
     parameters: dict[str, Any]
+    user_id: str | UUID = uuid4()
 
 
 class ApplicationIdentifierSchema(BaseModel):
@@ -85,7 +89,9 @@ class Agent(BaseModel):
 
 
 class GraphConfig(BaseModel):
-    agents: dict[str, Agent]
+    agents: dict[
+        str, Agent | PersonalDataFilterRequestSchema | TopicValidationRequestSchema
+    ]
     supervisor: Agent
     exception_chain: Agent | None = None
     max_input_length: int = -1

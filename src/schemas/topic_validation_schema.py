@@ -3,6 +3,7 @@ from pydantic import BaseModel
 
 class TopicValidationRequestSchema(BaseModel):
     question: str
+    enabled: bool = True
 
 
 class TopicValidationResponseSchema(BaseModel):

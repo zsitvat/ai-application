@@ -8,7 +8,7 @@ from langchain_community.chat_message_histories import PostgresChatMessageHistor
 from langchain_core.messages import AIMessage, HumanMessage
 
 
-class HistoryData:
+class DataChatHistoryService:
 
     async def get_history_messages_as_string(
         self, max_history_lenght=20, uuid: str = None, name_tags=True, reverse=False

@@ -5,7 +5,6 @@ import logging
 import os
 from functools import partial
 from typing import Any, Literal
-from urllib.parse import urlparse
 
 import redis
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
@@ -18,18 +17,13 @@ from langgraph.graph.message import add_messages
 from schemas.graph_schema import (
     Agent,
     AgentState,
-    Chain,
     CheckpointerType,
     GraphConfig,
-    Model,
-    ModelProviderType,
-    ModelType,
 )
 from services.data_api.app_settings import AppSettingsService
+from services.chat_history.redis_chat_history import RedisChatHistoryService
+from services.data_api.chat_history import DataChatHistoryService
 from utils.select_model import get_chat_model
-
-# Constants
-NO_AGENTS_ERROR = "No enabled agents available and supervisor finish is disabled"
 
 
 class GraphService:
@@ -40,12 +34,6 @@ class GraphService:
         self.app_settings_service = app_settings_service
         self.graph_config: GraphConfig | None = None
         self.workflow = None
-
-        self.redis_url = (
-            f"redis://{os.getenv('REDIS_USER')}:{os.getenv('REDIS_PASSWORD')}@{os.getenv('REDIS_HOST')}:{os.getenv('REDIS_PORT')}"
-            if os.getenv("REDIS_PASSWORD")
-            else f"redis://{os.getenv('REDIS_HOST')}:{os.getenv('REDIS_PORT')}"
-        )
 
     async def _load_graph_configuration(
         self, app_id: int, parameters: dict[str, Any] | None = None
@@ -69,12 +57,14 @@ class GraphService:
                     "No graph configuration found in app settings or parameters"
                 )
 
-            self.logger.info(
+            self.logger.debug(
                 f"Loaded graph config with {len(self.graph_config.agents)} agents"
             )
 
-        except Exception as e:
-            self.logger.error(f"Error loading graph configuration: {str(e)}")
+            self.generate_langgraph_studio_config()
+
+        except Exception as ex:
+            self.logger.error(f"Error loading graph configuration: {str(ex)}")
             raise
 
     async def _agent_node(
@@ -99,17 +89,70 @@ class GraphService:
             response = await chain.ainvoke({"messages": state["messages"]})
             state["messages"] = add_messages(state["messages"], [response])
 
-            self.logger.info(f"Agent {agent_name} completed processing")
+            self.logger.debug(f"Agent {agent_name} completed processing")
             return state
 
-        except Exception as e:
-            self.logger.error(f"Error in agent {agent_name}: {str(e)}")
+        except Exception as ex:
+            self.logger.error(f"Error in agent {agent_name}: {str(ex)}")
 
             error_message = AIMessage(
-                content=f"Agent {agent_name} encountered an error: {str(e)}"
+                content=f"Agent {agent_name} encountered an error: {str(ex)}"
             )
             state["messages"] = add_messages(state["messages"], [error_message])
             return state
+
+    def _build_supervisor_prompt(self, available_options: list[str]) -> str:
+        """Build the system prompt for the supervisor."""
+        agent_descriptions = []
+        for name, agent in self.graph_config.agents.items():
+            if agent.enabled:
+                agent_descriptions.append(f"- {name}: {agent.chain.prompt[:100]}...")
+
+        system_prompt_ending = ""
+        if self.graph_config.allow_supervisor_finish:
+            system_prompt_ending = "Based on the user input and conversation history, decide which agent should handle this next or if the task is complete (FINISH)."
+        else:
+            system_prompt_ending = "Based on the user input and conversation history, decide which agent should handle this next. You must select one of the available agents."
+
+        return f"""You are a supervisor managing a team of AI agents. Your job is to decide which agent should handle the user's request{"" if not self.graph_config.allow_supervisor_finish else " or if the task is complete"}.
+
+Available agents and their capabilities:
+{chr(10).join(agent_descriptions)}
+
+{system_prompt_ending}
+
+Select one of: {available_options}"""
+
+    def _build_function_definition(self, available_options: list[str]) -> dict:
+        """Build the function definition for supervisor routing."""
+        return {
+            "name": "route",
+            "description": "Select the next agent to handle the user's request.",
+            "parameters": {
+                "title": "routeSchema",
+                "type": "object",
+                "properties": {
+                    "chain": {
+                        "title": "Chain",
+                        "anyOf": [
+                            {"enum": available_options},
+                        ],
+                    },
+                },
+                "required": ["chain"],
+            },
+        }
+
+    def _extract_next_agent_from_response(self, response) -> str | None:
+        """Extract the next agent from LLM response."""
+        if response.additional_kwargs.get("function_call"):
+            return json.loads(
+                response.additional_kwargs["function_call"]["arguments"]
+            ).get("chain", None)
+        elif response.tool_calls:
+            return response.tool_calls[0].get("args", {}).get("chain", None)
+        else:
+            return None
 
     def _create_supervisor_node(self):
         """Create the supervisor node that decides which agent to call next."""
@@ -129,51 +172,14 @@ class GraphService:
                 ]
 
                 if not enabled_agents:
-                    raise ValueError(NO_AGENTS_ERROR)
+                    raise ValueError("No enabled agents available and supervisor finish is disabled")
 
                 available_options = enabled_agents[:]
                 if self.graph_config.allow_supervisor_finish:
                     available_options.append("FINISH")
 
-                function_def = {
-                    "name": "route",
-                    "description": "Select the next agent to handle the user's request.",
-                    "parameters": {
-                        "title": "routeSchema",
-                        "type": "object",
-                        "properties": {
-                            "chain": {
-                                "title": "Chain",
-                                "anyOf": [
-                                    {"enum": available_options},
-                                ],
-                            },
-                        },
-                        "required": ["chain"],
-                    },
-                }
-
-                agent_descriptions = []
-                for name, agent in self.graph_config.agents.items():
-                    if agent.enabled:
-                        agent_descriptions.append(
-                            f"- {name}: {agent.chain.prompt[:100]}..."
-                        )
-
-                system_prompt_ending = ""
-                if self.graph_config.allow_supervisor_finish:
-                    system_prompt_ending = "Based on the user input and conversation history, decide which agent should handle this next or if the task is complete (FINISH)."
-                else:
-                    system_prompt_ending = "Based on the user input and conversation history, decide which agent should handle this next. You must select one of the available agents."
-
-                system_prompt = f"""You are a supervisor managing a team of AI agents. Your job is to decide which agent should handle the user's request{"" if not self.graph_config.allow_supervisor_finish else " or if the task is complete"}.
-
-Available agents and their capabilities:
-{chr(10).join(agent_descriptions)}
-
-{system_prompt_ending}
-
-Select one of: {available_options}"""
+                function_def = self._build_function_definition(available_options)
+                system_prompt = self._build_supervisor_prompt(available_options)
 
                 prompt = ChatPromptTemplate.from_messages(
                     [
@@ -192,16 +198,7 @@ Select one of: {available_options}"""
 
                 response = await chain.ainvoke({"messages": state["messages"]})
 
-                if response.additional_kwargs.get("function_call"):
-                    next_agent = json.loads(
-                        response.additional_kwargs["function_call"]["arguments"]
-                    ).get("chain", None)
-                elif response.tool_calls:
-                    next_agent = (
-                        response.tool_calls[0].get("args", {}).get("chain", None)
-                    )
-                else:
-                    next_agent = None
+                next_agent = self._extract_next_agent_from_response(response)
 
                 if next_agent not in available_options:
                     if self.graph_config.allow_supervisor_finish:
@@ -211,11 +208,11 @@ Select one of: {available_options}"""
 
                 state["next"] = next_agent
 
-                self.logger.info(f"Supervisor decided next action: {state['next']}")
+                self.logger.debug(f"Supervisor decided next action: {state['next']}")
                 return state
 
-            except Exception as e:
-                self.logger.error(f"Error in supervisor: {str(e)}")
+            except Exception as ex:
+                self.logger.error(f"Error in supervisor: {str(ex)}")
                 raise
 
         return supervisor_node
@@ -234,7 +231,7 @@ Select one of: {available_options}"""
         }
 
         if not enabled_agents and not self.graph_config.allow_supervisor_finish:
-            raise ValueError(NO_AGENTS_ERROR)
+            raise ValueError("No enabled agents available and supervisor finish is disabled")
 
         for agent_name, agent_config in enabled_agents.items():
             agent_node = partial(
@@ -275,55 +272,33 @@ Select one of: {available_options}"""
             return InMemorySaver()
         elif checkpointer_type == CheckpointerType.REDIS:
             try:
-                redis_url = (
-                    self.redis_url
-                    if os.getenv("REDIS_HOST")
-                    else "redis://localhost:6379/0"
+                redis_client = redis.Redis(
+                    host=os.getenv("REDIS_HOST"),
+                    port=int(os.getenv("REDIS_PORT")),
+                    db=int(os.getenv("REDIS_DB")),
+                    password=os.getenv("REDIS_PASSWORD"),
+                    decode_responses=True,
                 )
-                parsed = urlparse(redis_url)
-
-                redis_config = {
-                    "host": parsed.hostname or "localhost",
-                    "port": parsed.port or 6379,
-                    "db": (
-                        int(parsed.path.lstrip("/"))
-                        if parsed.path and parsed.path != "/"
-                        else 0
-                    ),
-                    "decode_responses": True,
-                    "password": parsed.password if parsed.password else None,
-                }
-
-                redis_client = redis.Redis(**redis_config)
                 return RedisSaver(redis_client)
-            except Exception as e:
+            except Exception as ex:
                 self.logger.warning(
-                    f"Failed to create Redis checkpointer: {e}, falling back to memory"
+                    f"Failed to create Redis checkpointer: {ex}, falling back to memory"
                 )
                 return InMemorySaver()
+        elif checkpointer_type == CheckpointerType.DATA:
+            return DataChatHistoryService()
         elif checkpointer_type == CheckpointerType.CUSTOM:
-            try:
-                if hasattr(self.graph_config, "custom_checkpointer_class"):
-                    module_path, class_name = (
-                        self.graph_config.custom_checkpointer_class.rsplit(".", 1)
-                    )
-
-                    module = importlib.import_module(module_path)
-                    checkpointer_class = getattr(module, class_name)
-
-                    return checkpointer_class()
-                else:
-                    return RedisChatHistory()
-            except ImportError as e:
-                self.logger.warning(
-                    f"Custom checkpointer class not available: {e}, falling back to memory checkpointer"
+            if hasattr(self.graph_config, "custom_checkpointer_class"):
+                module_path, class_name = (
+                    self.graph_config.custom_checkpointer_class.rsplit(".", 1)
                 )
-                return InMemorySaver()
-            except Exception as e:
-                self.logger.warning(
-                    f"Failed to create custom checkpointer: {e}, falling back to memory"
-                )
-                return InMemorySaver()
+
+                module = importlib.import_module(module_path)
+                checkpointer_class = getattr(module, class_name)
+
+                return checkpointer_class()
+            else:
+                return RedisChatHistoryService()
         else:
             self.logger.warning(
                 f"Unknown checkpointer type: {checkpointer_type}, falling back to memory"
@@ -337,6 +312,7 @@ Select one of: {available_options}"""
         user_id: str | None = None,
         context: dict | None = None,
         parameters: dict | None = None,
+        save_visualization: bool = False,
     ) -> str:
         """
         Execute the multi-agent graph solution with supervisor pattern.
@@ -347,54 +323,81 @@ Select one of: {available_options}"""
             user_id (str, optional): User identifier
             context (dict, optional): Additional context
             parameters (dict, optional): Runtime parameters including graph configurations
+            save_visualization (bool): Whether to save graph visualization after execution.
+                Defaults to False.
 
         Returns:
             str: Generated response from agents
         """
+        self.logger.info(
+            f"Graph execution started for app_id: {app_id}, user_id: {user_id}"
+        )
         try:
-            self.logger.info(f"Executing graph for user_input: {user_input}")
+            self.logger.debug(f"Executing graph for user_input: {user_input}")
 
-            await self._prepare_graph_execution(app_id, parameters, user_input)
+            user_input = await self._prepare_graph_execution(
+                app_id, parameters, user_input
+            )
 
             initial_state = self._create_initial_state(user_input, context, parameters)
 
-            if self.graph_config.enable_checkpointer:
-                config = self._create_graph_config(user_id)
-                result = await self.workflow.ainvoke(initial_state, config)
-            else:
-                result = await self.workflow.ainvoke(initial_state)
+            result = await self.workflow.ainvoke(
+                initial_state, {"configurable": {"thread_id": user_id}}
+            )
 
-            return self._generate_final_response(result)
+            final_response = self._generate_final_response(result)
 
-        except Exception as e:
-            self.logger.error(f"Error executing graph: {str(e)}")
-            return await self._handle_execution_error(user_input, str(e))
+            if save_visualization:
+                try:
+                    visualization_path = self.save_graph_visualization(
+                        app_id, parameters
+                    )
+                    if visualization_path:
+                        self.logger.info(
+                            f"Graph visualization saved during execution: {visualization_path}"
+                        )
+                except Exception as visualization_error:
+                    self.logger.warning(
+                        f"Failed to save visualization during execution: {visualization_error}"
+                    )
+
+            self.logger.info(
+                f"Graph execution completed successfully for app_id: {app_id}"
+            )
+            return final_response
+
+        except Exception as ex:
+            self.logger.error(f"Error executing graph: {str(ex)}")
+            return await self._handle_execution_error(user_input, str(ex))
 
     async def _prepare_graph_execution(
         self, app_id: int, parameters: dict | None, user_input: str
-    ) -> None:
-        """Prepare graph for execution by loading config and validating input."""
+    ) -> str:
+        """
+        Prepare graph for execution by loading config and validating input.
+        If the input exceeds max length, it will be truncated.
+        """
         await self._load_graph_configuration(app_id, parameters)
 
         if not self.graph_config or not self.graph_config.agents:
             raise ValueError("No valid graph configuration or agents found")
 
-        if not self.workflow:
-            workflow_builder = self._build_workflow()
-
-            if self.graph_config.enable_checkpointer:
-                checkpointer = self._create_checkpointer()
-                self.workflow = workflow_builder.compile(checkpointer=checkpointer)
-            else:
-                self.workflow = workflow_builder.compile()
-
         if (
             self.graph_config.max_input_length > 0
             and len(user_input) > self.graph_config.max_input_length
         ):
-            raise ValueError(
-                f"Input length ({len(user_input)}) exceeds maximum allowed ({self.graph_config.max_input_length})"
+            user_input = user_input[: self.graph_config.max_input_length]
+            self.logger.debug(
+                f"User input truncated to {self.graph_config.max_input_length} characters"
             )
+
+        if not self.workflow:
+            workflow_builder = self._build_workflow()
+
+            checkpointer = self._create_checkpointer()
+            self.workflow = workflow_builder.compile(checkpointer=checkpointer)
+
+        return user_input
 
     def _create_initial_state(
         self, user_input: str, context: dict | None, parameters: dict | None
@@ -408,11 +411,6 @@ Select one of: {available_options}"""
             parameters=parameters or {},
         )
 
-    def _create_graph_config(self, user_id: str | None) -> dict:
-        """Create configuration for graph execution with checkpointing based on user_id."""
-        thread_id = user_id or "anonymous"
-        return {"configurable": {"thread_id": thread_id}}
-
     def _generate_final_response(self, result: AgentState) -> str:
         """Generate the final response from agent results."""
         if result["messages"] and len(result["messages"]) > 1:
@@ -424,7 +422,7 @@ Select one of: {available_options}"""
         else:
             final_response = "No response generated from agents."
 
-        self.logger.info("Graph execution completed successfully")
+        self.logger.debug("Graph execution completed successfully")
         return final_response
 
     async def _handle_execution_error(self, user_input: str, error_message: str) -> str:
@@ -465,15 +463,16 @@ Select one of: {available_options}"""
             chain = prompt | llm
             response = await chain.ainvoke({})
 
-            self.logger.info("Exception handled by exception chain")
+            self.logger.debug("Exception handled by exception chain")
             return response.content
 
-        except Exception as e:
-            self.logger.error(f"Exception chain failed: {str(e)}")
+        except Exception as ex:
+            self.logger.error(f"Exception chain failed: {str(ex)}")
             raise
 
     def get_compiled_workflow(self, app_id: int, parameters: dict | None = None):
         """Get the compiled workflow for LangGraph Studio integration."""
+        self.logger.info(f"Getting compiled workflow for app_id: {app_id}")
         try:
             loop = asyncio.get_event_loop()
             if loop.is_running():
@@ -485,22 +484,20 @@ Select one of: {available_options}"""
 
             if not self.workflow:
                 workflow_builder = self._build_workflow()
+                checkpointer = self._create_checkpointer()
+                self.workflow = workflow_builder.compile(checkpointer=checkpointer)
 
-                if self.graph_config.enable_checkpointer:
-                    checkpointer = self._create_checkpointer()
-                    self.workflow = workflow_builder.compile(checkpointer=checkpointer)
-                else:
-                    self.workflow = workflow_builder.compile()
-
+            self.logger.info(f"Compiled workflow ready for app_id: {app_id}")
             return self.workflow
-        except Exception as e:
-            self.logger.error(f"Error getting compiled workflow: {str(e)}")
+        except Exception as ex:
+            self.logger.error(f"Error getting compiled workflow: {str(ex)}")
             raise
 
     def export_graph_for_studio(
         self, app_id: int, parameters: dict | None = None
     ) -> dict:
         """Export graph configuration for LangGraph Studio."""
+        self.logger.info(f"Exporting graph for studio for app_id: {app_id}")
         try:
             self.get_compiled_workflow(app_id, parameters)
 
@@ -575,10 +572,11 @@ Select one of: {available_options}"""
                 }
             )
 
+            self.logger.info(f"Graph export completed for app_id: {app_id}")
             return graph_info
 
-        except Exception as e:
-            self.logger.error(f"Error exporting graph for studio: {str(e)}")
+        except Exception as ex:
+            self.logger.error(f"Error exporting graph for studio: {str(ex)}")
             raise
 
     def save_graph_visualization(
@@ -587,7 +585,18 @@ Select one of: {available_options}"""
         parameters: dict | None = None,
         output_path: str | None = None,
     ) -> str:
-        """Save graph visualization for debugging and studio integration."""
+        """Save graph visualization for debugging and studio integration.
+
+        Args:
+            app_id (int): Application ID for loading graph configuration.
+            parameters (dict, optional): Runtime parameters including graph configurations.
+            output_path (str, optional): Path where the visualization file will be saved.
+                Defaults to "graph_visualization_{app_id}.png".
+
+        Returns:
+            str: Path to the saved visualization file, or empty string if failed.
+        """
+        self.logger.info(f"Saving graph visualization for app_id: {app_id}")
         try:
             compiled_workflow = self.get_compiled_workflow(app_id, parameters)
 
@@ -596,12 +605,130 @@ Select one of: {available_options}"""
 
             try:
                 compiled_workflow.get_graph().draw_mermaid_png(output_path=output_path)
-                self.logger.info(f"Graph visualization saved to: {output_path}")
+                self.logger.debug(f"Graph visualization saved to: {output_path}")
                 return output_path
-            except Exception as viz_error:
-                self.logger.warning(f"Could not save graph visualization: {viz_error}")
+            except Exception as visualization_error:
+                self.logger.warning(
+                    f"Could not save graph visualization: {visualization_error}"
+                )
                 return ""
 
-        except Exception as e:
-            self.logger.error(f"Error saving graph visualization: {str(e)}")
+        except Exception as ex:
+            self.logger.error(f"Error saving graph visualization: {str(ex)}")
+            raise
+
+    def generate_langgraph_studio_config(
+        self, config_path: str = "langgraph.json"
+    ) -> None:
+        """Generate or update LangGraph Studio configuration file.
+
+        Creates or updates a LangGraph Studio configuration file that can be used
+        for debugging and visualizing the graph workflow. The configuration includes
+        the graph path, runtime parameters schema, and default values based on the
+        current graph configuration.
+
+        Args:
+            config_path (str): Path where the configuration file will be saved.
+                Defaults to "langgraph.json" in the project root.
+
+        Raises:
+            Exception: If there's an error writing the configuration file or
+                if the graph configuration is not properly initialized.
+        """
+        self.logger.info(f"Generating LangGraph Studio config at: {config_path}")
+        try:
+            config = {}
+            if os.path.exists(config_path):
+                with open(config_path, "r") as f:
+                    config = json.load(f)
+
+            if self.graph_config:
+                if "graphs" not in config:
+                    config["graphs"] = {}
+
+                if "recruiter_ai_graph" not in config["graphs"]:
+                    config["graphs"]["recruiter_ai_graph"] = {
+                        "path": "src.services.graph.graph_service:GraphService.get_compiled_workflow"
+                    }
+
+                config["graphs"]["recruiter_ai_graph"]["config_schema"] = {
+                    "type": "object",
+                    "properties": {
+                        "app_id": {
+                            "type": "integer",
+                            "description": "Application ID for loading graph configuration",
+                            "default": 0,
+                        },
+                        "parameters": {
+                            "type": "object",
+                            "description": "Runtime parameters including graph configurations",
+                            "properties": {
+                                "graph_config": {
+                                    "type": "object",
+                                    "description": "Graph configuration object",
+                                    "properties": {
+                                        "max_input_length": {
+                                            "type": "integer",
+                                            "description": "Maximum input length allowed",
+                                            "default": self.graph_config.max_input_length,
+                                        },
+                                        "allow_supervisor_finish": {
+                                            "type": "boolean",
+                                            "description": "Allow supervisor to finish conversation",
+                                            "default": self.graph_config.allow_supervisor_finish,
+                                        },
+                                        "checkpointer_type": {
+                                            "type": "string",
+                                            "enum": [
+                                                "memory",
+                                                "redis",
+                                                "data",
+                                                "custom",
+                                            ],
+                                            "description": "Type of checkpointer to use",
+                                            "default": self.graph_config.checkpointer_type.value,
+                                        },
+                                        "agents": {
+                                            "type": "object",
+                                            "description": "Available agents configuration",
+                                            "properties": {
+                                                agent_name: {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "enabled": {
+                                                            "type": "boolean",
+                                                            "description": f"Enable {agent_name} agent",
+                                                            "default": agent.enabled,
+                                                        }
+                                                    },
+                                                }
+                                                for agent_name, agent in self.graph_config.agents.items()
+                                            },
+                                        },
+                                    },
+                                }
+                            },
+                        },
+                    },
+                    "required": ["app_id"],
+                }
+
+                config["env"] = ".env"
+
+                config["dependencies"] = ["."]
+
+                if "dockerfile_lines" not in config:
+                    config["dockerfile_lines"] = [
+                        "RUN pip install --no-cache-dir -r requirements.txt"
+                    ]
+
+            with open(config_path, "w") as f:
+                json.dump(config, f, indent=2)
+
+            self.logger.info(
+                f"LangGraph Studio configuration file generated successfully: {config_path}"
+            )
+
+        except Exception as ex:
+            self.logger.error(f"Error generating LangGraph Studio config: {str(ex)}")
             raise

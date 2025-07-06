@@ -12,7 +12,7 @@ load_dotenv(find_dotenv())
 REDIS_URL_PREFIX = f"redis://{os.environ.get('RAG_REDIS_USER')}:{os.environ.get('RAG_REDIS_PASSWORD')}@{os.environ.get('RAG_REDIS_HOST')}:{os.environ.get('RAG_REDIS_PORT')}/"
 
 
-class ChatHistoryService:
+class RedisChatHistoryService:
     async def get_chat_histories(
         self, chat_memory_db: str, chat_memory_index_name: str, user_id: str
     ):

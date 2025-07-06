@@ -22,6 +22,7 @@ def get_graph_service(
 @router.post("/api/graph", response_model=str)
 async def execute_graph(
     request: RestOperationPostSchema,
+    save_visualization: bool = False,
     graph_service: GraphService = Depends(get_graph_service),
 ):
     """Execute multi-agent graph solution."""
@@ -34,6 +35,7 @@ async def execute_graph(
             user_id=str(request.uuid),
             context=request.context,
             parameters=request.parameters,
+            save_visualization=save_visualization,
         )
 
         return result

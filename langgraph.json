@@ -1,0 +1,36 @@
+{
+    "dependencies": [
+        "."
+    ],
+    "graphs": {
+        "recruiter_ai_graph": {
+            "path": "src.services.graph.graph_service:GraphService.get_compiled_workflow",
+            "config_schema": {
+                "type": "object",
+                "properties": {
+                    "app_id": {
+                        "type": "integer",
+                        "description": "Application ID for loading graph configuration"
+                    },
+                    "parameters": {
+                        "type": "object",
+                        "description": "Runtime parameters including graph configurations",
+                        "properties": {
+                            "graph_config": {
+                                "type": "object",
+                                "description": "Graph configuration object"
+                            }
+                        }
+                    }
+                },
+                "required": [
+                    "app_id"
+                ]
+            }
+        }
+    },
+    "env": ".env",
+    "dockerfile_lines": [
+        "RUN pip install --no-cache-dir -r requirements.txt"
+    ]
+}

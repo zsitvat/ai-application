@@ -48,6 +48,7 @@ class ModelType(str, Enum):
 class CheckpointerType(str, Enum):
     MEMORY = "memory"
     REDIS = "redis"
+    DATA = "data"
     CUSTOM = "custom"
 
 

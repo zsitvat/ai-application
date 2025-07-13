@@ -11,31 +11,7 @@ class LoggerService:
     def __init__(self):
         self._loggers = {}
 
-    def _get_log_level(self, log_level: str = "DEBUG"):
-        """Get the log level based on the log level string.
-
-        Args:
-            log_level (str): The log level string
-
-        Returns:
-            int: The log level integer
-        """
-        log_levels = {
-            "DEBUG": logging.DEBUG,
-            "INFO": logging.INFO,
-            "WARNING": logging.WARNING,
-            "ERROR": logging.ERROR,
-            "CRITICAL": logging.CRITICAL,
-            "FATAL": logging.FATAL,
-            "NOTSET": logging.NOTSET,
-        }
-        return log_levels.get(log_level.upper(), logging.DEBUG)
-
-    def _ensure_log_directory(self, log_file_path: str):
-        """Ensure the log directory exists."""
-        log_dir = Path(log_file_path).parent
-        log_dir.mkdir(parents=True, exist_ok=True)
-
+    # Public methods
     def setup_logger(self, log_level: str = "DEBUG", logger_name: str = "logger"):
         """Setup the logger with JSON formatting for both console and file output.
 
@@ -145,3 +121,29 @@ class LoggerService:
                 log_files.append(str(file_path))
 
         return sorted(log_files)
+
+    # Private methods
+    def _get_log_level(self, log_level: str = "DEBUG"):
+        """Get the log level based on the log level string.
+
+        Args:
+            log_level (str): The log level string
+
+        Returns:
+            int: The log level integer
+        """
+        log_levels = {
+            "DEBUG": logging.DEBUG,
+            "INFO": logging.INFO,
+            "WARNING": logging.WARNING,
+            "ERROR": logging.ERROR,
+            "CRITICAL": logging.CRITICAL,
+            "FATAL": logging.FATAL,
+            "NOTSET": logging.NOTSET,
+        }
+        return log_levels.get(log_level.upper(), logging.DEBUG)
+
+    def _ensure_log_directory(self, log_file_path: str):
+        """Ensure the log directory exists."""
+        log_dir = Path(log_file_path).parent
+        log_dir.mkdir(parents=True, exist_ok=True)

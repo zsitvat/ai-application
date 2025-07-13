@@ -1,9 +1,7 @@
 import logging
 import os
 
-import boto3
 from langchain_anthropic import ChatAnthropic
-from langchain_aws import ChatBedrock
 from langchain_openai import (
     AzureChatOpenAI,
     AzureOpenAI,
@@ -14,7 +12,7 @@ from langchain_openai import (
 )
 
 
-async def get_embedding_model(
+def get_embedding_model(
     provider: str = "openai",
     deployment: str | None = None,
     model: str = "text-embedding-3-large",
@@ -42,13 +40,13 @@ async def get_embedding_model(
         raise KeyError(f"Unsupported provider for embedding model: {provider}")
 
 
-async def get_chat_model(
+def get_chat_model(
     provider: str,
     deployment: str | None = None,
     model: str = "gpt-4o-mini",
     type: str = "chat",
     temperature: float = 0,
-) -> OpenAI | AzureOpenAI | ChatOpenAI | AzureChatOpenAI | ChatAnthropic | ChatBedrock:
+) -> OpenAI | AzureOpenAI | ChatOpenAI | AzureChatOpenAI | ChatAnthropic:
     """Get the model based on the provider and the type of the model
 
     Args:
@@ -86,17 +84,6 @@ async def get_chat_model(
             return ChatAnthropic(
                 name=model, temperature=temperature, timeout=60, stop=None
             )
-        elif provider == "bedrock":
-            client = boto3.client(
-                service_name="bedrock-runtime",
-                region_name=os.environ.get("BEDROCK_AWS_REGION_NAME"),
-                aws_access_key_id=os.environ.get("BEDROCK_AWS_ACCESS_KEY"),
-                aws_secret_access_key=os.environ.get("BEDROCK_AWS_SECRET_KEY"),
-            )
-
-            return ChatBedrock(
-                client=client, model=model, model_kwargs=dict(temperature=temperature)
-            )
         else:
             logging.getLogger("logger").error("Wrong model provider!")
             raise KeyError(f"Unsupported provider for chat model: {provider}")
@@ -105,7 +92,7 @@ async def get_chat_model(
         raise KeyError(f"Unsupported model type: {type}")
 
 
-async def get_model(
+def get_model(
     provider: str,
     deployment: str | None = None,
     model: str = "gpt-4o-mini",
@@ -117,12 +104,11 @@ async def get_model(
     | ChatOpenAI
     | AzureChatOpenAI
     | ChatAnthropic
-    | ChatBedrock
     | OpenAIEmbeddings
     | AzureOpenAIEmbeddings
 ):
     """Alias for get_chat_model for backward compatibility."""
     if type == "embedding":
-        return await get_embedding_model(provider, deployment, model)
+        return get_embedding_model(provider, deployment, model)
     else:
-        return await get_chat_model(provider, deployment, model, type, temperature)
+        return get_chat_model(provider, deployment, model, type, temperature)

@@ -188,6 +188,348 @@
                     ]
                 }
             }
+        },
+        {
+            "name": "Dataset törlés",
+            "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                    "raw": "http://localhost:5000/api/dataset/teszt_dataset",
+                    "protocol": "http",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "5000",
+                    "path": [
+                        "api",
+                        "dataset",
+                        "teszt_dataset"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Dokumentum feltöltés",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"files\": [\"files/document.pdf\"],\n  \"vector_db_index\": \"knowledge_base\",\n  \"chunk_size\": 1000,\n  \"chunk_overlap\": 200,\n  \"embedding_model\": {\n    \"name\": \"text-embedding-3-large\",\n    \"provider\": \"openai\"\n  },\n  \"index_schema\": {\n    \"content\": \"text\",\n    \"metadata\": \"json\"\n  }\n}"
+                },
+                "url": {
+                    "raw": "http://localhost:5000/api/documents/ingest",
+                    "protocol": "http",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "5000",
+                    "path": [
+                        "api",
+                        "documents",
+                        "ingest"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Dokumentumok törlése",
+            "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                    "raw": "http://localhost:5000/api/documents/knowledge_base",
+                    "protocol": "http",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "5000",
+                    "path": [
+                        "api",
+                        "documents",
+                        "knowledge_base"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Graf konfig végrehajtás",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"config_path\": \"examples/graph_config_openai.json\",\n  \"user_input\": \"Milyen munkalehetőségek vannak?\",\n  \"thread_id\": \"user123\"\n}"
+                },
+                "url": {
+                    "raw": "http://localhost:5000/api/graph/execute-with-config",
+                    "protocol": "http",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "5000",
+                    "path": [
+                        "api",
+                        "graph",
+                        "execute-with-config"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Graf konfig validálás",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "http://localhost:5000/api/graph/validate-config?config_path=examples/graph_config_openai.json",
+                    "protocol": "http",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "5000",
+                    "path": [
+                        "api",
+                        "graph",
+                        "validate-config"
+                    ],
+                    "query": [
+                        {
+                            "key": "config_path",
+                            "value": "examples/graph_config_openai.json"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Graf streaming válasz",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"prompt\": \"kérdés\",\n  \"user_input\": \"Mit tudsz a wifiről?\",\n  \"model\": {\n    \"name\": \"gpt-4o-mini\",\n    \"type\": \"chat\",\n    \"deployment\": null,\n    \"provider\": \"openai\",\n    \"temperature\": 0\n  },\n  \"tools\": [\n    {\n      \"name\": \"retriver_tool\",\n      \"vector_db_path\": \"deeplake_databases/deeplake_db_pdf\",\n      \"model\": {\n        \"name\": \"text-embedding-3-large\",\n        \"type\": \"embedding\",\n        \"provider\": \"openai\"\n      },\n      \"search_kwargs\": {\n        \"k\": 5,\n        \"threshold\": 0.5,\n        \"search_type\": \"similarity\"\n      }\n    }\n  ]\n}"
+                },
+                "url": {
+                    "raw": "http://localhost:5000/api/graph/stream",
+                    "protocol": "http",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "5000",
+                    "path": [
+                        "api",
+                        "graph",
+                        "stream"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Graf Studio Export",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "http://localhost:5000/api/graph-studio/export/app123",
+                    "protocol": "http",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "5000",
+                    "path": [
+                        "api",
+                        "graph-studio",
+                        "export",
+                        "app123"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Graf Studio Vizualizáció",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"config\": {\n    \"nodes\": [],\n    \"edges\": []\n  }\n}"
+                },
+                "url": {
+                    "raw": "http://localhost:5000/api/graph-studio/visualization/app123",
+                    "protocol": "http",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "5000",
+                    "path": [
+                        "api",
+                        "graph-studio",
+                        "visualization",
+                        "app123"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Graf Studio Konfig",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"config\": {\n    \"agents\": {},\n    \"supervisor\": {},\n    \"settings\": {}\n  }\n}"
+                },
+                "url": {
+                    "raw": "http://localhost:5000/api/graph-studio/config",
+                    "protocol": "http",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "5000",
+                    "path": [
+                        "api",
+                        "graph-studio",
+                        "config"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Személyes adatok szűrése",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"text\": \"My name is John Doe and my email is john.doe@example.com\",\n  \"data_types\": [\"email\", \"full_name\"],\n  \"action\": \"mask\",\n  \"mask_char\": \"*\"\n}"
+                },
+                "url": {
+                    "raw": "http://localhost:5000/api/personal-data-filter",
+                    "protocol": "http",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "5000",
+                    "path": [
+                        "api",
+                        "personal-data-filter"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Téma validálás",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"text\": \"Tell me about job opportunities in tech\",\n  \"allowed_topics\": [\"work\", \"career\", \"job\", \"professional\"],\n  \"model\": {\n    \"name\": \"gpt-4o-mini\",\n    \"provider\": \"openai\"\n  }\n}"
+                },
+                "url": {
+                    "raw": "http://localhost:5000/api/validate-topic",
+                    "protocol": "http",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "5000",
+                    "path": [
+                        "api",
+                        "validate-topic"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Web scraping",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"url\": \"https://example.com\",\n  \"scraping_type\": \"full_page\",\n  \"extract_links\": true,\n  \"max_depth\": 2\n}"
+                },
+                "url": {
+                    "raw": "http://localhost:5000/api/web-scraping",
+                    "protocol": "http",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "5000",
+                    "path": [
+                        "api",
+                        "web-scraping"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Rendszer logok",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "http://localhost:5000/api/logs?lines=100",
+                    "protocol": "http",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "5000",
+                    "path": [
+                        "api",
+                        "logs"
+                    ],
+                    "query": [
+                        {
+                            "key": "lines",
+                            "value": "100"
+                        }
+                    ]
+                }
+            }
         }
     ]
 }

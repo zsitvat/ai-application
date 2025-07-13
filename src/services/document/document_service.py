@@ -17,7 +17,7 @@ from langchain_community.document_loaders import (
 from langchain_redis import RedisConfig, RedisVectorStore
 from redisvl.schema import IndexSchema
 
-from schemas.graph_schema import Model
+from schemas.model_schema import Model
 from utils.select_model import get_embedding_model
 
 from .default_schema import DEFAULT_INDEX_SCHEMA
@@ -37,256 +37,7 @@ class DocumentService:
             else f"redis://{os.getenv('REDIS_HOST')}:{os.getenv('REDIS_PORT')}"
         )
 
-    def _is_url(self, string: str) -> bool:
-        """Check if a string is a valid URL."""
-        try:
-            result = urlparse(string)
-            return all([result.scheme, result.netloc])
-        except Exception:
-            return False
-
-    def _download_file_from_url(self, url: str) -> str:
-        """Download a file from URL and return temporary file path."""
-        try:
-            response = requests.get(url, timeout=30)
-            response.raise_for_status()
-
-            with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
-                tmp_file.write(response.content)
-                return tmp_file.name
-        except Exception as e:
-            self.logger.error(f"Error downloading file from URL {url}: {str(e)}")
-            raise e
-
-    def _process_json_file(self, file_path: str, filename: str) -> list[Document]:
-        """Process JSON file containing list of objects as documents.
-
-        Expects JSON format: [{"content": "text", "key1": "value1", "key2": "value2"}, ...]
-        The 'content' key becomes the document text, all other keys become metadata.
-        """
-        try:
-            with open(file_path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-
-            documents = []
-
-            if isinstance(data, list):
-                for i, item in enumerate(data):
-                    if isinstance(item, dict):
-                        content = item.get("content", "")
-                        if not content:
-                            self.logger.warning(
-                                f"Document {i} in {filename} has no 'content' key or empty content"
-                            )
-                            content = json.dumps(item, indent=2)
-
-                        metadata = {
-                            "filename": filename,
-                            "source": file_path,
-                            "source_type": "file",
-                            "document_index": i,
-                        }
-
-                        for key, value in item.items():
-                            if key != "content":
-                                metadata[key] = str(value) if value is not None else ""
-
-                        doc = Document(page_content=str(content), metadata=metadata)
-                        documents.append(doc)
-                    else:
-                        content = str(item)
-                        doc = Document(
-                            page_content=content,
-                            metadata={
-                                "filename": filename,
-                                "source": file_path,
-                                "source_type": "file",
-                                "document_index": i,
-                            },
-                        )
-                        documents.append(doc)
-            else:
-                if isinstance(data, dict):
-                    content = data.get("content", json.dumps(data, indent=2))
-                    metadata = {
-                        "filename": filename,
-                        "source": file_path,
-                        "source_type": "file",
-                    }
-
-                    for key, value in data.items():
-                        if key != "content":
-                            metadata[key] = str(value) if value is not None else ""
-
-                    doc = Document(page_content=str(content), metadata=metadata)
-                    documents.append(doc)
-                else:
-                    content = json.dumps(data, indent=2)
-                    doc = Document(
-                        page_content=content,
-                        metadata={
-                            "filename": filename,
-                            "source": file_path,
-                            "source_type": "file",
-                        },
-                    )
-                    documents.append(doc)
-
-            self.logger.debug(
-                f"Processed JSON file {filename} into {len(documents)} documents"
-            )
-            return documents
-
-        except json.JSONDecodeError as e:
-            self.logger.error(f"Invalid JSON in file {filename}: {str(e)}")
-            with open(file_path, "r", encoding="utf-8") as f:
-                content = f.read()
-            return [
-                Document(
-                    page_content=content,
-                    metadata={
-                        "filename": filename,
-                        "source": file_path,
-                        "source_type": "file",
-                        "json_parse_error": str(e),
-                    },
-                )
-            ]
-        except Exception as e:
-            self.logger.error(f"Error processing JSON file {filename}: {str(e)}")
-            raise e
-
-    def _process_pdf_file(self, file_path: str) -> list[Document]:
-        """Process PDF file."""
-        loader = PyPDFLoader(file_path)
-        return loader.load()
-
-    def _process_txt_file(self, file_path: str) -> list[Document]:
-        """Process text file."""
-        loader = TextLoader(file_path)
-        return loader.load()
-
-    def _process_docx_file(self, file_path: str) -> list[Document]:
-        """Process DOCX file."""
-        loader = Docx2txtLoader(file_path)
-        return loader.load()
-
-    def _process_xlsx_file(self, file_path: str) -> list[Document]:
-        """Process Excel file."""
-        loader = UnstructuredExcelLoader(file_path)
-        return loader.load()
-
-    def _filter_metadata_by_schema(
-        self, documents: list[Document], schema_fields: list[dict]
-    ) -> list[Document]:
-        """Filter document metadata to only include fields defined in the schema.
-
-        Args:
-            documents: List of documents to filter
-            schema_fields: List of schema field definitions
-
-        Returns:
-            List of documents with filtered metadata
-        """
-        schema_field_names = set()
-        for field in schema_fields:
-            field_name = field.get("name")
-            if field_name and field.get("type") != "vector":
-                schema_field_names.add(field_name)
-
-        allowed_fields = schema_field_names
-
-        self.logger.info(f"Schema allows only these fields: {allowed_fields}")
-
-        filtered_documents = []
-        dropped_fields_count = 0
-
-        for doc in documents:
-            filtered_metadata = {}
-            original_metadata_keys = set(doc.metadata.keys())
-
-            for key, value in doc.metadata.items():
-                if key in allowed_fields:
-                    filtered_metadata[key] = value
-                else:
-                    dropped_fields_count += 1
-
-            dropped_fields_for_doc = original_metadata_keys - allowed_fields
-            if dropped_fields_for_doc:
-                self.logger.debug(
-                    f"Dropped metadata fields not in schema: {', '.join(dropped_fields_for_doc)}"
-                )
-
-            filtered_doc = Document(
-                page_content=doc.page_content,
-                metadata=filtered_metadata,
-            )
-            filtered_documents.append(filtered_doc)
-
-        if dropped_fields_count > 0:
-            self.logger.info(
-                f"Filtered metadata: dropped {dropped_fields_count} field instances not defined in schema"
-            )
-
-        return filtered_documents
-
-    def _create_vector_store_and_ingest(
-        self,
-        documents: list[Document],
-        embeddings_model,
-        vector_db_index: str,
-        chunk_size: int,
-        chunk_overlap: int,
-        index_schema: list[dict] = None,
-    ) -> int:
-        """Create vector store and ingest documents.
-
-        Args:
-            documents: List of documents to ingest
-            embeddings_model: Embeddings model to use
-            vector_db_index: Name of the Redis index
-            chunk_size: Size of text chunks
-            chunk_overlap: Overlap between chunks
-            index_schema: Custom index schema, uses default if None
-
-        Returns:
-            int: Number of chunks processed
-        """
-        text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=chunk_size, chunk_overlap=chunk_overlap
-        )
-        split_documents = text_splitter.split_documents(documents)
-
-        if index_schema is None:
-            fields = DEFAULT_INDEX_SCHEMA
-        else:
-            fields = index_schema
-
-        schema_dict = {
-            "index": {"name": vector_db_index, "storage_type": "hash"},
-            "fields": fields,
-        }
-        schema = IndexSchema.from_dict(schema_dict)
-        config = RedisConfig.from_schema(schema=schema, redis_url=self.redis_url)
-
-        self.logger.debug(
-            f"Filtering metadata according to schema with {len(fields)} fields"
-        )
-        filtered_documents = self._filter_metadata_by_schema(split_documents, fields)
-
-        try:
-            vector_store = RedisVectorStore(embeddings_model, config=config)
-
-            vector_store.add_documents(filtered_documents)
-
-        except Exception as e:
-            self.logger.error(
-                f"Error adding documents to vector store {vector_db_index}: {str(e)}"
-            )
-            raise e
-
-        return len(filtered_documents)
-
+    # Public methods
     async def ingest_documents(
         self,
         model: Model | None,
@@ -340,7 +91,7 @@ class DocumentService:
                 f"Embedding configuration - Provider: {provider}, Model: {model_name}, Deployment: {deployment}"
             )
 
-            embeddings_model = await get_embedding_model(
+            embeddings_model = get_embedding_model(
                 provider=provider,
                 deployment=deployment,
                 model=model_name,
@@ -537,7 +288,7 @@ class DocumentService:
                 else os.getenv("EMBEDDING_MODEL", "text-embedding-3-large")
             )
 
-            embeddings_model = await get_embedding_model(
+            embeddings_model = get_embedding_model(
                 provider=provider,
                 deployment=deployment,
                 model=model_name,
@@ -564,4 +315,244 @@ class DocumentService:
 
         except Exception as e:
             self.logger.error(f"Error getting retriever: {str(e)}")
+            raise e
+
+    # Private methods
+    def _is_url(self, string: str) -> bool:
+        """Check if a string is a valid URL."""
+        try:
+            result = urlparse(string)
+            return all([result.scheme, result.netloc])
+        except Exception:
+            return False
+
+    def _download_file_from_url(self, url: str) -> str:
+        """Download a file from URL and return temporary file path."""
+        try:
+            response = requests.get(url, timeout=30)
+            response.raise_for_status()
+
+            with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
+                tmp_file.write(response.content)
+                return tmp_file.name
+        except Exception as e:
+            self.logger.error(f"Error downloading file from URL {url}: {str(e)}")
+            raise e
+
+    def _process_json_file(self, file_path: str, filename: str) -> list[Document]:
+        """Process JSON file containing list of objects as documents.
+
+        Expects JSON format: [{"content": "text", "key1": "value1", "key2": "value2"}, ...]
+        The 'content' key becomes the document text, all other keys become metadata.
+        """
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+
+            documents = []
+
+            if isinstance(data, list):
+                for i, item in enumerate(data):
+                    if isinstance(item, dict):
+                        content = item.get("content", "")
+                        if not content:
+                            self.logger.warning(
+                                f"Document {i} in {filename} has no 'content' key or empty content"
+                            )
+                            content = json.dumps(item, indent=2)
+
+                        metadata = {
+                            "filename": filename,
+                            "source": file_path,
+                            "source_type": "file",
+                            "document_index": i,
+                        }
+
+                        for key, value in item.items():
+                            if key != "content":
+                                metadata[key] = str(value) if value is not None else ""
+
+                        doc = Document(page_content=str(content), metadata=metadata)
+                        documents.append(doc)
+                    else:
+                        content = str(item)
+                        doc = Document(
+                            page_content=content,
+                            metadata={
+                                "filename": filename,
+                                "source": file_path,
+                                "source_type": "file",
+                                "document_index": i,
+                            },
+                        )
+                        documents.append(doc)
+
+            elif isinstance(data, dict):
+                for key, value in data.items():
+                    if isinstance(value, dict):
+                        content = value.get("content", json.dumps(value, indent=2))
+                        metadata = {
+                            "filename": filename,
+                            "source": file_path,
+                            "source_type": "file",
+                            "document_key": key,
+                        }
+
+                        for k, v in value.items():
+                            if k != "content":
+                                metadata[k] = str(v) if v is not None else ""
+
+                        doc = Document(page_content=str(content), metadata=metadata)
+                        documents.append(doc)
+                    else:
+                        doc = Document(
+                            page_content=str(value),
+                            metadata={
+                                "filename": filename,
+                                "source": file_path,
+                                "source_type": "file",
+                                "document_key": key,
+                            },
+                        )
+                        documents.append(doc)
+
+            else:
+                doc = Document(
+                    page_content=json.dumps(data, indent=2),
+                    metadata={
+                        "filename": filename,
+                        "source": file_path,
+                        "source_type": "file",
+                    },
+                )
+                documents.append(doc)
+
+            self.logger.info(
+                f"Processed JSON file {filename}: {len(documents)} documents"
+            )
+            return documents
+
+        except Exception as e:
+            self.logger.error(f"Error processing JSON file {filename}: {str(e)}")
+            raise e
+
+    def _process_pdf_file(self, file_path: str) -> list[Document]:
+        """Process PDF file."""
+        loader = PyPDFLoader(file_path)
+        return loader.load()
+
+    def _process_txt_file(self, file_path: str) -> list[Document]:
+        """Process text file."""
+        loader = TextLoader(file_path, encoding="utf-8")
+        return loader.load()
+
+    def _process_docx_file(self, file_path: str) -> list[Document]:
+        """Process DOCX file."""
+        loader = Docx2txtLoader(file_path)
+        return loader.load()
+
+    def _process_xlsx_file(self, file_path: str) -> list[Document]:
+        """Process Excel file."""
+        loader = UnstructuredExcelLoader(file_path)
+        return loader.load()
+
+    def _filter_metadata_by_schema(
+        self, documents: list[Document], schema_fields: list[dict]
+    ) -> list[Document]:
+        """Filter document metadata according to the index schema.
+
+        Args:
+            documents (list[Document]): List of documents to filter
+            schema_fields (list[dict]): Index schema fields definition
+
+        Returns:
+            list[Document]: Documents with filtered metadata
+        """
+        if not schema_fields:
+            return documents
+
+        field_names = set()
+        for field in schema_fields:
+            field_names.add(field.get("name", ""))
+
+        filtered_documents = []
+        for doc in documents:
+            if doc.metadata:
+                filtered_metadata = {}
+                for key, value in doc.metadata.items():
+                    if key in field_names:
+                        filtered_metadata[key] = value
+
+                filtered_doc = Document(
+                    page_content=doc.page_content, metadata=filtered_metadata
+                )
+                filtered_documents.append(filtered_doc)
+            else:
+                filtered_documents.append(doc)
+
+        self.logger.debug(
+            f"Filtered metadata for {len(documents)} documents according to schema"
+        )
+        return filtered_documents
+
+    def _create_vector_store_and_ingest(
+        self,
+        documents: list[Document],
+        embeddings_model,
+        vector_db_index: str,
+        chunk_size: int,
+        chunk_overlap: int,
+        index_schema: list[dict] = None,
+    ) -> int:
+        """Create vector store and ingest documents.
+
+        Args:
+            documents (list[Document]): Documents to ingest
+            embeddings_model: Embedding model instance
+            vector_db_index (str): Vector database index name
+            chunk_size (int): Text chunk size
+            chunk_overlap (int): Chunk overlap size
+            index_schema (list[dict], optional): Index schema definition
+
+        Returns:
+            int: Number of chunks created and ingested
+        """
+        try:
+            text_splitter = RecursiveCharacterTextSplitter(
+                chunk_size=chunk_size,
+                chunk_overlap=chunk_overlap,
+                length_function=len,
+                separators=["\n\n", "\n", " ", ""],
+            )
+
+            chunks = text_splitter.split_documents(documents)
+
+            if index_schema:
+                chunks = self._filter_metadata_by_schema(chunks, index_schema)
+                fields = index_schema
+            else:
+                fields = DEFAULT_INDEX_SCHEMA
+
+            self.logger.info(f"Created {len(chunks)} chunks from documents")
+
+            schema_dict = {
+                "index": {"name": vector_db_index, "storage_type": "hash"},
+                "fields": fields,
+            }
+
+            schema = IndexSchema.from_dict(schema_dict)
+            config = RedisConfig.from_schema(schema, redis_url=self.redis_url)
+
+            vector_store = RedisVectorStore(embeddings_model, config=config)
+
+            vector_store.add_documents(chunks)
+
+            self.logger.info(
+                f"Successfully ingested {len(chunks)} chunks into Redis vector store"
+            )
+
+            return len(chunks)
+
+        except Exception as e:
+            self.logger.error(f"Error creating vector store and ingesting: {str(e)}")
             raise e

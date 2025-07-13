@@ -15,6 +15,7 @@ class SystemService:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
 
+    # Public methods
     async def health_check(self) -> dict:
         """
         Perform comprehensive application health check.
@@ -62,122 +63,6 @@ class SystemService:
                 "response_time_ms": round((time.time() - start_time) * 1000, 2),
                 "error": str(e),
             }
-
-    async def _check_system_metrics(self) -> dict[str, Any]:
-        """Check system resource metrics."""
-        try:
-            memory = psutil.virtual_memory()
-            memory_usage = {
-                "total_gb": round(memory.total / (1024**3), 2),
-                "available_gb": round(memory.available / (1024**3), 2),
-                "percent_used": memory.percent,
-                "status": "healthy" if memory.percent < 85 else "warning",
-            }
-
-            cpu_percent = psutil.cpu_percent(interval=1)
-            cpu_usage = {
-                "percent_used": cpu_percent,
-                "core_count": psutil.cpu_count(),
-                "status": "healthy" if cpu_percent < 80 else "warning",
-            }
-
-            disk = psutil.disk_usage("/")
-            disk_usage = {
-                "total_gb": round(disk.total / (1024**3), 2),
-                "free_gb": round(disk.free / (1024**3), 2),
-                "percent_used": round((disk.used / disk.total) * 100, 2),
-                "status": (
-                    "healthy" if (disk.used / disk.total) * 100 < 85 else "warning"
-                ),
-            }
-
-            system_status = "healthy"
-            if any(
-                metric["status"] == "warning"
-                for metric in [memory_usage, cpu_usage, disk_usage]
-            ):
-                system_status = "warning"
-
-            return {
-                "status": system_status,
-                "memory": memory_usage,
-                "cpu": cpu_usage,
-                "disk": disk_usage,
-                "uptime_seconds": round(time.time() - psutil.boot_time(), 2),
-            }
-
-        except Exception as e:
-            self.logger.error(f"System metrics check failed: {str(e)}")
-            return {"status": "unhealthy", "error": str(e)}
-
-    async def _check_environment_variables(self) -> dict[str, Any]:
-        """Check required environment variables."""
-        required_vars = ["OPENAI_API_KEY", "LANGCHAIN_API_KEY", "SERPAPI_API_KEY"]
-
-        optional_vars = [
-            "AZURE_OPENAI_API_KEY",
-            "ANTHROPIC_API_KEY",
-            "LANGFUSE_SECRET_KEY",
-        ]
-
-        missing_required = []
-        missing_optional = []
-
-        for var in required_vars:
-            if not os.getenv(var):
-                missing_required.append(var)
-
-        for var in optional_vars:
-            if not os.getenv(var):
-                missing_optional.append(var)
-
-        status = "healthy" if not missing_required else "unhealthy"
-
-        return {
-            "status": status,
-            "required_vars_present": len(required_vars) - len(missing_required),
-            "optional_vars_present": len(optional_vars) - len(missing_optional),
-            "missing_required": missing_required,
-            "missing_optional": missing_optional,
-        }
-
-    async def _check_external_services(self) -> dict[str, Any]:
-        """Check external service connectivity."""
-        services = {}
-
-        tracer_type = os.getenv("TRACER_TYPE", "").lower()
-
-        if tracer_type == "langfuse":
-            services["langfuse"] = {
-                "status": "healthy" if os.getenv("LANGFUSE_SECRET_KEY") else "warning",
-                "message": (
-                    "API key configured"
-                    if os.getenv("LANGFUSE_SECRET_KEY")
-                    else "API key missing"
-                ),
-            }
-        elif tracer_type == "langsmith":
-            services["langsmith"] = {
-                "status": "healthy" if os.getenv("LANGCHAIN_API_KEY") else "warning",
-                "message": (
-                    "API key configured"
-                    if os.getenv("LANGCHAIN_API_KEY")
-                    else "API key missing"
-                ),
-            }
-        else:
-            services["tracer"] = {
-                "status": "warning",
-                "message": "No tracer service configured (TRACER_TYPE not set)",
-            }
-
-        services_status = "healthy"
-        if any(service["status"] == "unhealthy" for service in services.values()):
-            services_status = "unhealthy"
-        elif any(service["status"] == "warning" for service in services.values()):
-            services_status = "warning"
-
-        return {"status": services_status, "services": services}
 
     async def get_logs(
         self,
@@ -327,3 +212,124 @@ class SystemService:
                 "page_size": limit,
                 "error": f"Error retrieving logs: {str(e)}",
             }
+
+    # Private methods
+    async def _check_system_metrics(self) -> dict[str, Any]:
+        """Check system resource metrics."""
+        try:
+            memory = psutil.virtual_memory()
+            disk = psutil.disk_usage("/")
+            cpu_percent = psutil.cpu_percent(interval=1)
+
+            memory_usage = memory.percent
+            disk_usage = (disk.used / disk.total) * 100
+
+            status = "healthy"
+            issues = []
+
+            if memory_usage > 90:
+                status = "unhealthy"
+                issues.append(f"High memory usage: {memory_usage:.1f}%")
+            elif memory_usage > 80:
+                status = "degraded"
+                issues.append(f"Elevated memory usage: {memory_usage:.1f}%")
+
+            if disk_usage > 90:
+                status = "unhealthy"
+                issues.append(f"High disk usage: {disk_usage:.1f}%")
+            elif disk_usage > 85:
+                status = "degraded"
+                issues.append(f"Elevated disk usage: {disk_usage:.1f}%")
+
+            if cpu_percent > 90:
+                status = "unhealthy"
+                issues.append(f"High CPU usage: {cpu_percent:.1f}%")
+            elif cpu_percent > 80:
+                status = "degraded"
+                issues.append(f"Elevated CPU usage: {cpu_percent:.1f}%")
+
+            return {
+                "status": status,
+                "metrics": {
+                    "memory_usage_percent": round(memory_usage, 2),
+                    "memory_available_gb": round(memory.available / (1024**3), 2),
+                    "memory_total_gb": round(memory.total / (1024**3), 2),
+                    "disk_usage_percent": round(disk_usage, 2),
+                    "disk_free_gb": round(disk.free / (1024**3), 2),
+                    "disk_total_gb": round(disk.total / (1024**3), 2),
+                    "cpu_usage_percent": round(cpu_percent, 2),
+                },
+                "issues": issues,
+            }
+
+        except Exception as e:
+            self.logger.error(f"Error checking system metrics: {str(e)}")
+            return {
+                "status": "unhealthy",
+                "error": f"Failed to get system metrics: {str(e)}",
+            }
+
+    async def _check_environment_variables(self) -> dict[str, Any]:
+        """Check required environment variables."""
+        required_vars = [
+            "OPENAI_API_KEY",
+            "REDIS_HOST",
+            "REDIS_PORT",
+            "REDIS_DB",
+        ]
+
+        optional_vars = [
+            "AZURE_OPENAI_API_KEY",
+            "AZURE_OPENAI_ENDPOINT",
+            "REDIS_PASSWORD",
+            "LOG_LEVEL",
+        ]
+
+        status = "healthy"
+        missing = []
+        present = []
+
+        for var in required_vars:
+            if os.getenv(var):
+                present.append(var)
+            else:
+                missing.append(var)
+                status = "unhealthy"
+
+        for var in optional_vars:
+            if os.getenv(var):
+                present.append(var)
+
+        return {
+            "status": status,
+            "required_present": len([v for v in required_vars if v in present]),
+            "required_total": len(required_vars),
+            "optional_present": len([v for v in optional_vars if v in present]),
+            "optional_total": len(optional_vars),
+            "missing_required": missing,
+        }
+
+    async def _check_external_services(self) -> dict[str, Any]:
+        """Check connectivity to external services."""
+        services = []
+        services_status = "healthy"
+
+        # Redis check
+        try:
+            import redis
+
+            redis_client = redis.Redis(
+                host=os.getenv("REDIS_HOST", "localhost"),
+                port=int(os.getenv("REDIS_PORT", 6379)),
+                db=int(os.getenv("REDIS_DB", 0)),
+                password=os.getenv("REDIS_PASSWORD"),
+                socket_connect_timeout=5,
+                socket_timeout=5,
+            )
+            redis_client.ping()
+            services.append({"name": "Redis", "status": "healthy"})
+        except Exception as e:
+            services.append({"name": "Redis", "status": "unhealthy", "error": str(e)})
+            services_status = "degraded"
+
+        return {"status": services_status, "services": services}

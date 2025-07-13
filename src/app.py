@@ -8,7 +8,9 @@ from langfuse import Langfuse
 
 from routes.dataset_routes import router as dataset_router
 from routes.document_routes import router as document_router
+from routes.graph_config_loader_routes import router as graph_config_loader_router
 from routes.graph_routes import router as graph_router
+from routes.graph_studio_routes import router as graph_studio_router
 from routes.personal_data_filter_routes import router as personal_data_filter_router
 from routes.system_routes import router as system_router
 from routes.topic_validation_routes import router as topic_validation_router
@@ -35,6 +37,8 @@ def create_app():
     )
 
     app.include_router(graph_router)
+    app.include_router(graph_studio_router)
+    app.include_router(graph_config_loader_router)
     app.include_router(personal_data_filter_router)
     app.include_router(topic_validation_router)
     app.include_router(web_scraping_router)
@@ -51,6 +55,8 @@ def create_app():
     default_limit = int(os.getenv("RATELIMIT", "5"))
     paths_to_limit = [
         "/api/graph",
+        "/api/graph/stream",
+        "/api/graph-studio",
         "/api/health-check",
     ]
     app.add_middleware(

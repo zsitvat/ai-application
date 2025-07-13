@@ -1,5 +1,4 @@
 import logging
-from typing import Optional
 
 from schemas.token_validation_schema import (
     TokenCountResult,
@@ -202,7 +201,7 @@ class TokenValidationService:
         self,
         target_tokens: int,
         encoding_name: str = "cl100k_base",
-        sample_text: Optional[str] = None,
+        sample_text: str | None = None,
     ) -> TokenEstimationResult:
         """
         Estimate character count needed for target token count.

@@ -2,6 +2,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
+from .graph_schema import ApplicationIdentifierSchema, PlatformType
+
 
 class DatasetRequestSchema(BaseModel):
     dataset_name: str
@@ -19,16 +21,11 @@ class DatasetRequestSchema(BaseModel):
     )
 
 
-class ApplicationIdentifierSchema(BaseModel):
-    tenantIdentifier: int
-    applicationIdentifier: int
-
-
 class DatasetRunConfigSchema(BaseModel):
     endpoint: str | None = None
     uuid: UUID | str | None = None
     applicationIdentifier: ApplicationIdentifierSchema | None = None
-    platform: str | None = None
+    platform: PlatformType | None = None
     context: dict | None = None
     parameters: dict | None = None
 

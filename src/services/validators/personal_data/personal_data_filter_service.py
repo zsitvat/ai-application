@@ -28,7 +28,7 @@ class PersonalDataFilterService:
 
         self.logger.info("Filtering personal data from text...")
 
-        model = await get_chat_model(
+        model = get_chat_model(
             provider=config.model.provider,
             model=config.model.name,
             deployment=config.model.deployment,

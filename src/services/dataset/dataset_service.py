@@ -27,6 +27,7 @@ class DatasetService:
         self.client = Client()
         self.background_tasks = set()
 
+    # Public methods
     def create_dataset(
         self, name: str, description: str | None, test_cases: list[dict]
     ) -> dict:
@@ -50,43 +51,47 @@ class DatasetService:
                 dataset_name=name, description=description or f"Test dataset: {name}"
             )
 
-            self.client.create_examples(dataset_id=dataset.id, examples=test_cases)
+            if test_cases:
+                self._update_test_cases(dataset.id, test_cases)
 
-            return {
+            result = {
                 "id": str(dataset.id),
                 "name": dataset.name,
                 "description": dataset.description,
-                "test_cases": test_cases,
+                "test_cases_count": len(test_cases) if test_cases else 0,
                 "created_at": (
                     dataset.created_at.isoformat()
                     if dataset.created_at
                     else datetime.now().isoformat()
                 ),
-                "updated_at": (
-                    dataset.modified_at.isoformat()
-                    if dataset.modified_at
-                    else datetime.now().isoformat()
-                ),
+                "url": dataset.url,
+                "tags": dataset.tags,
+                "metadata": dataset.extra,
             }
+
+            self.logger.info(
+                f"Dataset created successfully: {name} with {len(test_cases) if test_cases else 0} test cases"
+            )
+            return result
 
         except Exception as e:
             self.logger.error(f"Error creating dataset {name}: {str(e)}")
             raise DatasetCreationError(f"Failed to create dataset: {str(e)}")
 
     def get_dataset(self, dataset_name: str) -> dict:
-        """Retrieve a dataset by name from LangSmith.
+        """Get dataset information from LangSmith.
 
         Args:
             dataset_name: The name of the dataset to retrieve
 
         Returns:
-            Dictionary containing dataset information and test cases
+            Dictionary containing dataset information
 
         Raises:
             DatasetNotFoundError: If dataset is not found
         """
         try:
-            self.logger.info(f"Getting dataset: {dataset_name}")
+            self.logger.info(f"Retrieving dataset: {dataset_name}")
 
             datasets = self.client.list_datasets(dataset_name=dataset_name)
             dataset_list = list(datasets)
@@ -98,81 +103,68 @@ class DatasetService:
 
             examples = list(self.client.list_examples(dataset_id=dataset.id))
 
-            test_cases = []
-            for example in examples:
-                test_case = {
-                    "inputs": example.inputs,
-                    "outputs": example.outputs,
-                    "metadata": example.metadata or {},
-                }
-                test_cases.append(test_case)
-
-            return {
+            result = {
                 "id": str(dataset.id),
                 "name": dataset.name,
                 "description": dataset.description,
-                "test_cases": test_cases,
+                "test_cases_count": len(examples),
+                "test_cases": [
+                    {
+                        "id": str(example.id),
+                        "inputs": example.inputs,
+                        "outputs": example.outputs,
+                        "metadata": example.metadata,
+                        "created_at": (
+                            example.created_at.isoformat()
+                            if example.created_at
+                            else None
+                        ),
+                    }
+                    for example in examples
+                ],
                 "created_at": (
-                    dataset.created_at.isoformat()
-                    if dataset.created_at
-                    else datetime.now().isoformat()
+                    dataset.created_at.isoformat() if dataset.created_at else None
                 ),
-                "updated_at": (
-                    dataset.modified_at.isoformat()
-                    if dataset.modified_at
-                    else datetime.now().isoformat()
+                "modified_at": (
+                    dataset.modified_at.isoformat() if dataset.modified_at else None
                 ),
+                "url": dataset.url,
+                "tags": dataset.tags,
+                "metadata": dataset.extra,
             }
 
+            self.logger.info(
+                f"Dataset retrieved successfully: {dataset_name} with {len(examples)} test cases"
+            )
+            return result
+
+        except DatasetNotFoundError:
+            raise
         except Exception as e:
-            self.logger.error(f"Error getting dataset {dataset_name}: {str(e)}")
-            raise DatasetNotFoundError(f"Failed to get dataset: {str(e)}")
-
-    def _prepare_examples_from_test_cases(self, test_cases: list[dict]) -> list[dict]:
-        """Convert test cases to LangSmith example format."""
-        examples = []
-        for test_case in test_cases:
-            example = {
-                "inputs": test_case.get("inputs", {}),
-                "outputs": test_case.get("outputs", {}),
-                "metadata": test_case.get("metadata", {}),
-            }
-            if "input" in test_case:
-                example["inputs"] = {"question": test_case["input"]}
-            if "expected_output" in test_case:
-                example["outputs"] = {"answer": test_case["expected_output"]}
-
-            examples.append(example)
-        return examples
-
-    def _update_test_cases(self, dataset_id: str, test_cases: list[dict]):
-        """Replace all examples in a LangSmith dataset with new ones."""
-        existing_examples = list(self.client.list_examples(dataset_id=dataset_id))
-        for example in existing_examples:
-            self.client.delete_example(example.id)
-
-        examples = self._prepare_examples_from_test_cases(test_cases)
-        self.client.create_examples(dataset_id=dataset_id, examples=examples)
+            self.logger.error(f"Error retrieving dataset {dataset_name}: {str(e)}")
+            raise DatasetNotFoundError(f"Failed to retrieve dataset: {str(e)}")
 
     def update_dataset(
         self,
         dataset_name: str,
+        name: str | None = None,
         description: str | None = None,
         test_cases: list[dict] | None = None,
     ) -> dict:
         """Update an existing dataset in LangSmith.
 
         Args:
-            dataset_name: The name of the dataset to update
-            description: Optional new description (warning: not fully supported by LangSmith)
-            test_cases: Optional new test cases to replace existing ones
+            dataset_name: The current name of the dataset
+            name: New name for the dataset (optional)
+            description: New description for the dataset (optional)
+            test_cases: New test cases to replace existing ones (optional)
 
         Returns:
             Dictionary containing updated dataset information
 
         Raises:
             DatasetNotFoundError: If dataset is not found
-            DatasetUpdateError: If update operation fails
+            DatasetUpdateError: If update fails
         """
         try:
             self.logger.info(f"Updating dataset: {dataset_name}")
@@ -185,129 +177,23 @@ class DatasetService:
 
             dataset = dataset_list[0]
 
-            if description is not None:
-                self.logger.warning(
-                    "Description update not directly supported by LangSmith SDK"
+            if name or description:
+                self.client.update_dataset(
+                    dataset_id=dataset.id,
+                    name=name or dataset.name,
+                    description=description or dataset.description,
                 )
 
             if test_cases is not None:
                 self._update_test_cases(dataset.id, test_cases)
 
-            return self.get_dataset(dataset_name)
+            return self.get_dataset(name or dataset_name)
 
         except DatasetNotFoundError:
             raise
         except Exception as e:
             self.logger.error(f"Error updating dataset {dataset_name}: {str(e)}")
             raise DatasetUpdateError(f"Failed to update dataset: {str(e)}")
-
-    async def _call_graph_api(
-        self, question: str, config: DatasetRunConfigSchema | dict | None
-    ) -> tuple[str | None, bool, str | None]:
-        """Call the graph API and return the response, success status, and error if any."""
-        try:
-            if hasattr(config, "model_dump"):
-                config_dict = config.model_dump()
-            else:
-                config_dict = config or {}
-
-            if "endpoint" in config_dict and config_dict["endpoint"]:
-                endpoint_url = config_dict["endpoint"]
-                request_data = {"question": question}
-            else:
-                port = os.getenv("PORT")
-                base_url = f"http://localhost:{port}"
-                endpoint_url = f"{base_url}/api/graph"
-                graph_request = RestOperationPostSchema(
-                    uuid=config_dict.get("uuid", str(uuid4())),
-                    applicationIdentifier=config_dict.get("applicationIdentifier"),
-                    platform=config_dict.get("platform", "dataset_evaluation"),
-                    user_input=question,
-                    context=config_dict.get("context"),
-                    parameters=config_dict.get("parameters"),
-                )
-                request_data = graph_request.model_dump()
-
-            async with httpx.AsyncClient(timeout=300.0) as client:
-                response = await client.post(
-                    endpoint_url,
-                    json=request_data,
-                    headers={"Content-Type": "application/json"},
-                )
-
-                if response.status_code == 200:
-                    return response.text.strip().strip('"'), True, None
-                else:
-                    error = f"HTTP {response.status_code}: {response.text}"
-                    return None, False, error
-
-        except Exception as e:
-            return None, False, str(e)
-
-    def _extract_question_from_test_case(
-        self, test_case: dict, index: int
-    ) -> str | None:
-        """Extract question from test case, handling both input formats."""
-        if "inputs" in test_case and "question" in test_case["inputs"]:
-            return test_case["inputs"]["question"]
-        elif "input" in test_case:
-            return test_case["input"]
-        else:
-            self.logger.warning(f"No question found in test case {index}")
-            return None
-
-    def _create_result_dict(
-        self,
-        index: int,
-        question: str,
-        test_case: dict,
-        actual_output: str | None,
-        success: bool,
-        error: str | None = None,
-    ) -> dict:
-        """Create a result dictionary for a test case."""
-        result = {
-            "test_case_index": index,
-            "input": question,
-            "expected_output": test_case.get(
-                "outputs", test_case.get("expected_output")
-            ),
-            "actual_output": actual_output,
-            "success": success,
-            "metadata": test_case.get("metadata", {}),
-        }
-
-        if error:
-            result["error"] = error
-
-        return result
-
-    def _create_llm_function(self, config: DatasetRunConfigSchema | dict | None):
-        """Create a function that calls our API endpoint."""
-
-        def llm_function(inputs):
-            question = inputs.get("question", "")
-            if not question:
-                return {"answer": "No question provided"}
-
-            try:
-                import asyncio
-
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                actual_output, success, error = loop.run_until_complete(
-                    self._call_graph_api(question, config)
-                )
-                loop.close()
-
-                if success:
-                    return {"answer": actual_output}
-                else:
-                    return {"answer": f"Error: {error}"}
-            except Exception as e:
-                return {"answer": f"Error: {str(e)}"}
-
-        return llm_function
 
     def run_dataset(
         self,
@@ -357,6 +243,218 @@ class DatasetService:
             self.logger.error(f"Error starting dataset run {dataset_name}: {str(e)}")
             raise DatasetRunError(f"Failed to start dataset run: {str(e)}")
 
+    def delete_dataset(self, dataset_name: str) -> dict:
+        """Delete a dataset from LangSmith.
+
+        Args:
+            dataset_name: The name of the dataset to delete
+
+        Returns:
+            Dictionary containing confirmation of deletion
+
+        Raises:
+            DatasetNotFoundError: If dataset is not found
+            DatasetUpdateError: If deletion fails
+        """
+        try:
+            self.logger.info(f"Deleting dataset: {dataset_name}")
+
+            datasets = self.client.list_datasets(dataset_name=dataset_name)
+            dataset_list = list(datasets)
+
+            if not dataset_list:
+                raise DatasetNotFoundError(f"Dataset '{dataset_name}' not found")
+
+            dataset = dataset_list[0]
+            self.client.delete_dataset(dataset_id=dataset.id)
+
+            return {
+                "message": f"Dataset '{dataset_name}' successfully deleted",
+                "dataset_name": dataset_name,
+                "deleted_at": datetime.now().isoformat(),
+            }
+
+        except DatasetNotFoundError:
+            raise
+        except Exception as e:
+            self.logger.error(f"Error deleting dataset {dataset_name}: {str(e)}")
+            raise DatasetUpdateError(f"Failed to delete dataset: {str(e)}")
+
+    # Private methods
+    def _prepare_examples_from_test_cases(self, test_cases: list[dict]) -> list[dict]:
+        """Prepare examples from test cases for LangSmith dataset."""
+        examples = []
+        for test_case in test_cases:
+            example = {
+                "inputs": test_case.get("inputs", {}),
+                "outputs": test_case.get(
+                    "outputs", test_case.get("expected_output", {})
+                ),
+                "metadata": test_case.get("metadata", {}),
+            }
+            examples.append(example)
+        return examples
+
+    def _update_test_cases(self, dataset_id: str, test_cases: list[dict]):
+        """Update test cases for a dataset by replacing all existing examples."""
+        examples = self._prepare_examples_from_test_cases(test_cases)
+        for example in examples:
+            self.client.create_example(
+                inputs=example["inputs"],
+                outputs=example["outputs"],
+                dataset_id=dataset_id,
+                metadata=example["metadata"],
+            )
+
+    async def _call_graph_api(
+        self, question: str, config: DatasetRunConfigSchema | dict | None
+    ) -> dict:
+        """Make an HTTP call to the graph API endpoint.
+
+        Args:
+            question: The question to send to the API
+            config: Configuration containing API endpoint and parameters
+
+        Returns:
+            Dictionary containing the API response
+
+        Raises:
+            Exception: If the API call fails
+        """
+        try:
+            # Default configuration
+            default_config = {
+                "url": "http://localhost:8000/api/v1/graph/execute",
+                "timeout": 300,
+                "method": "POST",
+                "headers": {"Content-Type": "application/json"},
+                "app_id": 0,
+                "user_id": "test_user",
+                "parameters": {},
+            }
+
+            # Use provided config or defaults
+            if config:
+                if hasattr(config, "model_dump"):
+                    config_dict = config.model_dump()
+                else:
+                    config_dict = dict(config)
+
+                api_config = {**default_config, **config_dict}
+            else:
+                api_config = default_config
+
+            payload = {
+                "user_input": question,
+                "app_id": api_config.get("app_id", 0),
+                "user_id": api_config.get("user_id", "test_user"),
+                "parameters": api_config.get("parameters", {}),
+            }
+
+            # Add UUID to parameters if provided
+            if "uuid" in api_config:
+                payload["parameters"]["uuid"] = api_config["uuid"]
+
+            self.logger.debug(
+                f"Making API call to {api_config['url']} with payload: {payload}"
+            )
+
+            async with httpx.AsyncClient(
+                timeout=api_config.get("timeout", 300)
+            ) as client:
+                response = await client.post(
+                    api_config["url"],
+                    json=payload,
+                    headers=api_config.get("headers", {}),
+                )
+                response.raise_for_status()
+                return response.json()
+
+        except Exception as e:
+            self.logger.error(f"Error calling graph API: {str(e)}")
+            raise
+
+    def _extract_question_from_test_case(
+        self, test_case: dict, config: DatasetRunConfigSchema | dict | None
+    ) -> str:
+        """Extract the question from a test case based on configuration."""
+        if not test_case:
+            return ""
+
+        question_key = "user_input"
+        if config and hasattr(config, "question_key"):
+            question_key = config.question_key
+        elif config and isinstance(config, dict) and "question_key" in config:
+            question_key = config["question_key"]
+
+        return test_case.get(question_key, "")
+
+    def _create_result_dict(
+        self,
+        question: str,
+        api_response: dict,
+        error: Exception | None = None,
+        config: DatasetRunConfigSchema | dict | None = None,
+    ) -> dict:
+        """Create a standardized result dictionary."""
+        result = {
+            "question": question,
+            "timestamp": datetime.now().isoformat(),
+            "config": config,
+        }
+
+        if error:
+            result.update(
+                {
+                    "success": False,
+                    "error": str(error),
+                    "response": None,
+                }
+            )
+        else:
+            result.update(
+                {
+                    "success": True,
+                    "error": None,
+                    "response": api_response,
+                }
+            )
+
+        return result
+
+    def _create_llm_function(self, config: DatasetRunConfigSchema | dict | None):
+        """Create an LLM function for use with run_on_dataset."""
+
+        def llm_function(inputs):
+            """LLM function that processes inputs and returns outputs."""
+            try:
+                question = self._extract_question_from_test_case(inputs, config)
+
+                if not question:
+                    self.logger.warning(f"No question found in inputs: {inputs}")
+                    return {"error": "No question found in test case"}
+
+                # Use asyncio to call the async API function
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                try:
+                    api_response = loop.run_until_complete(
+                        self._call_graph_api(question, config)
+                    )
+                    return self._create_result_dict(
+                        question, api_response, None, config
+                    )
+                finally:
+                    loop.close()
+
+            except Exception as e:
+                self.logger.error(f"Error in LLM function: {str(e)}")
+                return self._create_result_dict(
+                    question if "question" in locals() else "", {}, e, config
+                )
+
+        return llm_function
+
     async def _run_dataset_background(
         self,
         dataset_name: str,
@@ -403,40 +501,3 @@ class DatasetService:
 
         except Exception as e:
             self.logger.error(f"Error in background dataset run {run_id}: {str(e)}")
-
-    def delete_dataset(self, dataset_name: str) -> dict:
-        """Delete a dataset from LangSmith.
-
-        Args:
-            dataset_name: The name of the dataset to delete
-
-        Returns:
-            Dictionary containing confirmation of deletion
-
-        Raises:
-            DatasetNotFoundError: If dataset is not found
-            DatasetUpdateError: If deletion fails
-        """
-        try:
-            self.logger.info(f"Deleting dataset: {dataset_name}")
-
-            datasets = self.client.list_datasets(dataset_name=dataset_name)
-            dataset_list = list(datasets)
-
-            if not dataset_list:
-                raise DatasetNotFoundError(f"Dataset '{dataset_name}' not found")
-
-            dataset = dataset_list[0]
-            self.client.delete_dataset(dataset_id=dataset.id)
-
-            return {
-                "message": f"Dataset '{dataset_name}' successfully deleted",
-                "dataset_name": dataset_name,
-                "deleted_at": datetime.now().isoformat(),
-            }
-
-        except DatasetNotFoundError:
-            raise
-        except Exception as e:
-            self.logger.error(f"Error deleting dataset {dataset_name}: {str(e)}")
-            raise DatasetUpdateError(f"Failed to delete dataset: {str(e)}")

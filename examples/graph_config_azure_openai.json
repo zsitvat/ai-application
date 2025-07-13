@@ -1,0 +1,142 @@
+{
+    "agents": {
+        "topic_validator": {
+            "enabled": true,
+            "model": {
+                "provider": "azure_openai",
+                "name": "gpt-4o-mini",
+                "deployment": "gpt-4o-mini-deployment"
+            },
+            "allowed_topics": [
+                "work",
+                "career",
+                "job",
+                "professional",
+                "workplace",
+                "employment"
+            ],
+            "rejection_message": "I can only help with work-related topics. Please ask questions about careers, job search, professional development, or workplace matters."
+        },
+        "personal_data_filter": {
+            "enabled": true,
+            "model": {
+                "provider": "azure_openai",
+                "name": "gpt-4o-mini",
+                "deployment": "gpt-4o-mini-deployment"
+            },
+            "sensitive_data_types": [
+                "email",
+                "phone",
+                "ssn",
+                "credit_card",
+                "address",
+                "full_name"
+            ],
+            "action": "mask",
+            "mask_char": "*"
+        },
+        "retriever_agent": {
+            "enabled": true,
+            "chain": {
+                "model": {
+                    "provider": "azure_openai",
+                    "name": "gpt-4o-mini",
+                    "deployment": "gpt-4o-mini-deployment"
+                },
+                "prompt_id": "retriever-agent-prompt",
+                "debug": false
+            },
+            "tool_choice": "auto",
+            "tools": {
+                "retriever": {
+                    "type": "vector_search",
+                    "index_name": "knowledge_base",
+                    "search_type": "mmr",
+                    "search_kwargs": {
+                        "k": 5,
+                        "lambda_mult": 0.5
+                    }
+                }
+            }
+        },
+        "issue_reporter_agent": {
+            "enabled": true,
+            "chain": {
+                "model": {
+                    "provider": "azure_openai",
+                    "name": "gpt-4o-mini",
+                    "deployment": "gpt-4o-mini-deployment"
+                },
+                "prompt_id": "issue-reporter-agent-prompt",
+                "debug": false
+            },
+            "tool_choice": "auto",
+            "tools": {
+                "ticket_creator": {
+                    "type": "issue_tracker",
+                    "priority_levels": [
+                        "low",
+                        "medium",
+                        "high",
+                        "critical"
+                    ],
+                    "categories": [
+                        "technical",
+                        "account",
+                        "billing",
+                        "feature_request",
+                        "bug_report"
+                    ],
+                    "required_fields": [
+                        "description",
+                        "priority",
+                        "category"
+                    ]
+                }
+            }
+        }
+    },
+    "supervisor": {
+        "enabled": true,
+        "chain": {
+            "model": {
+                "provider": "azure_openai",
+                "name": "gpt-4o-mini",
+                "deployment": "gpt-4o-mini-deployment"
+            },
+            "prompt_id": "supervisor-prompt",
+            "debug": false
+        },
+        "tool_choice": "auto",
+        "tools": {}
+    },
+    "exception_chain": {
+        "enabled": true,
+        "chain": {
+            "model": {
+                "provider": "azure_openai",
+                "name": "gpt-4o-mini",
+                "deployment": "gpt-4o-mini-deployment"
+            },
+            "prompt_id": "exception-chain-prompt",
+            "debug": false
+        },
+        "tool_choice": "auto",
+        "tools": {}
+    },
+    "max_input_length": 4000,
+    "chat_memory_db": 0,
+    "chat_memory_index_name": "chat_memory",
+    "chat_memory_type": "redis",
+    "chat_history_max_length": 12,
+    "tags": [
+        "customer_support",
+        "retrieval",
+        "issue_tracking",
+        "workplace_assistant",
+        "azure_openai"
+    ],
+    "enable_checkpointer": true,
+    "checkpointer_type": "redis",
+    "allow_supervisor_finish": true
+}

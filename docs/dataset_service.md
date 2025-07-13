@@ -1,248 +1,180 @@
 # Dataset Service
 
-The Dataset Service provides comprehensive dataset management functionality using LangSmith for creating, managing, and running test datasets against your multi-agent AI system.
+## Overview
 
-## Features
+The Dataset Service is responsible for managing machine learning datasets using LangSmith integration. This service enables dataset creation, execution, and evaluation.
 
-- **Create Datasets**: Create new test datasets with multiple test cases
-- **Retrieve Datasets**: Get existing datasets by name
-- **Update Datasets**: Modify dataset descriptions and test cases
-- **Run Datasets**: Execute test cases against your AI system and collect results
+## Main Components
 
-## Prerequisites
+### DatasetService
 
-1. **LangSmith API Key**: Set your LangSmith API key as an environment variable:
-   ```bash
-   export LANGSMITH_API_KEY="your_langsmith_api_key"
-   ```
+The `DatasetService` class provides the complete spectrum of dataset operations through LangSmith integration.
 
-2. **LangSmith Project**: Configure your LangSmith project in the environment:
-   ```bash
-   export LANGSMITH_PROJECT="your_project_name"
-   ```
+#### Main Features
 
-## API Endpoints
+- **Dataset creation**: Creating new datasets with test data
+- **Dataset execution**: Asynchronous and synchronous execution modes
+- **Evaluation**: Automatic model evaluation on datasets
+- **Background task management**: Handling long-running tasks
+- **Error handling**: Detailed error reporting and exception handling
 
-### Create Dataset
-- **Endpoint**: `POST /api/dataset`
-- **Description**: Creates a new test dataset
-- **Request Body**:
-  ```json
-  {
-    "dataset_name": "my_test_dataset",
-    "description": "Dataset for testing AI responses",
-    "test_cases": [
-      {
-        "input": "What is AI?",
-        "expected_output": "Artificial Intelligence is...",
-        "metadata": {"category": "AI basics"}
-      },
-      {
-        "inputs": {"question": "How does ML work?"},
-        "outputs": {"answer": "Machine Learning works by..."},
-        "metadata": {"category": "ML"}
-      }
-    ]
-  }
-  ```
+## Usage
 
-### Get Dataset
-- **Endpoint**: `GET /api/dataset/{dataset_name}`
-- **Description**: Retrieves a dataset by name
-
-### Update Dataset
-- **Endpoint**: `PATCH /api/dataset/{dataset_name}`
-- **Description**: Updates an existing dataset
-- **Request Body**:
-  ```json
-  {
-    "description": "Updated description",
-    "test_cases": [...]
-  }
-  ```
-
-### Run Dataset
-- **Endpoint**: `POST /api/dataset/{dataset_name}/run`
-- **Description**: Runs test cases against the AI system
-- **Request Body**:
-  ```json
-  {
-    "config": {
-      "model": "gpt-4o-mini",
-      "temperature": 0.1,
-      "max_tokens": 150
-    }
-  }
-  ```
-
-## Test Case Formats
-
-The service supports two test case formats:
-
-### Legacy Format
-```json
-{
-  "input": "Your question here",
-  "expected_output": "Expected answer",
-  "metadata": {"key": "value"}
-}
-```
-
-### LangSmith Format
-```json
-{
-  "inputs": {"question": "Your question here"},
-  "outputs": {"answer": "Expected answer"},
-  "metadata": {"key": "value"}
-}
-```
-
-## Usage Examples
-
-### Python SDK Usage
+### Initialization
 
 ```python
-from services.dataset.dataset_service import DatasetService
+from src.services.dataset.dataset_service import DatasetService
 
-# Initialize service
 dataset_service = DatasetService()
+```
 
-# Create dataset
-dataset = await dataset_service.create_dataset(
-    name="my_dataset",
+### Main Methods
+
+#### `create_dataset(name, description, test_cases)`
+
+Creates a new dataset in LangSmith.
+
+**Parameters:**
+- `name` (str): Dataset name
+- `description` (str|None): Optional description
+- `test_cases` (list[dict]): List of test cases
+
+**Return Value:**
+- Dictionary with dataset information
+
+**Exceptions:**
+- `DatasetCreationError`: Dataset creation error
+
+**Example:**
+```python
+test_cases = [
+    {"input": "What is the capital?", "expected_output": "Budapest"},
+    {"input": "What is 2+2?", "expected_output": "4"}
+]
+
+dataset_info = dataset_service.create_dataset(
+    name="test_dataset",
     description="Test dataset",
-    test_cases=[
-        {
-            "input": "What is machine learning?",
-            "expected_output": "ML is a subset of AI...",
-            "metadata": {"topic": "ML"}
-        }
-    ]
-)
-
-# Run dataset
-results = await dataset_service.run_dataset(
-    dataset_name="my_dataset",
-    config={"model": "gpt-4o-mini"}
+    test_cases=test_cases
 )
 ```
 
-### cURL Examples
+#### `run_dataset_async(dataset_name, run_config)`
 
-#### Create Dataset
-```bash
-curl -X POST http://localhost:5000/api/dataset \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "dataset_name": "test_dataset",
-    "description": "My test dataset",
-    "test_cases": [
-      {
-        "input": "What is AI?",
-        "expected_output": "AI is artificial intelligence",
-        "metadata": {"category": "basics"}
-      }
-    ]
-  }'
+Asynchronous dataset execution in background.
+
+**Parameters:**
+- `dataset_name` (str): Dataset name
+- `run_config` (DatasetRunConfigSchema): Execution configuration
+
+**Return Value:**
+- Dictionary with execution ID and status
+
+**Example:**
+```python
+from schemas.dataset_schema import DatasetRunConfigSchema
+
+run_config = DatasetRunConfigSchema(
+    run_name="test_run",
+    description="Test execution",
+    # additional configuration parameters...
+)
+
+result = await dataset_service.run_dataset_async("test_dataset", run_config)
 ```
 
-#### Get Dataset
-```bash
-curl -X GET http://localhost:5000/api/dataset/test_dataset
-```
+#### `run_dataset_sync(dataset_name, run_config)`
 
-#### Run Dataset
-```bash
-curl -X POST http://localhost:5000/api/dataset/test_dataset/run \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "config": {
-      "model": "gpt-4o-mini",
-      "temperature": 0.1
-    }
-  }'
-```
+Synchronous dataset execution waiting for results.
 
-## Response Formats
+**Parameters:**
+- `dataset_name` (str): Dataset name
+- `run_config` (DatasetRunConfigSchema): Execution configuration
 
-### Dataset Response
-```json
-{
-  "id": "dataset_uuid",
-  "name": "dataset_name",
-  "description": "Dataset description",
-  "test_cases": [...],
-  "created_at": "2025-01-01T00:00:00Z",
-  "updated_at": "2025-01-01T00:00:00Z"
-}
-```
+**Return Value:**
+- Dictionary with execution results
 
-### Run Results Response
-```json
-{
-  "dataset_name": "test_dataset",
-  "run_id": "run_20250101_120000",
-  "config": {...},
-  "results": [
-    {
-      "test_case_index": 0,
-      "input": "What is AI?",
-      "expected_output": "Expected answer",
-      "actual_output": "Actual AI response",
-      "success": true,
-      "metadata": {...}
-    }
-  ],
-  "summary": {
-    "total_tests": 10,
-    "successful_tests": 9,
-    "failed_tests": 1,
-    "success_rate": 0.9
-  },
-  "timestamp": "2025-01-01T12:00:00Z"
-}
+## Configuration Schema
+
+### DatasetRunConfigSchema
+
+```python
+class DatasetRunConfigSchema(BaseModel):
+    run_name: str
+    description: Optional[str]
+    evaluation_config: Optional[dict]
+    concurrency_level: int = 1
+    # additional configuration fields...
 ```
 
 ## Error Handling
 
-The service uses custom exception classes:
+### Custom Exceptions
 
-- `DatasetNotFoundError`: Raised when a dataset doesn't exist
-- `DatasetCreationError`: Raised when dataset creation fails
-- `DatasetUpdateError`: Raised when dataset update fails
-- `DatasetRunError`: Raised when dataset execution fails
+- **DatasetCreationError**: Dataset creation errors
+- **DatasetNotFoundError**: Dataset not found
+- **DatasetUpdateError**: Dataset update errors
+- **DatasetRunError**: Execution errors
 
-## Integration with Multi-Agent System
+### Error Reporting
 
-The `run_dataset` method is designed to integrate with your multi-agent graph system. Currently, it provides a placeholder implementation. To fully integrate:
+- Detailed logging of all operations
+- Stack trace preservation on errors
+- User-friendly error messages
 
-1. Import your graph service in the `run_dataset` method
-2. Process each test case through your multi-agent pipeline
-3. Compare actual outputs with expected outputs
-4. Calculate success metrics
+## Background Task Management
 
-## Best Practices
+The service uses `asyncio.create_task()` to handle background tasks:
 
-1. **Dataset Organization**: Use descriptive names and categories in metadata
-2. **Test Case Design**: Include diverse examples covering edge cases
-3. **Batch Operations**: Use bulk operations for better performance
-4. **Error Handling**: Always handle potential exceptions in your code
-5. **Monitoring**: Use LangSmith's UI to monitor dataset runs and results
+```python
+self.background_tasks = set()
 
-## Environment Variables
-
-Required environment variables:
-- `LANGSMITH_API_KEY`: Your LangSmith API key
-- `LANGSMITH_PROJECT`: Your LangSmith project name (optional)
-- `LANGSMITH_ENDPOINT`: LangSmith endpoint (default: https://api.smith.langchain.com)
-
-## Example Script
-
-Run the example script to see the dataset service in action:
-
-```bash
-cd examples
-python dataset_example.py
+# Starting background task
+task = asyncio.create_task(self._run_dataset_background(...))
+self.background_tasks.add(task)
+task.add_done_callback(self.background_tasks.discard)
 ```
 
-Make sure to set your LangSmith API key before running the example.
+## LangSmith Integration
+
+### Client Configuration
+
+```python
+from langsmith import Client
+
+self.client = Client()
+```
+
+### Supported Operations
+
+- Dataset creation and update
+- Execution start and monitoring
+- Results retrieval
+- Evaluation metrics
+
+## Logging
+
+- **Info level**: Start/end of dataset operations
+- **Debug level**: Detailed execution information
+- **Error level**: Errors and exceptions
+- **Warning level**: Potential issues
+
+## Performance Optimization
+
+- **Asynchronous execution**: For non-blocking operations
+- **Concurrency control**: Limiting parallel executions
+- **Background tasks**: Avoiding UI blocking
+- **Memory management**: Automatic task reference cleanup
+
+## Security Considerations
+
+- **API key management**: LangSmith authentication
+- **Input validation**: Input data verification
+- **Error information filtering**: Hiding internal details
+
+## Dependencies
+
+- `langsmith`: LangSmith Python SDK
+- `langchain.smith.evaluation`: Evaluation tools
+- `asyncio`: Asynchronous programming
+- `uuid4`: Unique identifier generation

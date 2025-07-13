@@ -7,8 +7,9 @@ from langgraph.graph.message import add_messages
 from pydantic import AliasChoices, BaseModel, Field
 from typing_extensions import TypedDict
 
-from schemas.personal_data_filter_schema import PersonalDataFilterRequestSchema
-from schemas.topic_validation_schema import TopicValidationRequestSchema
+from .model_schema import Model
+from .personal_data_filter_schema import PersonalDataFilterRequestSchema
+from .topic_validation_schema import TopicValidationRequestSchema
 
 
 class AgentState(TypedDict):
@@ -27,26 +28,21 @@ class ApplicationIdentifierSchema(BaseModel):
     applicationIdentifier: int | str
 
 
+class PlatformType(str, Enum):
+    GOOGLE_CHAT = "google_chat"
+    VIBER = "viber"
+    FACEBOOK_MESSENGER = "facebook_messenger"
+    LIVECHAT = "livechat"
+    WEBCHAT = "webchat"
+
+
 class RestOperationPostSchema(BaseModel):
     uuid: UUID | str
     applicationIdentifier: ApplicationIdentifierSchema
-    platform: str
+    platform: PlatformType = PlatformType.WEBCHAT
     user_input: str = Field(validation_alias=AliasChoices("user_input", "userInput"))
-    context: dict[str, str] | None = None
+    context: dict[str, str] = {}
     parameters: dict[str, Any] | None = None
-
-
-class ModelProviderType(str, Enum):
-    OPENAI = "openai"
-    AZURE = "azure"
-    ANTHROPIC = "anthropic"
-    BEDROCK = "bedrock"
-
-
-class ModelType(str, Enum):
-    EMBEDDING = "embedding"
-    CHAT = "chat"
-    GENERAL = "general"
 
 
 class CheckpointerType(str, Enum):
@@ -56,16 +52,9 @@ class CheckpointerType(str, Enum):
     CUSTOM = "custom"
 
 
-class Model(BaseModel):
-    provider: ModelProviderType = ModelProviderType.OPENAI
-    deployment: str | None = None
-    name: str | None = "gpt-4o-mini"
-    type: ModelType = ModelType.CHAT
-
-
 class Chain(BaseModel):
     model: Model
-    prompt: str
+    prompt_id: str
     debug: bool = False
 
 

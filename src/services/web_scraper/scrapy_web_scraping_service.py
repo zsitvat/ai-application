@@ -6,7 +6,6 @@ import os
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 from urllib.parse import urlparse
 
 from docx import Document
@@ -18,7 +17,7 @@ from scrapy.http import Request
 from scrapy.linkextractors import LinkExtractor
 from scrapy.spiders import Spider
 
-from src.schemas.graph_schema import Model
+from src.schemas.model_schema import Model
 from src.schemas.web_scraping_schema import OutputType
 from src.services.web_scraper.scraper_config import (
     CONTENT_SELECTORS,
@@ -510,8 +509,8 @@ class ScrapySpider(Spider):
         self,
         start_url: str,
         max_depth: int = 2,
-        allowed_domains: Optional[list] = None,
-        scraping_config: Optional[dict] = None,
+        allowed_domains: list | None = None,
+        scraping_config: dict | None = None,
     ) -> dict:
         """
         Scrape a website starting from the given URL using a subprocess for event loop safety.
@@ -787,8 +786,8 @@ class ScrapySpider(Spider):
         self,
         start_url: str,
         max_depth: int = 1,
-        allowed_domains: Optional[list] = None,
-        scraping_config: Optional[dict] = None,
+        allowed_domains: list | None = None,
+        scraping_config: dict | None = None,
     ) -> dict:
         """
         Run the Scrapy spider in a subprocess for robust event loop isolation.
@@ -902,11 +901,11 @@ class ScrapySpider(Spider):
             provider = embedding_model_config.provider.value
             deployment = embedding_model_config.deployment
             model_name = embedding_model_config.name
-            embedding_model = await get_embedding_model(
+            embedding_model = get_embedding_model(
                 provider=provider, deployment=deployment, model=model_name
             )
         else:
-            embedding_model = await get_embedding_model()
+            embedding_model = get_embedding_model()
 
         redis_config = RedisConfig(
             index_name=vector_db_index,

@@ -24,8 +24,22 @@ async def validate_topic(
 ):
     "Validate if question belongs to acceptable topics."
     try:
+        valid_topics = getattr(request, "allowed_topics", None)
+        model_config = getattr(request, "model", None)
+
+        if not model_config:
+            raise HTTPException(
+                status_code=400,
+                detail="Model configuration is required for topic validation",
+            )
+
         is_valid, topic, reason = await validator_service.validate_topic(
-            question=request.question, user_id=request.user_id
+            question=request.question,
+            model_provider=model_config.provider.value,
+            model_name=model_config.name,
+            model_deployment=model_config.deployment,
+            valid_topics=valid_topics,
+            raise_on_invalid=False,
         )
 
         return TopicValidationResponseSchema(

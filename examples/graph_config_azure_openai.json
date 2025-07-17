@@ -5,7 +5,7 @@
             "model": {
                 "provider": "azure_openai",
                 "name": "gpt-4o-mini",
-                "deployment": "gpt-4o-mini-deployment"
+                "deployment": "chatboss_sweden-central_chat_gpt-4o-mini"
             },
             "allowed_topics": [
                 "work",
@@ -22,7 +22,7 @@
             "model": {
                 "provider": "azure_openai",
                 "name": "gpt-4o-mini",
-                "deployment": "gpt-4o-mini-deployment"
+                "deployment": "chatboss_sweden-central_chat_gpt-4o-mini"
             },
             "sensitive_data_types": [
                 "email",
@@ -41,7 +41,7 @@
                 "model": {
                     "provider": "azure_openai",
                     "name": "gpt-4o-mini",
-                    "deployment": "gpt-4o-mini-deployment"
+                    "deployment": "chatboss_sweden-central_chat_gpt-4o-mini"
                 },
                 "prompt_id": "retriever-agent-prompt",
                 "debug": false
@@ -55,6 +55,11 @@
                     "search_kwargs": {
                         "k": 5,
                         "lambda_mult": 0.5
+                    },
+                    "embedding_model": {
+                        "provider": "azure_openai",
+                        "name": "text-embedding-3-large",
+                        "deployment": "chatboss_sweden-central_embedding_text-embedding-3-large_1"
                     }
                 }
             }
@@ -65,7 +70,7 @@
                 "model": {
                     "provider": "azure_openai",
                     "name": "gpt-4o-mini",
-                    "deployment": "gpt-4o-mini-deployment"
+                    "deployment": "chatboss_sweden-central_chat_gpt-4o-mini"
                 },
                 "prompt_id": "issue-reporter-agent-prompt",
                 "debug": false
@@ -102,7 +107,7 @@
             "model": {
                 "provider": "azure_openai",
                 "name": "gpt-4o-mini",
-                "deployment": "gpt-4o-mini-deployment"
+                "deployment": "chatboss_sweden-central_chat_gpt-4o-mini"
             },
             "prompt_id": "supervisor-prompt",
             "debug": false
@@ -116,7 +121,7 @@
             "model": {
                 "provider": "azure_openai",
                 "name": "gpt-4o-mini",
-                "deployment": "gpt-4o-mini-deployment"
+                "deployment": "chatboss_sweden-central_chat_gpt-4o-mini"
             },
             "prompt_id": "exception-chain-prompt",
             "debug": false

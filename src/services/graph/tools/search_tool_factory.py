@@ -3,7 +3,6 @@ import os
 from schemas.tool_schema import SearchProvider
 
 from .document_link_analyzer_tool import DocumentLinkAnalyzerTool
-from .retriever_tool import create_vector_retriever_tool
 from .web_search_tool import WebSearchTool
 
 

@@ -8,7 +8,6 @@ import aiohttp
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, HttpUrl
 
-from src.schemas.graph_schema import RestOperationPostSchema
 from src.services.data_api.app_settings import AppSettingsService
 from src.services.graph.graph_service import GraphService
 

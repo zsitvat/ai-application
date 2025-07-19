@@ -1,8 +1,6 @@
 import asyncio
 import logging
-import os
 from datetime import datetime
-from uuid import uuid4
 
 import httpx
 from langchain.smith.evaluation import run_on_dataset
@@ -15,7 +13,6 @@ from schemas.dataset_schema import (
     DatasetRunError,
     DatasetUpdateError,
 )
-from schemas.graph_schema import RestOperationPostSchema
 
 
 class DatasetService:

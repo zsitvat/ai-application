@@ -24,7 +24,8 @@ async def validate_topic(
 ):
     "Validate if question belongs to acceptable topics."
     try:
-        valid_topics = getattr(request, "allowed_topics", None)
+        allowed_topics = getattr(request, "allowed_topics", None)
+        invalid_topics = getattr(request, "invalid_topics", None)
         model_config = getattr(request, "model", None)
 
         if not model_config:
@@ -38,7 +39,8 @@ async def validate_topic(
             model_provider=model_config.provider.value,
             model_name=model_config.name,
             model_deployment=model_config.deployment,
-            valid_topics=valid_topics,
+            allowed_topics=allowed_topics,
+            invalid_topics=invalid_topics,
             raise_on_invalid=False,
         )
 

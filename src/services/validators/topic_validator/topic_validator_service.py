@@ -33,7 +33,7 @@ class TopicValidatorService:
         model_provider: str,
         model_name: str,
         model_deployment: str,
-        valid_topics: Optional[list[str]] = None,
+        allowed_topics: Optional[list[str]] = None,
         invalid_topics: Optional[list[str]] = None,
         raise_on_invalid: bool = False,
     ) -> tuple[bool, str, str]:
@@ -57,8 +57,8 @@ class TopicValidatorService:
         """
         self.logger.info(f"Validating topic for question: {question[:50]}...")
 
-        if valid_topics is None:
-            valid_topics = [
+        if allowed_topics is None:
+            allowed_topics = [
                 "work",
                 "career",
                 "job",
@@ -70,33 +70,37 @@ class TopicValidatorService:
         if invalid_topics is None:
             invalid_topics = ["personal", "politics", "religion", "inappropriate"]
 
-        if not valid_topics:
-            raise ValueError("valid_topics must be set and contain at least one topic.")
+        if not allowed_topics:
+            raise ValueError(
+                "allowed_topics must be set and contain at least one topic."
+            )
 
-        valid_set = set(valid_topics)
+        allowed_set = set(allowed_topics)
         invalid_set = set(invalid_topics)
 
-        if valid_set.intersection(invalid_set):
-            raise ValueError("A topic cannot be valid and invalid at the same time.")
+        if allowed_set.intersection(invalid_set):
+            raise ValueError("A topic cannot be allowed and invalid at the same time.")
 
-        if "other" not in invalid_set and "other" not in valid_set:
+        if "other" not in invalid_set and "other" not in allowed_set:
             invalid_set.add("other")
 
-        candidate_topics = list(valid_set.union(invalid_set))
+        candidate_topics = list(allowed_set.union(invalid_set))
 
         try:
             topic = await self._classify_with_llm(
                 question, candidate_topics, model_provider, model_name, model_deployment
             )
 
-            is_valid = topic in valid_topics
+            is_allowed = topic in allowed_topics
 
-            if is_valid:
-                reason = f"Question classified as '{topic}' which is a valid topic."
+            if is_allowed:
+                reason = f"Question classified as '{topic}' which is an allowed topic."
                 self.logger.debug(f"Topic validation passed: {topic}")
                 return True, topic, reason
             else:
-                reason = f"Question classified as '{topic}' which is not a valid topic."
+                reason = (
+                    f"Question classified as '{topic}' which is not an allowed topic."
+                )
                 self.logger.debug(f"Topic validation failed: {topic}")
 
                 if raise_on_invalid:

@@ -11,7 +11,7 @@ from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.checkpoint.redis import RedisSaver
-from langgraph.graph import END, START, StateGraph
+from langgraph.graph import END, StateGraph
 from langgraph.graph.message import add_messages
 
 from src.schemas.graph_schema import (
@@ -25,6 +25,7 @@ from src.schemas.topic_validation_schema import TopicValidationRequestSchema
 from src.services.chat_history.redis_chat_history import RedisChatHistoryService
 from src.services.data_api.app_settings import AppSettingsService
 from src.services.data_api.chat_history import DataChatHistoryService
+from src.services.graph.tools.tools_config import AVAILABLE_TOOLS
 from src.services.validators.personal_data.personal_data_filter_checkpointer import (
     PersonalDataFilterCheckpointer,
 )
@@ -236,6 +237,12 @@ class GraphService:
                     f"Could not load prompt {agent_config.chain.prompt_id}"
                 )
 
+            allowed_tools = {}
+            if hasattr(agent_config, "tools") and isinstance(agent_config.tools, dict):
+                for tool_name, tool_config in agent_config.tools.items():
+                    if tool_name in AVAILABLE_TOOLS:
+                        allowed_tools[tool_name] = tool_config
+
             chain = prompt | llm
             response = await chain.ainvoke({"messages": state["messages"]})
             state["messages"] = add_messages(state["messages"], [response])
@@ -386,7 +393,9 @@ Select one of: {available_options}"""
         enabled_agents = {
             name: agent
             for name, agent in self.graph_config.agents.items()
-            if agent.enabled and not isinstance(agent, TopicValidationRequestSchema)
+            if agent.enabled
+            and name != "topic_validator"
+            and name != "personal_data_filter"
         }
 
         if not enabled_agents and not self.graph_config.allow_supervisor_finish:
@@ -406,24 +415,6 @@ Select one of: {available_options}"""
         if self.graph_config.exception_chain:
             workflow.add_edge("exception_chain", END)
 
-        def should_continue_from_supervisor(
-            state: AgentState,
-        ) -> Literal["FINISH"] | str:
-            if state["next"] == "FINISH":
-                return "FINISH"
-            return state["next"]
-
-        def should_continue_from_topic_validator(
-            state: AgentState,
-        ) -> Literal["supervisor", "exception_chain", "FINISH"]:
-            next_step = state.get("next")
-            if next_step == "exception_chain":
-                return "exception_chain"
-            elif next_step == "FINISH":
-                return "FINISH"
-            else:
-                return "supervisor"
-
         conditional_mapping = {
             agent_name: agent_name for agent_name in enabled_agents.keys()
         }
@@ -433,7 +424,7 @@ Select one of: {available_options}"""
 
         workflow.add_conditional_edges(
             "supervisor",
-            should_continue_from_supervisor,
+            self.should_continue_from_supervisor,
             conditional_mapping,
         )
 
@@ -445,7 +436,7 @@ Select one of: {available_options}"""
 
         workflow.add_conditional_edges(
             "topic_validator",
-            should_continue_from_topic_validator,
+            self.should_continue_from_topic_validator,
             topic_conditional_mapping,
         )
 
@@ -737,3 +728,23 @@ Select one of: {available_options}"""
             state["messages"] = add_messages(state["messages"], [error_message])
             state["next"] = "FINISH"
             return state
+
+    def should_continue_from_supervisor(
+        self, state: AgentState
+    ) -> Literal["FINISH"] | str:
+        """Determine next step after supervisor node."""
+        if state["next"] == "FINISH":
+            return "FINISH"
+        return state["next"]
+
+    def should_continue_from_topic_validator(
+        self, state: AgentState
+    ) -> Literal["supervisor", "exception_chain", "FINISH"]:
+        """Determine next step after topic validator node."""
+        next_step = state.get("next")
+        if next_step == "exception_chain":
+            return "exception_chain"
+        elif next_step == "FINISH":
+            return "FINISH"
+        else:
+            return "supervisor"

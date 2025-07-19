@@ -8,8 +8,6 @@ from pydantic import AliasChoices, BaseModel, Field
 from typing_extensions import TypedDict
 
 from .model_schema import Model
-from .personal_data_filter_schema import PersonalDataFilterRequestSchema
-from .topic_validation_schema import TopicValidationRequestSchema
 
 
 class AgentState(TypedDict):
@@ -77,10 +75,22 @@ class Agent(BaseModel):
     tools: dict[str, dict] = {}
 
 
+class TopicValidatorConfig(BaseModel):
+    enabled: bool = True
+    model: Model
+    allowed_topics: list[str] = []
+    invalid_topics: list[str] = []
+
+
+class PersonalDataFilterConfig(BaseModel):
+    enabled: bool = True
+    model: Model
+    sensitive_data_types: list[str] = []
+    mask_char: str = "*"
+
+
 class GraphConfig(BaseModel):
-    agents: dict[
-        str, Agent | PersonalDataFilterRequestSchema | TopicValidationRequestSchema
-    ]
+    agents: dict[str, Agent | TopicValidatorConfig | PersonalDataFilterConfig]
     supervisor: Agent
     exception_chain: Agent | None = None
     max_input_length: int = -1

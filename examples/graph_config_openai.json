@@ -48,7 +48,7 @@
             },
             "tool_choice": "auto",
             "tools": {
-                "retriever": {
+                "vector_retriever_tool": {
                     "type": "vector_search",
                     "index_name": "knowledge_base",
                     "search_type": "mmr",
@@ -72,7 +72,7 @@
             },
             "tool_choice": "auto",
             "tools": {
-                "ticket_creator": {
+                "issue_tracker_tool": {
                     "type": "issue_tracker",
                     "priority_levels": [
                         "low",
@@ -92,6 +92,30 @@
                         "priority",
                         "category"
                     ]
+                }
+            }
+        },
+        "recruiter_agent": {
+            "enabled": true,
+            "chain": {
+                "model": {
+                    "provider": "openai",
+                    "name": "gpt-4o-mini",
+                    "temperature": 0.25
+                },
+                "prompt_id": "recruiter",
+                "debug": false
+            },
+            "tool_choice": "auto",
+            "tools": {
+                "vector_retriever_tool": {
+                    "type": "vector_search",
+                    "index_name": "knowledge_base",
+                    "search_type": "mmr",
+                    "search_kwargs": {
+                        "k": 30,
+                        "lambda_mult": 0.5
+                    }
                 }
             }
         }

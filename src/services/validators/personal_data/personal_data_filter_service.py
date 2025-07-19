@@ -44,6 +44,7 @@ class PersonalDataFilterService:
             {
                 "role": "user",
                 "content": text,
+                "mask_char": getattr(config, "mask_char", "*"),
             }
         )
 

@@ -1,9 +1,9 @@
 import os
 
+from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain_community.utilities import BingSearchAPIWrapper, SerpAPIWrapper
 from langchain_core.tools import BaseTool
 from langchain_google_community import GoogleSearchAPIWrapper
-from langchain_tavily import TavilySearchResults
 from pydantic import BaseModel, Field
 
 from schemas.tool_schema import SearchProvider, WebSearchToolInput

@@ -12,6 +12,7 @@ class PersonalDataFilterConfigSchema(BaseModel):
 
 class PersonalDataFilterRequestSchema(BaseModel):
     text: str
+    model: Model | None = None
     config: PersonalDataFilterConfigSchema | None = None
     enabled: bool = True
 

@@ -31,13 +31,8 @@ class DocumentService:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
 
-        self.redis_url = (
-            f"redis://{os.getenv('REDIS_USER')}:{os.getenv('REDIS_PASSWORD')}@{os.getenv('REDIS_HOST')}:{os.getenv('REDIS_PORT')}"
-            if os.getenv("REDIS_PASSWORD")
-            else f"redis://{os.getenv('REDIS_HOST')}:{os.getenv('REDIS_PORT')}"
-        )
+        self.redis_url = f"redis://{os.getenv('REDIS_USER')}:{os.getenv('REDIS_PASSWORD')}@{os.getenv('REDIS_HOST')}:{os.getenv('REDIS_PORT')}"
 
-    # Public methods
     async def ingest_documents(
         self,
         model: Model | None,
@@ -69,11 +64,10 @@ class DocumentService:
             deployment = (
                 model.deployment
                 if model and model.deployment
-                else os.getenv("EMBEDDING_DEPLOYMENT", None)
+                else os.getenv("AZURE_EMBEDDING_DEPLOYMENT_NAME", None)
             )
             if deployment is not None:
                 provider = "azure"
-
             else:
                 provider = (
                     model.provider.value
@@ -317,7 +311,6 @@ class DocumentService:
             self.logger.error(f"Error getting retriever: {str(e)}")
             raise e
 
-    # Private methods
     def _is_url(self, string: str) -> bool:
         """Check if a string is a valid URL."""
         try:
@@ -354,12 +347,11 @@ class DocumentService:
             if isinstance(data, list):
                 for i, item in enumerate(data):
                     if isinstance(item, dict):
+
+                        if "content" not in item:
+                            item = dict(item)
+                            item["content"] = json.dumps(item, ensure_ascii=False)
                         content = item.get("content", "")
-                        if not content:
-                            self.logger.warning(
-                                f"Document {i} in {filename} has no 'content' key or empty content"
-                            )
-                            content = json.dumps(item, indent=2)
 
                         metadata = {
                             "filename": filename,

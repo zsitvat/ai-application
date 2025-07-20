@@ -19,6 +19,9 @@ from src.schemas.graph_schema import (
     AgentState,
     CheckpointerType,
     GraphConfig,
+    Model,
+    TopicValidatorConfig,
+    PersonalDataFilterConfig,
 )
 from src.schemas.personal_data_filter_schema import PersonalDataFilterRequestSchema
 from src.schemas.topic_validation_schema import TopicValidationRequestSchema
@@ -456,7 +459,7 @@ Select one of: {available_options}"""
                 redis_client = redis.Redis(
                     host=os.getenv("REDIS_HOST"),
                     port=int(os.getenv("REDIS_PORT")),
-                    db=int(os.getenv("REDIS_DB")),
+                    db=int(os.getenv("REDIS_HISTORY_DB")),
                     password=os.getenv("REDIS_PASSWORD"),
                     decode_responses=True,
                 )
@@ -630,7 +633,7 @@ Select one of: {available_options}"""
         for name, agent_config in self.graph_config.agents.items():
             if (
                 name == "personal_data_filter"
-                and isinstance(agent_config, PersonalDataFilterRequestSchema)
+                and isinstance(agent_config, PersonalDataFilterConfig)
                 and agent_config.enabled
             ):
                 return agent_config
@@ -651,8 +654,9 @@ Select one of: {available_options}"""
 
             topic_validator_service = TopicValidatorService()
 
-            valid_topics = getattr(topic_validation_config, "allowed_topics", None)
-            model_config = getattr(topic_validation_config, "model", None)
+            allowed_topics = getattr(topic_validation_config, "allowed_topics", None)
+            invalid_topics = getattr(topic_validation_config, "invalid_topics", None)
+            model_config: Model = getattr(topic_validation_config, "model", None)
 
             if not model_config:
                 raise ValueError("Topic validation model configuration is required")
@@ -662,7 +666,8 @@ Select one of: {available_options}"""
                 model_provider=model_config.provider.value,
                 model_name=model_config.name,
                 model_deployment=model_config.deployment,
-                valid_topics=valid_topics,
+                allowed_topics=allowed_topics,
+                invalid_topics=invalid_topics,
                 raise_on_invalid=False,
             )
 

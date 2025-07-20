@@ -84,7 +84,7 @@ class TopicValidatorConfig(BaseModel):
 
 class PersonalDataFilterConfig(BaseModel):
     enabled: bool = True
-    model: Model
+    chain: Chain
     sensitive_data_types: list[str] = []
     mask_char: str = "*"
 

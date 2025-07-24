@@ -20,11 +20,9 @@ from src.schemas.graph_schema import (
     CheckpointerType,
     GraphConfig,
     Model,
-    TopicValidatorConfig,
     PersonalDataFilterConfig,
+    TopicValidatorConfig,
 )
-from src.schemas.personal_data_filter_schema import PersonalDataFilterRequestSchema
-from src.schemas.topic_validation_schema import TopicValidationRequestSchema
 from src.services.chat_history.redis_chat_history import RedisChatHistoryService
 from src.services.data_api.app_settings import AppSettingsService
 from src.services.data_api.chat_history import DataChatHistoryService
@@ -603,7 +601,7 @@ Select one of: {available_options}"""
         for name, agent_config in self.graph_config.agents.items():
             if (
                 name == "topic_validator"
-                and isinstance(agent_config, TopicValidationRequestSchema)
+                and isinstance(agent_config, TopicValidatorConfig)
                 and agent_config.enabled
             ):
                 return agent_config

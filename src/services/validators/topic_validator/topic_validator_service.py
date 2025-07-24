@@ -24,7 +24,7 @@ class TopicValidatorService:
 
     def __init__(self):
         self.logger = logging.getLogger(__name__)
-        self._default_prompt = """Classify the following text '{text}' into one of these topics: {topics}. 
+        self._default_prompt = """Classify the following text '{text}' into one of these topics: {topics}.
         Format the response as JSON with the following schema: ```json {{"topic": "most_relevant_topic"}}```"""
 
     async def validate_topic(

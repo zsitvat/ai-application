@@ -1,5 +1,3 @@
-
-
 # Recruiter AI App
 
 Ez az alkalmazás egy több ügynökből álló mesterséges intelligencia rendszer, amely dokumentumokat, webes adatokat és egyéb forrásokat képes feldolgozni, keresni és szűrni. A rendszer támogatja a vektoralapú adatbázist, személyes adatok maszkolását, webes keresést, valamint graf-alapú workflow-t.
@@ -50,3 +48,53 @@ További részletek és példák a `/docs` végponton (FastAPI automatikus dokum
 ---
 
 Indítás előtt győződj meg róla, hogy minden szükséges környezeti változót beállítottál, és a függőségek telepítve vannak (`poetry install`).
+
+
+## LangGraph Studio használata (lokális fejlesztéshez)
+
+A LangGraph Studio segítségével vizuálisan tesztelheted és fejlesztheted a LangGraph-alapú alkalmazásodat.
+
+### 1. Telepítsd a LangGraph CLI-t (ha még nincs):
+
+```bash
+pip install -U "langgraph-cli[inmem]"
+```
+
+vagy Poetry-vel:
+
+```bash
+poetry add langgraph-cli[inmem]
+```
+
+### 2. Indítsd el a LangGraph fejlesztői szervert:
+
+```bash
+langgraph dev
+```
+
+Ha Safari böngészőt használsz, vagy problémád van a localhost eléréssel, indítsd a szervert a következőképp:
+
+```bash
+langgraph dev --tunnel
+```
+
+### 3. Nyisd meg a LangGraph Studio-t böngészőben:
+
+Látogasd meg ezt a címet:
+
+https://smith.langchain.com/studio/?baseUrl=http://127.0.0.1:2024
+
+Ha más porton vagy hoston fut a szerver, módosítsd a `baseUrl` paramétert ennek megfelelően.
+
+További információ: [LangGraph Studio Quickstart](https://langchain-ai.github.io/langgraph/cloud/how-tos/studio/quick_start/#local-development-server)
+
+#### (Opcionális) Debugger csatlakoztatása
+
+Ha lépésenként szeretnéd debuggolni az alkalmazást:
+
+```bash
+pip install debugpy
+langgraph dev --debug-port 5678
+```
+
+Ezután VS Code-ban vagy más IDE-ben csatlakozhatsz a 5678-as portra.

@@ -28,6 +28,7 @@ class DatasetService:
     def create_dataset(
         self, name: str, description: str | None, test_cases: list[dict]
     ) -> dict:
+        self.logger.info(f"[DatasetService|create_dataset] started (name={name})")
         """Create a new dataset in LangSmith.
 
         Args:
@@ -69,13 +70,18 @@ class DatasetService:
             self.logger.info(
                 f"Dataset created successfully: {name} with {len(test_cases) if test_cases else 0} test cases"
             )
+            self.logger.info(f"[DatasetService|create_dataset] finished (name={name})")
             return result
 
         except Exception as e:
             self.logger.error(f"Error creating dataset {name}: {str(e)}")
+            self.logger.info(f"[DatasetService|create_dataset] finished (name={name})")
             raise DatasetCreationError(f"Failed to create dataset: {str(e)}")
 
     def get_dataset(self, dataset_name: str) -> dict:
+        self.logger.info(
+            f"[DatasetService|get_dataset] started (dataset_name={dataset_name})"
+        )
         """Get dataset information from LangSmith.
 
         Args:
@@ -133,12 +139,21 @@ class DatasetService:
             self.logger.info(
                 f"Dataset retrieved successfully: {dataset_name} with {len(examples)} test cases"
             )
+            self.logger.info(
+                f"[DatasetService|get_dataset] finished (dataset_name={dataset_name})"
+            )
             return result
 
         except DatasetNotFoundError:
+            self.logger.info(
+                f"[DatasetService|get_dataset] finished (dataset_name={dataset_name})"
+            )
             raise
         except Exception as e:
             self.logger.error(f"Error retrieving dataset {dataset_name}: {str(e)}")
+            self.logger.info(
+                f"[DatasetService|get_dataset] finished (dataset_name={dataset_name})"
+            )
             raise DatasetNotFoundError(f"Failed to retrieve dataset: {str(e)}")
 
     def update_dataset(
@@ -148,6 +163,9 @@ class DatasetService:
         description: str | None = None,
         test_cases: list[dict] | None = None,
     ) -> dict:
+        self.logger.info(
+            f"[DatasetService|update_dataset] started (dataset_name={dataset_name})"
+        )
         """Update an existing dataset in LangSmith.
 
         Args:
@@ -184,12 +202,21 @@ class DatasetService:
             if test_cases is not None:
                 self._update_test_cases(dataset.id, test_cases)
 
+            self.logger.info(
+                f"[DatasetService|update_dataset] finished (dataset_name={dataset_name})"
+            )
             return self.get_dataset(name or dataset_name)
 
         except DatasetNotFoundError:
+            self.logger.info(
+                f"[DatasetService|update_dataset] finished (dataset_name={dataset_name})"
+            )
             raise
         except Exception as e:
             self.logger.error(f"Error updating dataset {dataset_name}: {str(e)}")
+            self.logger.info(
+                f"[DatasetService|update_dataset] finished (dataset_name={dataset_name})"
+            )
             raise DatasetUpdateError(f"Failed to update dataset: {str(e)}")
 
     def run_dataset(

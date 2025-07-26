@@ -6,38 +6,29 @@ import os
 from functools import partial
 from typing import Any, AsyncGenerator, Literal
 
-import redis
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langgraph.checkpoint.memory import InMemorySaver
-from langgraph.checkpoint.redis import RedisSaver
+from langgraph.checkpoint.redis.aio import AsyncRedisSaver
 from langgraph.graph import END, StateGraph
 from langgraph.graph.message import add_messages
 
-from src.schemas.graph_schema import (
-    Agent,
-    AgentState,
-    CheckpointerType,
-    GraphConfig,
-    Model,
-    PersonalDataFilterConfig,
-    TopicValidatorConfig,
-)
-from src.services.chat_history.redis_chat_history import RedisChatHistoryService
-from src.services.data_api.app_settings import AppSettingsService
-from src.services.data_api.chat_history import DataChatHistoryService
-from src.services.graph.tools.tools_config import AVAILABLE_TOOLS
-from src.services.validators.personal_data.personal_data_filter_checkpointer import (
+from schemas.graph_schema import Agent, AgentState, CheckpointerType, GraphConfig, Model
+from services.chat_history.redis_chat_history import RedisChatHistoryService
+from services.data_api.app_settings import AppSettingsService
+from services.data_api.chat_history import DataChatHistoryService
+from services.graph.tools.tools_config import AVAILABLE_TOOLS
+from services.validators.personal_data.personal_data_filter_checkpointer import (
     PersonalDataFilterCheckpointer,
 )
-from src.services.validators.personal_data.personal_data_filter_service import (
+from services.validators.personal_data.personal_data_filter_service import (
     PersonalDataFilterService,
 )
-from src.services.validators.topic_validator.topic_validator_service import (
+from services.validators.topic_validator.topic_validator_service import (
     TopicValidatorService,
 )
-from src.utils.get_prompt import get_prompt_by_type
-from src.utils.select_model import get_chat_model
+from utils.get_prompt import get_prompt_by_type
+from utils.select_model import get_chat_model
 
 
 class GraphService:
@@ -48,6 +39,11 @@ class GraphService:
         self.app_settings_service = app_settings_service
         self.graph_config: GraphConfig | None = None
         self.workflow = None
+
+        self.redis_history_db = os.getenv("REDIS_HISTORY_DB")
+        self.redis_url = f"redis://{os.getenv('REDIS_PASSWORD') + '@' if os.getenv('REDIS_PASSWORD') else ''}{os.getenv('REDIS_HOST')}:{os.getenv('REDIS_PORT')}{'/' + self.redis_history_db if self.redis_history_db else ''}"
+        self.tracer_type = os.getenv("TRACER_TYPE", "langsmith")
+        os.environ["REDIS_URL"] = self.redis_url
 
     async def execute_graph(
         self,
@@ -70,12 +66,11 @@ class GraphService:
         Returns:
             str: Generated response from agents
         """
+
         self.logger.info(
-            f"Graph execution started for app_id: {app_id}, user_id: {user_id}"
+            f"[GraphService|execute_graph] started (app_id={app_id}, user_id={user_id})"
         )
         try:
-            self.logger.debug(f"Executing graph for user_input: {user_input}")
-
             user_input = await self._prepare_graph_execution(
                 app_id, parameters, user_input
             )
@@ -88,19 +83,27 @@ class GraphService:
                 parameters=parameters or {},
             )
 
+            recursion_limit = getattr(self.graph_config, "recursion_limit", 1)
+
             result = await self.workflow.ainvoke(
-                initial_state, {"configurable": {"thread_id": user_id}}
+                initial_state,
+                {"recursion_limit": recursion_limit, "thread_id": user_id},
             )
 
             final_response = self._generate_final_response(result)
 
             self.logger.info(
-                f"Graph execution completed successfully for app_id: {app_id}"
+                f"[GraphService|execute_graph] finished (app_id={app_id}, user_id={user_id})"
             )
             return final_response
 
         except Exception as ex:
-            self.logger.error(f"Error executing graph: {str(ex)}")
+            self.logger.error(
+                f"[GraphService|execute_graph] error (app_id={app_id}, user_id={user_id}): {str(ex)}"
+            )
+            self.logger.info(
+                f"[GraphService|execute_graph] finished (app_id={app_id}, user_id={user_id})"
+            )
             return await self._handle_execution_error(user_input, str(ex))
 
     async def execute_graph_stream(
@@ -125,12 +128,11 @@ class GraphService:
         Yields:
             str: Token chunks of the final response
         """
+
         self.logger.info(
-            f"Graph streaming execution started for app_id: {app_id}, user_id: {user_id}"
+            f"[GraphService|execute_graph_stream] started (app_id={app_id}, user_id={user_id})"
         )
         try:
-            self.logger.debug(f"Executing streaming graph for user_input: {user_input}")
-
             user_input = await self._prepare_graph_execution(
                 app_id, parameters, user_input
             )
@@ -143,50 +145,62 @@ class GraphService:
                 parameters=parameters or {},
             )
 
+            recursion_limit = getattr(self.graph_config, "recursion_limit", 1)
+
             async for message_chunk, metadata in self.workflow.astream(
                 initial_state,
-                {"configurable": {"thread_id": user_id}},
+                {"recursion_limit": recursion_limit, "thread_id": user_id},
                 stream_mode="messages",
             ):
                 if hasattr(message_chunk, "content") and message_chunk.content:
                     yield message_chunk.content
 
             self.logger.info(
-                f"Graph streaming execution completed successfully for app_id: {app_id}"
+                f"[GraphService|execute_graph_stream] finished (app_id={app_id}, user_id={user_id})"
             )
 
         except Exception as ex:
-            self.logger.error(f"Error executing streaming graph: {str(ex)}")
+            self.logger.error(
+                f"[GraphService|execute_graph_stream] error (app_id={app_id}, user_id={user_id}): {str(ex)}"
+            )
+            self.logger.info(
+                f"[GraphService|execute_graph_stream] finished (app_id={app_id}, user_id={user_id})"
+            )
             error_response = await self._handle_execution_error(user_input, str(ex))
             yield error_response
 
-    def get_compiled_workflow(self, app_id: int, parameters: dict | None = None):
-        """Get the compiled workflow for LangGraph Studio integration."""
-        self.logger.info(f"Getting compiled workflow for app_id: {app_id}")
+    async def get_compiled_workflow(self, app_id: int, parameters: dict | None = None):
+        """Get the compiled workflow for LangGraph Studio integration (async)."""
+
+        self.logger.info(
+            f"[GraphService|get_compiled_workflow] started (app_id={app_id})"
+        )
         try:
-            loop = asyncio.get_event_loop()
-            if loop.is_running():
-                loop.run_until_complete(
-                    self._load_graph_configuration(app_id, parameters)
-                )
-            else:
-                asyncio.run(self._load_graph_configuration(app_id, parameters))
+            await self._load_graph_configuration(app_id, parameters)
 
             if not self.workflow:
                 workflow_builder = self._build_workflow()
-                checkpointer = self._create_checkpointer()
+                checkpointer = await self._create_checkpointer()
                 self.workflow = workflow_builder.compile(checkpointer=checkpointer)
 
-            self.logger.info(f"Compiled workflow ready for app_id: {app_id}")
+            self.logger.info(
+                f"[GraphService|get_compiled_workflow] finished (app_id={app_id})"
+            )
             return self.workflow
         except Exception as ex:
-            self.logger.error(f"Error getting compiled workflow: {str(ex)}")
+            self.logger.error(
+                f"[GraphService|get_compiled_workflow] error (app_id={app_id}): {str(ex)}"
+            )
+            self.logger.info(
+                f"[GraphService|get_compiled_workflow] finished (app_id={app_id})"
+            )
             raise
 
     async def _load_graph_configuration(
         self, app_id: int, parameters: dict[str, Any] | None = None
     ) -> None:
         """Load graph configuration from app settings and parameters."""
+
         try:
             graph_config_data = None
 
@@ -206,17 +220,20 @@ class GraphService:
                 )
 
             self.logger.debug(
-                f"Loaded graph config with {len(self.graph_config.agents)} agents"
+                f"[GraphService] Loaded graph config with {len(self.graph_config.agents)} agents for app_id: {app_id}"
             )
 
         except Exception as ex:
-            self.logger.error(f"Error loading graph configuration: {str(ex)}")
+            self.logger.error(
+                f"[GraphService] Error loading graph configuration for app_id: {app_id}, error: {str(ex)}"
+            )
             raise
 
     async def _agent_node(
         self, state: AgentState, agent_name: str, agent_config: Agent
     ) -> AgentState:
         """Handle agent node execution."""
+
         try:
             llm = get_chat_model(
                 provider=agent_config.chain.model.provider.value,
@@ -224,19 +241,9 @@ class GraphService:
                 model=agent_config.chain.model.name,
             )
 
-            tracer_type = os.getenv("TRACER_TYPE", "langsmith")
-            try:
-                dynamic_prompt = await get_prompt_by_type(
-                    prompt_id=agent_config.chain.prompt_id, tracer_type=tracer_type
-                )
-                prompt = dynamic_prompt
-            except Exception as e:
-                self.logger.error(
-                    f"Failed to load prompt {agent_config.chain.prompt_id} from {tracer_type}: {str(e)}"
-                )
-                raise ValueError(
-                    f"Could not load prompt {agent_config.chain.prompt_id}"
-                )
+            prompt = await get_prompt_by_type(
+                prompt_id=agent_config.chain.prompt_id, tracer_type=self.tracer_type
+            )
 
             allowed_tools = {}
             if hasattr(agent_config, "tools") and isinstance(agent_config.tools, dict):
@@ -244,15 +251,60 @@ class GraphService:
                     if tool_name in AVAILABLE_TOOLS:
                         allowed_tools[tool_name] = tool_config
 
-            chain = prompt | llm
+            chain = prompt | llm.bind_tools(allowed_tools)
             response = await chain.ainvoke({"messages": state["messages"]})
-            state["messages"] = add_messages(state["messages"], [response])
 
-            self.logger.debug(f"Agent {agent_name} completed processing")
+            tool_result_message = None
+            tool_call = None
+            tool_name = None
+            tool_args = None
+
+            if hasattr(response, "tool_calls") and response.tool_calls:
+                tool_call = response.tool_calls[0]
+                tool_name = tool_call.get("name")
+                tool_args = tool_call.get("args", {})
+
+            elif response.additional_kwargs.get("function_call"):
+                try:
+                    fc = response.additional_kwargs["function_call"]
+                    tool_name = fc.get("name")
+                    tool_args = json.loads(fc.get("arguments", "{}"))
+                except Exception:
+                    tool_name = None
+                    tool_args = None
+
+            if tool_name and tool_name in allowed_tools:
+                tool_func = allowed_tools[tool_name].get("function")
+                if callable(tool_func):
+                    try:
+
+                        if asyncio.iscoroutinefunction(tool_func):
+                            tool_result = await tool_func(**tool_args)
+                        else:
+                            tool_result = tool_func(**tool_args)
+                        tool_result_message = AIMessage(
+                            content=f"Tool '{tool_name}' result: {tool_result}"
+                        )
+                    except Exception as tool_ex:
+                        tool_result_message = AIMessage(
+                            content=f"Tool '{tool_name}' error: {tool_ex}"
+                        )
+
+            state["messages"] = add_messages(state["messages"], [response])
+            if tool_result_message:
+                state["messages"] = add_messages(
+                    state["messages"], [tool_result_message]
+                )
+
+            self.logger.debug(
+                f"[GraphService] Agent node '{agent_name}' completed processing."
+            )
             return state
 
         except Exception as ex:
-            self.logger.error(f"Error in agent {agent_name}: {str(ex)}")
+            self.logger.error(
+                f"[GraphService] Error in agent node '{agent_name}': {str(ex)}"
+            )
 
             error_message = AIMessage(
                 content=f"Agent {agent_name} encountered an error: {str(ex)}"
@@ -260,14 +312,15 @@ class GraphService:
             state["messages"] = add_messages(state["messages"], [error_message])
             return state
 
-    def _build_supervisor_prompt(self, available_options: list[str]) -> str:
+    def _build_supervisor_prompt(
+        self, available_options: list[str], last_agent=None
+    ) -> str:
         """Build the system prompt for the supervisor."""
+
         agent_descriptions = []
         for name, agent in self.graph_config.agents.items():
             if agent.enabled:
-                agent_descriptions.append(
-                    f"- {name}: prompt_id={agent.chain.prompt_id}"
-                )
+                agent_descriptions.append(f"- {name}")
 
         system_prompt_ending = ""
         if self.graph_config.allow_supervisor_finish:
@@ -275,10 +328,21 @@ class GraphService:
         else:
             system_prompt_ending = "Based on the user input and conversation history, decide which agent should handle this next. You must select one of the available agents."
 
+        last_agent_str = (
+            f"\nThe last agent selected was: {last_agent}."
+            if last_agent
+            else "No last agent selected."
+        )
+
         return f"""You are a supervisor managing a team of AI agents. Your job is to decide which agent should handle the user's request{"" if not self.graph_config.allow_supervisor_finish else " or if the task is complete"}.
 
 Available agents and their capabilities:
 {chr(10).join(agent_descriptions)}
+
+Important: Avoid recursion. Do not select the same agent repeatedly in a loop, so check the conversation history.
+If the same agent was just called, prefer choosing a different agent or FINISH if appropriate.
+If the answer from the last agent was not satisfactory, you can choose a different agent to try again, but do not choose the same one.
+{last_agent_str}
 
 {system_prompt_ending}
 
@@ -306,6 +370,7 @@ Select one of: {available_options}"""
 
     def _extract_next_agent_from_response(self, response) -> str | None:
         """Extract the next agent from LLM response."""
+
         if response.additional_kwargs.get("function_call"):
             return json.loads(
                 response.additional_kwargs["function_call"]["arguments"]
@@ -329,7 +394,7 @@ Select one of: {available_options}"""
                 enabled_agents = [
                     name
                     for name, agent in self.graph_config.agents.items()
-                    if agent.enabled
+                    if (agent.enabled and isinstance(agent, Agent))
                 ]
 
                 if not enabled_agents:
@@ -342,7 +407,9 @@ Select one of: {available_options}"""
                     available_options.append("FINISH")
 
                 function_def = self._build_function_definition(available_options)
-                system_prompt = self._build_supervisor_prompt(available_options)
+                system_prompt = self._build_supervisor_prompt(
+                    available_options, state.get("last_agent")
+                )
 
                 prompt = ChatPromptTemplate.from_messages(
                     [
@@ -371,20 +438,41 @@ Select one of: {available_options}"""
 
                 state["next"] = next_agent
 
-                self.logger.debug(f"Supervisor decided next action: {state['next']}")
+                agent_name = None
+                if response.additional_kwargs.get("function_call"):
+                    try:
+                        agent_name = json.loads(
+                            response.additional_kwargs["function_call"]["arguments"]
+                        ).get("chain", None)
+                    except Exception:
+                        agent_name = None
+                elif response.tool_calls:
+                    agent_name = (
+                        response.tool_calls[0].get("args", {}).get("chain", None)
+                    )
+                state["last_agent"] = agent_name
+
+                self.logger.debug(
+                    f"[GraphService] Supervisor node decided next action: {state['next']}. State: {state}"
+                )
                 return state
 
             except Exception as ex:
-                self.logger.error(f"Error in supervisor: {str(ex)}")
+                self.logger.error(
+                    f"[GraphService] Error in supervisor node: {str(ex)}. State: {state}"
+                )
                 raise
 
         return supervisor_node
 
     def _build_workflow(self) -> StateGraph:
         """Build the LangGraph workflow with supervisor pattern."""
+
         workflow = StateGraph(AgentState)
 
-        workflow.add_node("topic_validator", self._topic_validator_node)
+        topic_validator_config = getattr(self.graph_config, "topic_validator", None)
+        if topic_validator_config and getattr(topic_validator_config, "enabled", False):
+            workflow.add_node("topic_validator", self._topic_validator_node)
 
         workflow.add_node("supervisor", self._create_supervisor_node())
 
@@ -394,9 +482,7 @@ Select one of: {available_options}"""
         enabled_agents = {
             name: agent
             for name, agent in self.graph_config.agents.items()
-            if agent.enabled
-            and name != "topic_validator"
-            and name != "personal_data_filter"
+            if agent.enabled and isinstance(agent, Agent)
         }
 
         if not enabled_agents and not self.graph_config.allow_supervisor_finish:
@@ -435,18 +521,21 @@ Select one of: {available_options}"""
             "FINISH": END,
         }
 
-        workflow.add_conditional_edges(
-            "topic_validator",
-            self.should_continue_from_topic_validator,
-            topic_conditional_mapping,
-        )
-
-        workflow.set_entry_point("topic_validator")
+        if topic_validator_config and getattr(topic_validator_config, "enabled", False):
+            workflow.add_conditional_edges(
+                "topic_validator",
+                self.should_continue_from_topic_validator,
+                topic_conditional_mapping,
+            )
+            workflow.set_entry_point("topic_validator")
+        else:
+            workflow.set_entry_point("supervisor")
 
         return workflow
 
-    def _create_checkpointer(self):
-        """Create checkpointer based on configuration."""
+    async def _create_checkpointer(self):
+        """Create checkpointer based on configuration (async version)."""
+
         checkpointer_type = self.graph_config.checkpointer_type
         base_checkpointer = None
 
@@ -454,17 +543,19 @@ Select one of: {available_options}"""
             base_checkpointer = InMemorySaver()
         elif checkpointer_type == CheckpointerType.REDIS:
             try:
-                redis_client = redis.Redis(
-                    host=os.getenv("REDIS_HOST"),
-                    port=int(os.getenv("REDIS_PORT")),
-                    db=int(os.getenv("REDIS_HISTORY_DB")),
-                    password=os.getenv("REDIS_PASSWORD"),
-                    decode_responses=True,
-                )
-                base_checkpointer = RedisSaver(redis_client)
+                if (
+                    not hasattr(self, "_async_redis_saver")
+                    or self._async_redis_saver is None
+                ):
+                    async with AsyncRedisSaver.from_conn_string(
+                        redis_url=self.redis_url
+                    ) as saver:
+                        await saver.asetup()
+                        self._async_redis_saver = saver
+                base_checkpointer = self._async_redis_saver
             except Exception as ex:
                 self.logger.warning(
-                    f"Failed to create Redis checkpointer: {ex}, falling back to memory"
+                    f"[GraphService] Failed to create AsyncRedisSaver: {ex}, falling back to memory"
                 )
                 base_checkpointer = InMemorySaver()
         elif checkpointer_type == CheckpointerType.DATA:
@@ -474,16 +565,14 @@ Select one of: {available_options}"""
                 module_path, class_name = (
                     self.graph_config.custom_checkpointer_class.rsplit(".", 1)
                 )
-
                 module = importlib.import_module(module_path)
                 checkpointer_class = getattr(module, class_name)
-
                 base_checkpointer = checkpointer_class()
             else:
                 base_checkpointer = RedisChatHistoryService()
         else:
             self.logger.warning(
-                f"Unknown checkpointer type: {checkpointer_type}, falling back to memory"
+                f"[GraphService] Unknown checkpointer type: {checkpointer_type}, falling back to memory"
             )
             base_checkpointer = InMemorySaver()
 
@@ -507,6 +596,7 @@ Select one of: {available_options}"""
         Prepare graph for execution by loading config and validating input.
         If the input exceeds max length, it will be truncated.
         """
+
         await self._load_graph_configuration(app_id, parameters)
 
         if not self.graph_config or not self.graph_config.agents:
@@ -518,44 +608,48 @@ Select one of: {available_options}"""
         ):
             user_input = user_input[: self.graph_config.max_input_length]
             self.logger.debug(
-                f"User input truncated to {self.graph_config.max_input_length} characters"
+                f"[GraphService] User input truncated to {self.graph_config.max_input_length} characters for app_id: {app_id}"
             )
 
         if not self.workflow:
             workflow_builder = self._build_workflow()
-
-            checkpointer = self._create_checkpointer()
+            checkpointer = await self._create_checkpointer()
             self.workflow = workflow_builder.compile(checkpointer=checkpointer)
 
         return user_input
 
     def _generate_final_response(self, result: AgentState) -> str:
         """Generate the final response from agent results."""
-        if result["messages"] and len(result["messages"]) > 1:
-            last_message = result["messages"][-1]
-            if hasattr(last_message, "content"):
-                final_response = last_message.content
-            else:
-                final_response = str(last_message)
+
+        final_response = None
+        if result["messages"]:
+            for msg in reversed(result["messages"]):
+                if hasattr(msg, "content") and msg.content:
+                    final_response = msg.content
+                    break
+            if final_response is None:
+                final_response = str(result["messages"][-1])
         else:
             final_response = "No response generated from agents."
 
-        self.logger.debug("Graph execution completed successfully")
+        self.logger.debug(
+            "[GraphService] Graph execution completed successfully. Final result: %s",
+            result,
+        )
         return final_response
 
     async def _handle_execution_error(self, user_input: str, error_message: str) -> str:
         """Handle execution errors, potentially using exception chain."""
-        if (
-            hasattr(self, "graph_config")
-            and self.graph_config
-            and self.graph_config.exception_chain
-        ):
+
+        if self.graph_config and self.graph_config.exception_chain:
             try:
                 return await self._handle_exception_with_chain(
                     user_input, error_message
                 )
             except Exception as chain_error:
-                self.logger.error(f"Exception chain also failed: {str(chain_error)}")
+                self.logger.error(
+                    f"[GraphService] Exception chain also failed for user_input: {user_input}, error: {str(chain_error)}"
+                )
 
         return f"Error executing multi-agent workflow: {error_message}"
 
@@ -563,6 +657,7 @@ Select one of: {available_options}"""
         self, user_input: str, error_message: str
     ) -> str:
         """Handle exceptions using the configured exception chain."""
+
         try:
             llm = get_chat_model(
                 provider=self.graph_config.exception_chain.chain.model.provider.value,
@@ -570,50 +665,42 @@ Select one of: {available_options}"""
                 model=self.graph_config.exception_chain.chain.model.name,
             )
 
-            tracer_type = os.getenv("TRACER_TYPE", "langsmith")
-            try:
-                dynamic_prompt = await get_prompt_by_type(
-                    prompt_id=self.graph_config.exception_chain.chain.prompt_id,
-                    tracer_type=tracer_type,
-                )
-                context = f"User input: {user_input}\nError: {error_message}"
-                prompt = dynamic_prompt.partial(context=context)
-            except Exception as e:
-                self.logger.error(
-                    f"Failed to load exception chain prompt {self.graph_config.exception_chain.chain.prompt_id} from {tracer_type}: {str(e)}"
-                )
-                raise ValueError(
-                    f"Could not load exception chain prompt {self.graph_config.exception_chain.chain.prompt_id}"
-                )
+            prompt = await get_prompt_by_type(
+                prompt_id=self.graph_config.exception_chain.chain.prompt_id,
+                tracer_type=self.tracer_type,
+            )
+            context = f"User input: {user_input}\nError: {error_message}"
+            prompt = prompt.partial(context=context)
 
             chain = prompt | llm
-            response = await chain.ainvoke({})
+            response = await chain.ainvoke(user_input)
 
-            self.logger.debug("Exception handled by exception chain")
+            self.logger.debug(
+                f"[GraphService] Exception handled by exception chain for user_input: {user_input}, error: {error_message}"
+            )
             return response.content
 
         except Exception as ex:
-            self.logger.error(f"Exception chain failed: {str(ex)}")
+            self.logger.error(
+                f"[GraphService] Exception chain failed for user_input: {user_input}, error: {str(ex)}"
+            )
             raise
 
     def _find_topic_validation_config(self):
-        """Find topic validation configuration from agents."""
-        for name, agent_config in self.graph_config.agents.items():
-            if (
-                name == "topic_validator"
-                and isinstance(agent_config, TopicValidatorConfig)
-                and agent_config.enabled
-            ):
-                return agent_config
+        """Return topic validator config if enabled, else None."""
+        config = getattr(self.graph_config, "topic_validator", None)
+        if config and getattr(config, "enabled", False):
+            return config
         return None
 
     def _handle_invalid_topic(self, state: AgentState, reason: str) -> AgentState:
         """Handle when topic validation fails."""
+
         if self.graph_config.exception_chain:
             state["next"] = "exception_chain"
             state["error_context"] = f"Topic validation failed: {reason}"
             self.logger.debug(
-                f"Question rejected by topic validator, routing to exception chain. Reason: {reason}"
+                f"[GraphService] Question rejected by topic validator, routing to exception chain. Reason: {reason}, State: {state}"
             )
         else:
             error_message = AIMessage(
@@ -622,32 +709,34 @@ Select one of: {available_options}"""
             state["messages"] = add_messages(state["messages"], [error_message])
             state["next"] = "FINISH"
             self.logger.debug(
-                f"Question rejected by topic validator, no exception chain available. Reason: {reason}"
+                f"[GraphService] Question rejected by topic validator, no exception chain available. Reason: {reason}, State: {state}"
             )
         return state
 
     def _find_personal_data_filter_config(self):
-        """Find personal data filter configuration from agents."""
-        for name, agent_config in self.graph_config.agents.items():
-            if (
-                name == "personal_data_filter"
-                and isinstance(agent_config, PersonalDataFilterConfig)
-                and agent_config.enabled
-            ):
-                return agent_config
+        """Return personal data filter config if enabled, else None."""
+        config = getattr(self.graph_config, "personal_data_filter", None)
+        if config and getattr(config, "enabled", False):
+            return config
         return None
 
     async def _topic_validator_node(self, state: AgentState) -> AgentState:
         """Topic validator node logic."""
+
         try:
             topic_validation_config = self._find_topic_validation_config()
 
             if not topic_validation_config:
-                self.logger.debug("Topic validation is disabled, skipping validation")
+                self.logger.debug(
+                    "[GraphService] Topic validation is disabled, skipping validation. State: %s",
+                    state,
+                )
                 return state
 
             if not state["user_input"]:
-                self.logger.warning("No user input found for topic validation")
+                self.logger.warning(
+                    f"[GraphService] No user input found for topic validation. State: {state}"
+                )
                 return state
 
             topic_validator_service = TopicValidatorService()
@@ -670,17 +759,21 @@ Select one of: {available_options}"""
             )
 
             self.logger.debug(
-                f"Topic validation result: valid={is_valid}, topic={topic}, reason={reason}"
+                f"[GraphService] Topic validation result: valid={is_valid}, topic={topic}, reason={reason}, State: {state}"
             )
 
             if not is_valid:
                 return self._handle_invalid_topic(state, reason)
 
-            self.logger.debug("Topic validation passed, proceeding to supervisor")
+            self.logger.debug(
+                f"[GraphService] Topic validation passed, proceeding to supervisor. State: {state}"
+            )
             return state
 
         except Exception as ex:
-            self.logger.error(f"Error in topic validator: {str(ex)}")
+            self.logger.error(
+                f"[GraphService] Error in topic validator: {str(ex)}. State: {state}"
+            )
             if self.graph_config.exception_chain:
                 state["next"] = "exception_chain"
                 state["error_context"] = f"Topic validation error: {str(ex)}"
@@ -689,53 +782,61 @@ Select one of: {available_options}"""
 
     async def _exception_chain_node(self, state: AgentState) -> AgentState:
         """Exception chain node for handling errors and invalid inputs."""
+        error_context = state.get("error_context", "General error occurred")
         try:
-            error_context = state.get("error_context", "General error occurred")
-
             llm = get_chat_model(
                 provider=self.graph_config.exception_chain.chain.model.provider.value,
                 deployment=self.graph_config.exception_chain.chain.model.deployment,
                 model=self.graph_config.exception_chain.chain.model.name,
             )
+        except Exception as ex:
+            self.logger.error(
+                f"[GraphService] Error getting LLM for exception chain: {str(ex)}. State: {state}"
+            )
+            return self._handle_exception_chain_fallback(state)
 
-            tracer_type = os.getenv("TRACER_TYPE", "langsmith")
-            try:
-                dynamic_prompt = await get_prompt_by_type(
-                    prompt_id=self.graph_config.exception_chain.chain.prompt_id,
-                    tracer_type=tracer_type,
-                )
-                context = f"User input: {state['user_input']}\nContext: {error_context}"
-                prompt = dynamic_prompt.partial(context=context)
-            except Exception as e:
-                self.logger.error(
-                    f"Failed to load exception chain prompt {self.graph_config.exception_chain.chain.prompt_id} from {tracer_type}: {str(e)}"
-                )
-                raise ValueError(
-                    f"Could not load exception chain prompt {self.graph_config.exception_chain.chain.prompt_id}"
-                )
+        prompt = None
+        try:
+            prompt = await get_prompt_by_type(
+                prompt_id=self.graph_config.exception_chain.chain.prompt_id,
+                tracer_type=self.tracer_type,
+            )
+            context = f"User input: {state['user_input']}\nContext: {error_context}"
+            prompt = prompt.partial(context=context)
+        except Exception as e:
+            self.logger.error(
+                f"Failed to load exception chain prompt {self.graph_config.exception_chain.chain.prompt_id} from {self.tracer_type}: {str(e)}"
+            )
+            return self._handle_exception_chain_fallback(state)
 
+        try:
             chain = prompt | llm
             response = await chain.ainvoke({"messages": state["messages"]})
-
             state["messages"] = add_messages(state["messages"], [response])
             state["next"] = "FINISH"
-
-            self.logger.debug("Exception chain handled the error")
-            return state
-
-        except Exception as ex:
-            self.logger.error(f"Error in exception chain: {str(ex)}")
-            error_message = AIMessage(
-                content="I apologize, but I'm unable to process your request at this time. Please try again later."
+            self.logger.debug(
+                f"[GraphService] Exception chain node handled the error. State: {state}"
             )
-            state["messages"] = add_messages(state["messages"], [error_message])
-            state["next"] = "FINISH"
             return state
+        except Exception as ex:
+            self.logger.error(
+                f"[GraphService] Error in exception chain node: {str(ex)}. State: {state}"
+            )
+            return self._handle_exception_chain_fallback(state)
+
+    def _handle_exception_chain_fallback(self, state: AgentState) -> AgentState:
+        error_message = AIMessage(
+            content="I apologize, but I'm unable to process your request at this time. Please try again later."
+        )
+        state["messages"] = add_messages(state["messages"], [error_message])
+        state["next"] = "FINISH"
+        return state
 
     def should_continue_from_supervisor(
         self, state: AgentState
     ) -> Literal["FINISH"] | str:
         """Determine next step after supervisor node."""
+
         if state["next"] == "FINISH":
             return "FINISH"
         return state["next"]
@@ -744,6 +845,7 @@ Select one of: {available_options}"""
         self, state: AgentState
     ) -> Literal["supervisor", "exception_chain", "FINISH"]:
         """Determine next step after topic validator node."""
+
         next_step = state.get("next")
         if next_step == "exception_chain":
             return "exception_chain"

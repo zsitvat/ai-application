@@ -5,7 +5,7 @@ from typing import Optional
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 
-from src.utils.select_model import get_chat_model
+from utils.select_model import get_chat_model
 
 
 class InvalidTopicException(Exception):
@@ -57,18 +57,15 @@ class TopicValidatorService:
         """
         self.logger.info(f"Validating topic for question: {question[:50]}...")
 
-        if allowed_topics is None:
-            allowed_topics = [
-                "work",
-                "career",
-                "job",
-                "professional",
-                "workplace",
-                "employment",
-            ]
-
         if invalid_topics is None:
-            invalid_topics = ["personal", "politics", "religion", "inappropriate"]
+            invalid_topics = [
+                "personal",
+                "politics",
+                "religion",
+                "inappropriate",
+                "programming",
+                "other",
+            ]
 
         if not allowed_topics:
             raise ValueError(

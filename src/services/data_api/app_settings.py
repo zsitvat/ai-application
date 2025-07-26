@@ -11,7 +11,7 @@ class DataApiException(Exception):
 class AppSettingsService:
 
     async def get_app_settings(self, app_id):
-        """Get app settings from data api"""
+        """Get app settings from data ap[A-Z]"""
 
         base = os.environ.get("DATA_API_BASE_URL")
         path = os.environ.get("DATA_API_APP_SETTINGS_ROUTE_PATH").format(
@@ -43,7 +43,7 @@ class AppSettingsService:
             raise DataApiException(error_msg) from ex
 
     async def get_app_settings_by_key(self, key: str):
-        """Get app settings from data api"""
+        """Get app settings from data ap[A-Z]"""
 
         base = os.environ.get("DATA_API_BASE_URL")
         path = os.environ.get("DATA_API_APP_SETTINGS_ROUTE_PATH")

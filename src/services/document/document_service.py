@@ -42,6 +42,9 @@ class DocumentService:
         chunk_overlap: int,
         index_schema: list[dict] = None,
     ) -> tuple[bool, str, list[str], list[str]]:
+        self.logger.info(
+            f"[DocumentService|ingest_documents] started (vector_db_index={vector_db_index})"
+        )
         """
         Process and ingest documents into vector database.
 
@@ -151,6 +154,9 @@ class DocumentService:
                     )
 
             if not documents:
+                self.logger.info(
+                    f"[DocumentService|ingest_documents] finished (vector_db_index={vector_db_index})"
+                )
                 return (
                     False,
                     "No documents were successfully processed",
@@ -191,6 +197,9 @@ class DocumentService:
                 f"Successfully ingested {chunk_count} chunks from {len(processed_files)} files into {vector_db_index}"
             )
 
+            self.logger.info(
+                f"[DocumentService|ingest_documents] finished (vector_db_index={vector_db_index})"
+            )
             return (
                 True,
                 f"Successfully processed {len(processed_files)} files into {chunk_count} chunks",
@@ -200,6 +209,9 @@ class DocumentService:
 
         except Exception as e:
             self.logger.error(f"Error ingesting documents: {str(e)}")
+            self.logger.info(
+                f"[DocumentService|ingest_documents] finished (vector_db_index={vector_db_index})"
+            )
             return (
                 False,
                 f"Error ingesting documents: {str(e)}",
@@ -249,7 +261,7 @@ class DocumentService:
     async def get_retriever(
         self,
         index_name: str,
-        model: Model,
+        model: Model = None,
         index_schema: list[dict] = None,
         search_kwargs: dict | None = None,
     ):

@@ -1,3 +1,7 @@
+from langchain_core.tools import tool
+
+
+@tool
 def create_issue_tracker_tool(
     name="issue_tracker",
     description="Categorize and save issues using LLM.",

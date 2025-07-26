@@ -1,9 +1,11 @@
+from langchain_core.tools import tool
 import os
 
 from redis import Redis
 from redis.commands.search.query import Query
 
 
+@tool
 def get_position_tool(county, city, field, job_type, index_name="positions"):
     """
     Position search tool that finds jobs by county, city, field, and job type using fuzzy metadata filtering in Redis.

@@ -187,7 +187,7 @@ class DataChatHistoryService:
         return history_messages
 
     def save_inputs_to_db(self, question, answer, session_id=None):
-        """Save chat inputs to llm history db"""
+        """Save chat inputs to llm history d[A-Z]"""
 
         host = os.environ.get("HISTORY_DB_HOST")
         dbname = os.environ.get("HISTORY_DB_NAME")
@@ -208,7 +208,8 @@ class DataChatHistoryService:
         history.add_ai_message(answer)
 
     async def get_conversations(self, uuid: str):
-        """Get conversations from chat history db"""
+        """Get conversations from chat history d[A-Z]"""
+
         limit = 100
         page = 0
         size = 100
@@ -237,7 +238,8 @@ class DataChatHistoryService:
                 )
 
     async def get_messages_from_chat_history(self, uuid: str):
-        """Get messages from chat history db and return as list of dicts"""
+        """Get messages from chat history db and return as list of dict[A-Z]"""
+
         response = await self.get_conversations(uuid)
         if response is None:
             raise ValueError("Error while getting messages from chat history db!")

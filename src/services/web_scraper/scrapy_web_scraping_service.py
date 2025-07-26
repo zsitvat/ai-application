@@ -17,14 +17,14 @@ from scrapy.http import Request
 from scrapy.linkextractors import LinkExtractor
 from scrapy.spiders import Spider
 
-from src.schemas.model_schema import Model
-from src.schemas.web_scraping_schema import OutputType
-from src.services.web_scraper.scraper_config import (
+from schemas.model_schema import Model
+from schemas.web_scraping_schema import OutputType
+from services.web_scraper.scraper_config import (
     CONTENT_SELECTORS,
     EXCLUDED_SELECTORS,
     IGNORED_EXTENSIONS,
 )
-from src.utils.select_model import get_embedding_model
+from utils.select_model import get_embedding_model
 
 
 def install_reactor():
@@ -115,10 +115,14 @@ class ScrapySpider(Spider):
             full_content += "\n".join(content_parts[:200])
 
             self.scraped_data[response.url] = full_content
-            self.logger.info(f"Successfully scraped content from: {response.url}")
+            self.logger.info(
+                f"[ScrapyWebScrapingService] Successfully scraped content from: {response.url}"
+            )
 
         except Exception as e:
-            self.logger.error(f"Error extracting content from {response.url}: {str(e)}")
+            self.logger.error(
+                f"[ScrapyWebScrapingService] Error extracting content from {response.url}: {str(e)}"
+            )
             self.failed_urls.add(response.url)
 
     def _get_content_with_exclusions(self, response):
@@ -166,9 +170,9 @@ class ScrapySpider(Spider):
         Handle request failures.
         """
         self.logger.error(
-            f"Request failed: {failure.request.url} - {str(failure.value)}"
+            f"[ScrapyWebScrapingService] Request failed: {getattr(failure.request, 'url', 'unknown')} - {getattr(failure.value, '__str__', lambda: str(failure.value))()}"
         )
-        self.failed_urls.add(failure.request.url)
+        self.failed_urls.add(getattr(failure.request, "url", "unknown"))
 
     def _save_scraped_content_to_file(self, output_type: str, output_path: str) -> str:
         """Save scraped content to file based on output type."""
@@ -261,17 +265,21 @@ class ScrapySpider(Spider):
                     doc.add_paragraph("")
 
         doc.save(filename)
-        self.logger.debug(f"Successfully saved DOCX file: {filename}")
+        self.logger.debug(
+            f"[ScrapyWebScrapingService] Successfully saved DOCX file: {filename}"
+        )
         return filename
 
     def _try_register_local_font(self, font_name, font_path):
         """Try to register a local TTF font."""
         try:
             pdfmetrics.registerFont(TTFont(font_name, str(font_path)))
-            self.logger.debug(f"Using font: {font_name}")
+            self.logger.debug(f"[ScrapyWebScrapingService] Using font: {font_name}")
             return font_name
         except Exception as e:
-            self.logger.debug(f"Failed to register font {font_name}: {str(e)}")
+            self.logger.debug(
+                f"[ScrapyWebScrapingService] Failed to register font {font_name}: {str(e)}"
+            )
             return None
 
     def _try_register_cid_font(self, cid_font_name):
@@ -280,7 +288,9 @@ class ScrapySpider(Spider):
 
         try:
             pdfmetrics.registerFont(UnicodeCIDFont(cid_font_name))
-            self.logger.debug(f"Using built-in CID font {cid_font_name}")
+            self.logger.debug(
+                f"[ScrapyWebScrapingService] Using built-in CID font {cid_font_name}"
+            )
             return cid_font_name
         except Exception:
             return None
@@ -304,9 +314,13 @@ class ScrapySpider(Spider):
         if not font_dir.exists():
             try:
                 font_dir.mkdir(parents=True, exist_ok=True)
-                self.logger.debug(f"Created fonts directory: {font_dir}")
+                self.logger.debug(
+                    f"[ScrapyWebScrapingService] Created fonts directory: {font_dir}"
+                )
             except Exception as e:
-                self.logger.error(f"Failed to create fonts directory: {str(e)}")
+                self.logger.error(
+                    f"[ScrapyWebScrapingService] Failed to create fonts directory: {str(e)}"
+                )
 
         if font_dir.exists():
             preferred_result = self._find_preferred_local_font(font_dir)
@@ -316,7 +330,9 @@ class ScrapySpider(Spider):
             for font_file in font_dir.glob("*.ttf"):
                 result = self._try_register_local_font(font_file.stem, font_file)
                 if result:
-                    self.logger.debug(f"Using available font: {result}")
+                    self.logger.debug(
+                        f"[ScrapyWebScrapingService] Using available font: {result}"
+                    )
                     return result
 
         # Try built-in CID fonts with good Unicode support
@@ -324,10 +340,14 @@ class ScrapySpider(Spider):
         for cid_font in cid_fonts:
             result = self._try_register_cid_font(cid_font)
             if result:
-                self.logger.debug(f"Using CID font: {result}")
+                self.logger.debug(
+                    f"[ScrapyWebScrapingService] Using CID font: {result}"
+                )
                 return result
 
-        self.logger.warning("No suitable Unicode font found, using default Helvetica")
+        self.logger.warning(
+            "[ScrapyWebScrapingService] No suitable Unicode font found, using default Helvetica"
+        )
         return "Helvetica"
 
     def _create_pdf_styles(self, font_name):
@@ -387,7 +407,9 @@ class ScrapySpider(Spider):
 
             return Paragraph(escaped_line, content_style)
         except Exception as e:
-            self.logger.warning(f"Error formatting text for PDF: {str(e)}")
+            self.logger.warning(
+                f"[ScrapyWebScrapingService] Error formatting text for PDF: {str(e)}"
+            )
 
             try:
                 sanitized = ""
@@ -402,7 +424,9 @@ class ScrapySpider(Spider):
 
                 return Paragraph(sanitized, content_style)
             except Exception as e2:
-                self.logger.error(f"Complete failure formatting text: {str(e2)}")
+                self.logger.error(
+                    f"[ScrapyWebScrapingService] Complete failure formatting text: {str(e2)}"
+                )
                 return Paragraph("[Text conversion error]", content_style)
 
     def _add_content_to_pdf(self, story, scraped_data, url_style, content_style):
@@ -431,9 +455,13 @@ class ScrapySpider(Spider):
             registered_font = self._register_unicode_font()
             if registered_font:
                 font_name = registered_font
-                self.logger.debug(f"Using font {font_name} for PDF generation")
+                self.logger.debug(
+                    f"[ScrapyWebScrapingService] Using font {font_name} for PDF generation"
+                )
         except Exception as e:
-            self.logger.warning(f"Font registration failed: {str(e)}")
+            self.logger.warning(
+                f"[ScrapyWebScrapingService] Font registration failed: {str(e)}"
+            )
 
         doc = SimpleDocTemplate(
             filename,
@@ -463,7 +491,9 @@ class ScrapySpider(Spider):
         )
 
         doc.build(story)
-        self.logger.debug(f"Successfully saved PDF file: {filename}")
+        self.logger.debug(
+            f"[ScrapyWebScrapingService] Successfully saved PDF file: {filename}"
+        )
         return filename
 
     def _save_as_json(self, output_path, timestamp):
@@ -477,7 +507,9 @@ class ScrapySpider(Spider):
         with open(filename, "w", encoding="utf-8") as f:
             json.dump(json_data, f, ensure_ascii=False, indent=2)
 
-        self.logger.debug(f"Successfully saved JSON file: {filename}")
+        self.logger.debug(
+            f"[ScrapyWebScrapingService] Successfully saved JSON file: {filename}"
+        )
         return filename
 
     def get_scraped_content_as_string(self) -> str:

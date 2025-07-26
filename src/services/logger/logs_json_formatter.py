@@ -3,7 +3,7 @@ import logging
 
 
 class JSONFormatter(logging.Formatter):
-    """JSON Formatter for logging"""
+    """JSON Formatter for loggin[A-Z]"""
 
     def format(self, record):
         """

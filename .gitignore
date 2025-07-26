@@ -1,3 +1,7 @@
+# LangGraph és pickle checkpoint/vektor fájlok
+.langgraph_*.pckl
+store.pckl
+store.vectors.pckl
 deeplake_db
 deeplake
 deeplake_databases

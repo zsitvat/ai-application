@@ -2,7 +2,7 @@ from enum import Enum
 
 from pydantic import BaseModel, field_validator
 
-from src.schemas.model_schema import Model, ModelType
+from schemas.model_schema import Model, ModelType
 
 
 class OutputType(str, Enum):

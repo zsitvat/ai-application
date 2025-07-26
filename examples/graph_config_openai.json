@@ -1,40 +1,5 @@
 {
     "agents": {
-        "topic_validator": {
-            "enabled": true,
-            "model": {
-                "provider": "openai",
-                "name": "gpt-4o-mini",
-                "temperature": 0.1
-            },
-            "allowed_topics": [
-                "work",
-                "career",
-                "job",
-                "professional",
-                "workplace",
-                "employment"
-            ],
-            "rejection_message": "I can only help with work-related topics. Please ask questions about careers, job search, professional development, or workplace matters."
-        },
-        "personal_data_filter": {
-            "enabled": true,
-            "model": {
-                "provider": "openai",
-                "name": "gpt-4o-mini",
-                "temperature": 0.0
-            },
-            "sensitive_data_types": [
-                "email",
-                "phone",
-                "ssn",
-                "credit_card",
-                "address",
-                "full_name"
-            ],
-            "action": "mask",
-            "mask_char": "*"
-        },
         "retriever_agent": {
             "enabled": true,
             "chain": {
@@ -119,6 +84,44 @@
                 }
             }
         }
+    },
+    "topic_validator": {
+        "enabled": true,
+        "model": {
+            "provider": "openai",
+            "name": "gpt-4o-mini",
+            "temperature": 0.1
+        },
+        "allowed_topics": [
+            "work",
+            "career",
+            "job",
+            "professional",
+            "workplace",
+            "employment"
+        ],
+        "rejection_message": "I can only help with work-related topics. Please ask questions about careers, job search, professional development, or workplace matters."
+    },
+    "personal_data_filter": {
+        "enabled": true,
+        "chain": {
+            "model": {
+                "provider": "openai",
+                "name": "gpt-4o-mini",
+                "temperature": 0.0
+            },
+            "prompt_id": "personal-data-filter-prompt",
+            "debug": false
+        },
+        "sensitive_data_types": [
+            "email",
+            "phone",
+            "ssn",
+            "credit_card",
+            "address",
+            "full_name"
+        ],
+        "mask_char": "*"
     },
     "supervisor": {
         "enabled": true,

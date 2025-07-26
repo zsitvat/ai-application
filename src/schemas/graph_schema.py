@@ -15,6 +15,7 @@ class AgentState(TypedDict):
 
     messages: Annotated[list[AnyMessage], add_messages]
     next: str
+    last_agent: str | list | None = None
     user_input: str
     context: dict[str, Any]
     parameters: dict[str, Any]
@@ -90,9 +91,11 @@ class PersonalDataFilterConfig(BaseModel):
 
 
 class GraphConfig(BaseModel):
-    agents: dict[str, Agent | TopicValidatorConfig | PersonalDataFilterConfig]
+    agents: dict[str, Agent]
     supervisor: Agent
     exception_chain: Agent | None = None
+    topic_validator: TopicValidatorConfig | None = None
+    personal_data_filter: PersonalDataFilterConfig | None = None
     max_input_length: int = -1
     chat_memory_db: int | None = None
     chat_memory_index_name: str = "chat_memory"
@@ -102,3 +105,4 @@ class GraphConfig(BaseModel):
     enable_checkpointer: bool = True
     checkpointer_type: CheckpointerType = CheckpointerType.MEMORY
     allow_supervisor_finish: bool = True
+    recursion_limit: int = 3

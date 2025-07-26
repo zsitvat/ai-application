@@ -8,8 +8,8 @@ import aiohttp
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, HttpUrl
 
-from src.services.data_api.app_settings import AppSettingsService
-from src.services.graph.graph_service import GraphService
+from services.data_api.app_settings import AppSettingsService
+from services.graph.graph_service import GraphService
 
 router = APIRouter(tags=["Graph Config Loader"])
 
@@ -87,14 +87,20 @@ async def execute_graph_with_config(
 
     try:
         config_source = str(request.config_source)
-        logger.info(f"Loading graph configuration from: {config_source}")
+        logger.info(
+            f"[GraphConfigLoaderRoutes] Loading graph configuration from: {config_source}"
+        )
 
         if config_source.startswith(("http://", "https://")):
             graph_config = await load_config_from_url(config_source)
-            logger.debug(f"Loaded configuration from URL: {config_source}")
+            logger.debug(
+                f"[GraphConfigLoaderRoutes] Loaded configuration from URL: {config_source}"
+            )
         else:
             graph_config = await load_config_from_file(config_source)
-            logger.debug(f"Loaded configuration from file: {config_source}")
+            logger.debug(
+                f"[GraphConfigLoaderRoutes] Loaded configuration from file: {config_source}"
+            )
 
         if not isinstance(graph_config, dict):
             raise ValueError("Configuration must be a JSON object")
@@ -116,6 +122,7 @@ async def execute_graph_with_config(
         )
 
         logger.info(
+            f"[GraphConfigLoaderRoutes] Graph execution started with config_source: {config_source}, request: {request}. "
             f"Graph execution completed successfully with config from: {config_source}"
         )
 
@@ -126,13 +133,15 @@ async def execute_graph_with_config(
         }
 
     except ValueError as e:
-        logger.error(f"Configuration error: {str(e)}")
+        logger.error(f"[GraphConfigLoaderRoutes] Configuration error: {str(e)}")
         raise HTTPException(status_code=400, detail=f"Configuration error: {str(e)}")
     except FileNotFoundError as e:
-        logger.error(f"File not found: {str(e)}")
+        logger.error(f"[GraphConfigLoaderRoutes] File not found: {str(e)}")
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
-        logger.error(f"Unexpected error in graph execution with config: {str(e)}")
+        logger.error(
+            f"[GraphConfigLoaderRoutes] Unexpected error in graph execution with config: {str(e)}"
+        )
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
@@ -147,7 +156,9 @@ async def validate_graph_config(config_source: str):
     logger = logging.getLogger(__name__)
 
     try:
-        logger.info(f"Validating graph configuration from: {config_source}")
+        logger.info(
+            f"[GraphConfigLoaderRoutes] Validating graph configuration from: {config_source}"
+        )
 
         if config_source.startswith(("http://", "https://")):
             graph_config = await load_config_from_url(config_source)
@@ -181,7 +192,9 @@ async def validate_graph_config(config_source: str):
             "max_input_length": graph_config.get("max_input_length", -1),
         }
 
-        logger.info(f"Configuration validation successful for: {config_source}")
+        logger.info(
+            f"[GraphConfigLoaderRoutes] Configuration validation successful for: {config_source}"
+        )
 
         return {
             "valid": True,
@@ -191,7 +204,9 @@ async def validate_graph_config(config_source: str):
         }
 
     except Exception as e:
-        logger.error(f"Configuration validation failed: {str(e)}")
+        logger.error(
+            f"[GraphConfigLoaderRoutes] Configuration validation failed: {str(e)}"
+        )
         return {
             "valid": False,
             "config_source": config_source,

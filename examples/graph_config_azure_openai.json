@@ -1,45 +1,5 @@
 {
     "agents": {
-        "topic_validator": {
-            "enabled": true,
-            "model": {
-                "provider": "azure",
-                "name": "gpt-4o-mini",
-                "deployment": "chatboss_sweden-central_chat_gpt-4o-mini"
-            },
-            "allowed_topics": [
-                "work",
-                "career",
-                "job",
-                "professional",
-                "workplace",
-                "employment"
-            ],
-            "invalid_topics": [
-                "personal",
-                "politics",
-                "religion",
-                "inappropriate",
-                "programing"
-            ]
-        },
-        "personal_data_filter": {
-            "enabled": true,
-            "model": {
-                "provider": "azure",
-                "name": "gpt-4o-mini",
-                "deployment": "chatboss_sweden-central_chat_gpt-4o-mini"
-            },
-            "sensitive_data_types": [
-                "email",
-                "phone",
-                "ssn",
-                "credit_card",
-                "address",
-                "full_name"
-            ],
-            "mask_char": "*"
-        },
         "retriever_agent": {
             "enabled": true,
             "chain": {
@@ -136,6 +96,88 @@
             }
         }
     },
+    "topic_validator": {
+        "enabled": true,
+        "model": {
+            "provider": "azure",
+            "name": "gpt-4o-mini",
+            "deployment": "chatboss_sweden-central_chat_gpt-4o-mini"
+        },
+        "allowed_topics": [
+            "work",
+            "career",
+            "job",
+            "professional",
+            "workplace",
+            "employment",
+            "recruitment",
+            "hiring",
+            "interview",
+            "resume",
+            "cv",
+            "job_search",
+            "job_application",
+            "job_offer",
+            "job_description",
+            "job_requirements",
+            "job_skills",
+            "job_market",
+            "job_trends",
+            "job_industry",
+            "job_roles",
+            "job_titles",
+            "job_levels",
+            "job_salaries",
+            "job_benefits",
+            "job_perks",
+            "job_culture",
+            "job_environment",
+            "job_satisfaction",
+            "smalltalk",
+            "greetings"
+        ],
+        "invalid_topics": [
+            "personal",
+            "politics",
+            "religion",
+            "inappropriate",
+            "programming",
+            "coding",
+            "technical",
+            "math",
+            "science",
+            "history",
+            "geography",
+            "sports",
+            "entertainment",
+            "music",
+            "movies",
+            "games",
+            "books",
+            "art",
+            "literature"
+        ]
+    },
+    "personal_data_filter": {
+        "enabled": true,
+        "chain": {
+            "model": {
+                "provider": "azure",
+                "name": "gpt-4o-mini",
+                "deployment": "chatboss_sweden-central_chat_gpt-4o-mini"
+            },
+            "prompt_id": "personal-data-filter-prompt"
+        },
+        "sensitive_data_types": [
+            "email",
+            "phone",
+            "ssn",
+            "credit_card",
+            "address",
+            "full_name"
+        ],
+        "mask_char": "*"
+    },
     "supervisor": {
         "enabled": true,
         "chain": {
@@ -174,5 +216,6 @@
     ],
     "enable_checkpointer": true,
     "checkpointer_type": "redis",
-    "allow_supervisor_finish": true
+    "allow_supervisor_finish": true,
+    "recursion_limit": 5
 }

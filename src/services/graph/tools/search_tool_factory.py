@@ -1,3 +1,4 @@
+from langchain_core.tools import tool
 import os
 
 from schemas.tool_schema import SearchProvider
@@ -6,6 +7,7 @@ from .document_link_analyzer_tool import DocumentLinkAnalyzerTool
 from .web_search_tool import WebSearchTool
 
 
+@tool
 def create_google_search_tool(
     api_key: str | None = None, cse_id: str | None = None, k: int = 5
 ) -> WebSearchTool:
@@ -18,6 +20,7 @@ def create_google_search_tool(
     )
 
 
+@tool
 def create_bing_search_tool(
     subscription_key: str | None = None, search_url: str | None = None, k: int = 5
 ) -> WebSearchTool:
@@ -31,6 +34,7 @@ def create_bing_search_tool(
     )
 
 
+@tool
 def create_serpapi_search_tool(
     api_key: str | None = None,
     engine: str = "google",
@@ -50,6 +54,7 @@ def create_serpapi_search_tool(
     )
 
 
+@tool
 def create_tavily_search_tool(
     api_key: str | None = None,
     topic: str = "general",
@@ -66,6 +71,7 @@ def create_tavily_search_tool(
     )
 
 
+@tool
 def create_document_link_analyzer_tool(
     max_content_length: int = 5000,
     timeout: int = 30,

@@ -20,19 +20,21 @@ class PersonalDataFilterCheckpointer:
         self.personal_data_config = personal_data_config
         self.logger = logger
 
-    # Public methods
-    async def aput(self, config, checkpoint, metadata):
-        """Save checkpoint with personal data filtering."""
-        # Create a deep copy to avoid modifying the original
-        checkpoint_copy = copy.deepcopy(checkpoint)
+    async def aput(self, *args, **kwargs):
+        """Save checkpoint with personal data filtering. Accepts any args to match wrapped checkpointer."""
 
-        if hasattr(checkpoint_copy, "channel_values"):
-            filtered_values = await self._filter_state_data(
-                checkpoint_copy.channel_values
-            )
-            checkpoint_copy.channel_values = filtered_values
+        if len(args) >= 2:
+            checkpoint = args[1]
+            checkpoint_copy = copy.deepcopy(checkpoint)
+            if hasattr(checkpoint_copy, "channel_values"):
+                filtered_values = await self._filter_state_data(
+                    checkpoint_copy.channel_values
+                )
+                checkpoint_copy.channel_values = filtered_values
 
-        return await self.base_checkpointer.aput(config, checkpoint_copy, metadata)
+            args = list(args)
+            args[1] = checkpoint_copy
+        return await self.base_checkpointer.aput(*args, **kwargs)
 
     def put(self, config, checkpoint, metadata):
         """Save checkpoint with personal data filtering (sync version)."""
@@ -47,14 +49,13 @@ class PersonalDataFilterCheckpointer:
     def __getattr__(self, name):
         return getattr(self.base_checkpointer, name)
 
-    # Private methods
     async def _filter_state_data(self, state_data: dict) -> dict:
         """Filter personal data from state before saving to database."""
         if not self.personal_data_config:
             return state_data
 
         try:
-            # Create a deep copy to avoid modifying the original
+
             filtered_state = copy.copy(state_data)
 
             if "messages" in filtered_state and filtered_state["messages"]:

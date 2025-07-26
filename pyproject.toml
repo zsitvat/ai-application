@@ -47,6 +47,7 @@ python-docx = "*"
 openpyxl = "*"
 reportlab = "*"
 scrapy-user-agents = "*"
+langgraph-cli = {extras = ["inmem"], version = "^0.3.6"}
 
 
 [tool.poetry.group.dev.dependencies]

@@ -17,6 +17,7 @@ class SystemService:
 
     # Public methods
     async def health_check(self) -> dict:
+        self.logger.info("[SystemService|health_check] started")
         """
         Perform comprehensive application health check.
 
@@ -26,15 +27,10 @@ class SystemService:
         start_time = time.time()
 
         try:
-
             system_health = await self._check_system_metrics()
-
             env_health = await self._check_environment_variables()
-
             services_health = await self._check_external_services()
-
             response_time = round((time.time() - start_time) * 1000, 2)
-
             overall_status = "healthy"
             if not all(
                 [
@@ -44,7 +40,7 @@ class SystemService:
                 ]
             ):
                 overall_status = "degraded"
-
+            self.logger.info("[SystemService|health_check] finished")
             return {
                 "status": overall_status,
                 "timestamp": datetime.now().isoformat(),
@@ -54,9 +50,9 @@ class SystemService:
                 "environment": env_health,
                 "services": services_health,
             }
-
         except Exception as e:
-            self.logger.error(f"Health check failed: {str(e)}")
+            self.logger.error(f"[SystemService] Health check failed: {str(e)}")
+            self.logger.info("[SystemService|health_check] finished")
             return {
                 "status": "unhealthy",
                 "timestamp": datetime.now().isoformat(),
@@ -73,6 +69,7 @@ class SystemService:
         limit: int = 100,
         page: int = 1,
     ) -> dict:
+        self.logger.info("[SystemService|get_logs] started")
         """
         Retrieve application logs from log files.
 
@@ -177,7 +174,7 @@ class SystemService:
                             continue
 
             except Exception as e:
-                self.logger.error(f"Error reading log file: {str(e)}")
+                self.logger.error(f"[SystemService] Error reading log file: {str(e)}")
                 return {
                     "logs": [],
                     "total_count": 0,
@@ -193,6 +190,7 @@ class SystemService:
             end_idx = start_idx + limit
             paginated_logs = logs[start_idx:end_idx]
 
+            self.logger.info("[SystemService|get_logs] finished")
             return {
                 "logs": paginated_logs,
                 "total_count": total_count,
@@ -204,7 +202,8 @@ class SystemService:
             }
 
         except Exception as e:
-            self.logger.error(f"Error retrieving logs: {str(e)}")
+            self.logger.error(f"[SystemService] Error retrieving logs: {str(e)}")
+            self.logger.info("[SystemService|get_logs] finished")
             return {
                 "logs": [],
                 "total_count": 0,
@@ -263,7 +262,9 @@ class SystemService:
             }
 
         except Exception as e:
-            self.logger.error(f"Error checking system metrics: {str(e)}")
+            self.logger.error(
+                f"[SystemService] Error checking system metrics: {str(e)}"
+            )
             return {
                 "status": "unhealthy",
                 "error": f"Failed to get system metrics: {str(e)}",

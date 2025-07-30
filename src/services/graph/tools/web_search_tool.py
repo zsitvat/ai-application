@@ -1,3 +1,4 @@
+import logging
 import os
 
 from langchain_community.tools.tavily_search import TavilySearchResults
@@ -71,10 +72,11 @@ class WebSearchTool(BaseTool):
         cse_id = self.google_cse_id or os.getenv("GOOGLE_CSE_ID")
 
         if not api_key or not cse_id:
-            raise ValueError(
+            logging.warning(
                 "Google search requires GOOGLE_API_KEY and GOOGLE_CSE_ID. "
                 "Set them as environment variables or pass them to the tool."
             )
+            return
 
         os.environ["GOOGLE_API_KEY"] = api_key
         os.environ["GOOGLE_CSE_ID"] = cse_id
@@ -91,10 +93,11 @@ class WebSearchTool(BaseTool):
         )
 
         if not subscription_key:
-            raise ValueError(
+            logging.warning(
                 "Bing search requires BING_SUBSCRIPTION_KEY. "
                 "Set it as environment variable or pass it to the tool."
             )
+            return
 
         os.environ["BING_SUBSCRIPTION_KEY"] = subscription_key
         os.environ["BING_SEARCH_URL"] = search_url
@@ -106,10 +109,11 @@ class WebSearchTool(BaseTool):
         api_key = self.serpapi_api_key or os.getenv("SERPAPI_API_KEY")
 
         if not api_key:
-            raise ValueError(
+            logging.warning(
                 "SerpAPI search requires SERPAPI_API_KEY. "
                 "Set it as environment variable or pass it to the tool."
             )
+            return
 
         os.environ["SERPAPI_API_KEY"] = api_key
 
@@ -128,10 +132,11 @@ class WebSearchTool(BaseTool):
         api_key = self.tavily_api_key or os.getenv("TAVILY_API_KEY")
 
         if not api_key:
-            raise ValueError(
+            logging.warning(
                 "Tavily search requires TAVILY_API_KEY. "
                 "Set it as environment variable or pass it to the tool."
             )
+            return
 
         os.environ["TAVILY_API_KEY"] = api_key
 

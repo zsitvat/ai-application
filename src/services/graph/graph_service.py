@@ -101,9 +101,6 @@ class GraphService:
             self.logger.error(
                 f"[GraphService|execute_graph] error (app_id={app_id}, user_id={user_id}): {str(ex)}"
             )
-            self.logger.info(
-                f"[GraphService|execute_graph] finished (app_id={app_id}, user_id={user_id})"
-            )
             return await self._handle_execution_error(user_input, str(ex))
 
     async def execute_graph_stream(
@@ -115,20 +112,8 @@ class GraphService:
         parameters: dict | None = None,
     ) -> AsyncGenerator[str, None]:
         """
-        Execute the multi-agent graph solution with token-by-token streaming output.
-        Same as execute_graph but streams the response text token by token.
-
-        Args:
-            user_input (str): User input/question
-            app_id (str): Application identifier for loading configurations
-            user_id (str, optional): User identifier
-            context (dict, optional): Additional context
-            parameters (dict, optional): Runtime parameters including graph configurations
-
-        Yields:
-            str: Token chunks of the final response
+        Execute the multi-agent graph solution and stream only the final response token by token.
         """
-
         self.logger.info(
             f"[GraphService|execute_graph_stream] started (app_id={app_id}, user_id={user_id})"
         )
@@ -147,13 +132,15 @@ class GraphService:
 
             recursion_limit = getattr(self.graph_config, "recursion_limit", 1)
 
-            async for message_chunk, metadata in self.workflow.astream(
+            result = await self.workflow.ainvoke(
                 initial_state,
                 {"recursion_limit": recursion_limit, "thread_id": user_id},
-                stream_mode="messages",
-            ):
-                if hasattr(message_chunk, "content") and message_chunk.content:
-                    yield message_chunk.content
+            )
+
+            final_response = self._generate_final_response(result)
+
+            async for token in self._tokenize(final_response):
+                yield token
 
             self.logger.info(
                 f"[GraphService|execute_graph_stream] finished (app_id={app_id}, user_id={user_id})"
@@ -167,7 +154,12 @@ class GraphService:
                 f"[GraphService|execute_graph_stream] finished (app_id={app_id}, user_id={user_id})"
             )
             error_response = await self._handle_execution_error(user_input, str(ex))
-            yield error_response
+            async for token in self._tokenize(error_response):
+                yield token
+
+    async def _tokenize(self, text: str) -> AsyncGenerator[str, None]:
+        for word in text.split():
+            yield word + " "
 
     async def get_compiled_workflow(self, app_id: int, parameters: dict | None = None):
         """Get the compiled workflow for LangGraph Studio integration (async)."""
@@ -204,8 +196,11 @@ class GraphService:
         try:
             graph_config_data = None
 
-            if parameters and "graph_config" in parameters:
-                graph_config_data = parameters["graph_config"]
+            if parameters:
+                if "graph_config" in parameters:
+                    graph_config_data = parameters["graph_config"]
+                elif "config" in parameters:
+                    graph_config_data = parameters["config"]
             else:
                 app_settings = await self.app_settings_service.get_app_settings(app_id)
                 graph_config_data = app_settings.get("graph_config")
@@ -229,6 +224,45 @@ class GraphService:
             )
             raise
 
+    async def _applicant_attributes_extractor_node(
+        self, state: AgentState
+    ) -> AgentState:
+        """Node that extracts applicant attributes from all messages using LLM and updates application_attributes."""
+
+        try:
+            llm = get_chat_model(
+                provider=self.graph_config.supervisor.chain.model.provider.value,
+                deployment=self.graph_config.supervisor.chain.model.deployment,
+                model=self.graph_config.supervisor.chain.model.name,
+            )
+
+            extract_prompt = (
+                "You are an assistant that extracts applicant attributes from a job application chat history. "
+                "Given the full conversation below, return a JSON object with all available applicant attributes (e.g., name, email, phone, address, skills, experience, etc.) that the applicant provided. "
+                "If an attribute is not present, omit it. Only return the JSON object, nothing else."
+            )
+
+            messages_text = "\n".join(
+                [
+                    f"{msg.__class__.__name__}: {getattr(msg, 'content', str(msg))}"
+                    for msg in state["messages"]
+                ]
+            )
+            full_prompt = f"{extract_prompt}\n\nConversation History:\n{messages_text}"
+
+            response = await llm.ainvoke(full_prompt)
+
+            extracted = json.loads(response.content)
+            if isinstance(extracted, dict):
+                state["application_attributes"].update(extracted)
+
+            return state
+
+        except Exception as ex:
+            self.logger.error(
+                f"[GraphService|_applicant_attributes_extractor_node] error: {str(ex)}"
+            )
+
     async def _agent_node(
         self, state: AgentState, agent_name: str, agent_config: Agent
     ) -> AgentState:
@@ -245,50 +279,29 @@ class GraphService:
                 prompt_id=agent_config.chain.prompt_id, tracer_type=self.tracer_type
             )
 
-            allowed_tools = {}
-            if hasattr(agent_config, "tools") and isinstance(agent_config.tools, dict):
-                for tool_name, tool_config in agent_config.tools.items():
-                    if tool_name in AVAILABLE_TOOLS:
-                        allowed_tools[tool_name] = tool_config
-
-            chain = prompt | llm.bind_tools(allowed_tools)
+            prompt = self._inject_tool_info_into_prompt(prompt, agent_config)
+            allowed_tool_names = self._get_allowed_tool_names(agent_config)
+            tools_to_bind = [AVAILABLE_TOOLS[name] for name in allowed_tool_names]
+            chain = prompt | llm.bind_tools(
+                tools_to_bind, tool_choice=agent_config.tool_choice
+            )
             response = await chain.ainvoke({"messages": state["messages"]})
 
-            tool_result_message = None
-            tool_call = None
-            tool_name = None
-            tool_args = None
+            tool_name, tool_args = self._extract_tool_call(response)
+            tool_func = self._find_tool_func(tool_name, tools_to_bind)
 
-            if hasattr(response, "tool_calls") and response.tool_calls:
-                tool_call = response.tool_calls[0]
-                tool_name = tool_call.get("name")
-                tool_args = tool_call.get("args", {})
+            if (
+                tool_name
+                and tool_name in agent_config.tools
+                and isinstance(tool_args, dict)
+            ):
+                tool_args = self._merge_tool_args_with_config(
+                    tool_args, agent_config.tools[tool_name]
+                )
 
-            elif response.additional_kwargs.get("function_call"):
-                try:
-                    fc = response.additional_kwargs["function_call"]
-                    tool_name = fc.get("name")
-                    tool_args = json.loads(fc.get("arguments", "{}"))
-                except Exception:
-                    tool_name = None
-                    tool_args = None
-
-            if tool_name and tool_name in allowed_tools:
-                tool_func = allowed_tools[tool_name].get("function")
-                if callable(tool_func):
-                    try:
-
-                        if asyncio.iscoroutinefunction(tool_func):
-                            tool_result = await tool_func(**tool_args)
-                        else:
-                            tool_result = tool_func(**tool_args)
-                        tool_result_message = AIMessage(
-                            content=f"Tool '{tool_name}' result: {tool_result}"
-                        )
-                    except Exception as tool_ex:
-                        tool_result_message = AIMessage(
-                            content=f"Tool '{tool_name}' error: {tool_ex}"
-                        )
+            tool_result_message = await self._execute_tool_func(
+                tool_func, tool_name, tool_args, agent_config
+            )
 
             state["messages"] = add_messages(state["messages"], [response])
             if tool_result_message:
@@ -312,6 +325,77 @@ class GraphService:
             state["messages"] = add_messages(state["messages"], [error_message])
             return state
 
+    def _inject_tool_info_into_prompt(self, prompt, agent_config):
+        if hasattr(agent_config, "tools") and isinstance(agent_config.tools, dict):
+            all_tool_info = []
+            for tool_name, tool_conf in agent_config.tools.items():
+                tool_info_lines = [f"Tool: {tool_name}"]
+                for k, v in tool_conf.items():
+                    if isinstance(v, (list, tuple)):
+                        tool_info_lines.append(f"{k}: {', '.join(map(str, v))}")
+                    else:
+                        tool_info_lines.append(f"{k}: {v}")
+                all_tool_info.append("\n".join(tool_info_lines))
+            if all_tool_info:
+                prompt = prompt.partial(agent_tool_info="\n\n".join(all_tool_info))
+        return prompt
+
+    def _get_allowed_tool_names(self, agent_config):
+        allowed_tool_names = []
+        if hasattr(agent_config, "tools") and isinstance(agent_config.tools, dict):
+            for tool_name in agent_config.tools.keys():
+                if tool_name in AVAILABLE_TOOLS:
+                    allowed_tool_names.append(tool_name)
+        return allowed_tool_names
+
+    def _extract_tool_call(self, response):
+        tool_name = None
+        tool_args = None
+        if hasattr(response, "additional_kwargs") and response.additional_kwargs.get(
+            "function_call"
+        ):
+            try:
+                fc = response.additional_kwargs["function_call"]
+                tool_name = fc.get("name")
+                tool_args = json.loads(fc.get("arguments", "{}"))
+            except Exception:
+                tool_name = None
+                tool_args = None
+        return tool_name, tool_args
+
+    def _find_tool_func(self, tool_name, tools_to_bind):
+        if tool_name:
+            for t in tools_to_bind:
+                if hasattr(t, "name") and t.name == tool_name:
+                    return t
+        return None
+
+    def _merge_tool_args_with_config(self, tool_args, config_defaults):
+        merged_args = dict(tool_args)
+        for k, v in config_defaults.items():
+            merged_args[k] = v
+        return merged_args
+
+    async def _execute_tool_func(self, tool_func, tool_name, tool_args, agent_config):
+        if tool_func and callable(tool_func):
+            filtered_args = tool_args
+            try:
+                input_fields = []
+                if tool_name and tool_name in agent_config.tools:
+                    input_fields = agent_config.tools[tool_name].get("input_fields", [])
+                if input_fields and isinstance(filtered_args, dict):
+                    filtered_args = {
+                        k: v for k, v in filtered_args.items() if k in input_fields
+                    }
+                if asyncio.iscoroutinefunction(tool_func):
+                    tool_result = await tool_func(**filtered_args)
+                else:
+                    tool_result = tool_func(**filtered_args)
+                return AIMessage(content=f"Tool '{tool_name}' result: {tool_result}")
+            except Exception as tool_ex:
+                return AIMessage(content=f"Tool '{tool_name}' error: {tool_ex}")
+        return None
+
     def _build_supervisor_prompt(
         self, available_options: list[str], last_agent=None
     ) -> str:
@@ -334,14 +418,11 @@ class GraphService:
             else "No last agent selected."
         )
 
-        return f"""You are a supervisor managing a team of AI agents. Your job is to decide which agent should handle the user's request{"" if not self.graph_config.allow_supervisor_finish else " or if the task is complete"}.
+        return f"""You are a supervisor managing a team of AI agents. Your job is to decide which agent should handle the user's request{'' if not self.graph_config.allow_supervisor_finish else ' or if the task is complete'}.
 
 Available agents and their capabilities:
 {chr(10).join(agent_descriptions)}
 
-Important: Avoid recursion. Do not select the same agent repeatedly in a loop, so check the conversation history.
-If the same agent was just called, prefer choosing a different agent or FINISH if appropriate.
-If the answer from the last agent was not satisfactory, you can choose a different agent to try again, but do not choose the same one.
 {last_agent_str}
 
 {system_prompt_ending}
@@ -371,14 +452,22 @@ Select one of: {available_options}"""
     def _extract_next_agent_from_response(self, response) -> str | None:
         """Extract the next agent from LLM response."""
 
-        if response.additional_kwargs.get("function_call"):
-            return json.loads(
-                response.additional_kwargs["function_call"]["arguments"]
-            ).get("chain", None)
-        elif response.tool_calls:
-            return response.tool_calls[0].get("args", {}).get("chain", None)
-        else:
-            return None
+        if hasattr(response, "additional_kwargs") and response.additional_kwargs.get(
+            "function_call"
+        ):
+            try:
+                fc = response.additional_kwargs["function_call"]
+                args = json.loads(fc.get("arguments", "{}"))
+                return args.get("chain", None)
+            except Exception:
+                return None
+
+        if hasattr(response, "tool_calls") and response.tool_calls:
+            try:
+                return response.tool_calls[0].get("args", {}).get("chain", None)
+            except Exception:
+                return None
+        return None
 
     def _create_supervisor_node(self):
         """Create the supervisor node that decides which agent to call next."""
@@ -496,8 +585,13 @@ Select one of: {available_options}"""
             )
             workflow.add_node(agent_name, agent_node)
 
+        workflow.add_node(
+            "applicant_attributes_extractor",
+            self._applicant_attributes_extractor_node,
+        )
         for agent_name in enabled_agents.keys():
-            workflow.add_edge(agent_name, "supervisor")
+            workflow.add_edge(agent_name, "applicant_attributes_extractor")
+        workflow.add_edge("applicant_attributes_extractor", END)
 
         if self.graph_config.exception_chain:
             workflow.add_edge("exception_chain", END)
@@ -673,7 +767,9 @@ Select one of: {available_options}"""
             prompt = prompt.partial(context=context)
 
             chain = prompt | llm
-            response = await chain.ainvoke(user_input)
+            response = await chain.ainvoke(
+                {"messages": [HumanMessage(content=user_input)]}
+            )
 
             self.logger.debug(
                 f"[GraphService] Exception handled by exception chain for user_input: {user_input}, error: {error_message}"
@@ -743,16 +839,16 @@ Select one of: {available_options}"""
 
             allowed_topics = getattr(topic_validation_config, "allowed_topics", None)
             invalid_topics = getattr(topic_validation_config, "invalid_topics", None)
-            model_config: Model = getattr(topic_validation_config, "model", None)
+            config: Model = getattr(topic_validation_config, "model", None)
 
-            if not model_config:
+            if not config:
                 raise ValueError("Topic validation model configuration is required")
 
             is_valid, topic, reason = await topic_validator_service.validate_topic(
                 question=state["user_input"],
-                model_provider=model_config.provider.value,
-                model_name=model_config.name,
-                model_deployment=model_config.deployment,
+                provider=config.provider.value,
+                name=config.name,
+                deployment=config.deployment,
                 allowed_topics=allowed_topics,
                 invalid_topics=invalid_topics,
                 raise_on_invalid=False,
@@ -811,6 +907,7 @@ Select one of: {available_options}"""
 
         try:
             chain = prompt | llm
+
             response = await chain.ainvoke({"messages": state["messages"]})
             state["messages"] = add_messages(state["messages"], [response])
             state["next"] = "FINISH"

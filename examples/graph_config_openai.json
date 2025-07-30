@@ -5,8 +5,7 @@
             "chain": {
                 "model": {
                     "provider": "openai",
-                    "name": "gpt-4o-mini",
-                    "temperature": 0.3
+                    "name": "gpt-4o-mini"
                 },
                 "prompt_id": "retriever-agent-prompt",
                 "debug": false
@@ -14,11 +13,10 @@
             "tool_choice": "auto",
             "tools": {
                 "vector_retriever_tool": {
-                    "type": "vector_search",
                     "index_name": "knowledge_base",
                     "search_type": "mmr",
                     "search_kwargs": {
-                        "k": 5,
+                        "k": 10,
                         "lambda_mult": 0.5
                     }
                 }
@@ -29,8 +27,7 @@
             "chain": {
                 "model": {
                     "provider": "openai",
-                    "name": "gpt-4o-mini",
-                    "temperature": 0.2
+                    "name": "gpt-4o-mini"
                 },
                 "prompt_id": "issue-reporter-agent-prompt",
                 "debug": false
@@ -38,7 +35,6 @@
             "tool_choice": "auto",
             "tools": {
                 "issue_tracker_tool": {
-                    "type": "issue_tracker",
                     "priority_levels": [
                         "low",
                         "medium",
@@ -51,11 +47,6 @@
                         "billing",
                         "feature_request",
                         "bug_report"
-                    ],
-                    "required_fields": [
-                        "description",
-                        "priority",
-                        "category"
                     ]
                 }
             }
@@ -73,14 +64,21 @@
             },
             "tool_choice": "auto",
             "tools": {
-                "vector_retriever_tool": {
-                    "type": "vector_search",
-                    "index_name": "knowledge_base",
-                    "search_type": "mmr",
-                    "search_kwargs": {
-                        "k": 30,
-                        "lambda_mult": 0.5
-                    }
+                "get_position_tool": {
+                    "description": "Position search tool that finds jobs by county, city, field, and job type using fuzzy metadata filtering in Redis database.",
+                    "input_fields": [
+                        "county",
+                        "city",
+                        "field",
+                        "job_type"
+                    ],
+                    "index_name": "positions"
+                },
+                "get_labels_tool": {
+                    "type": "label_search",
+                    "description": "Tool to fetch all unique labels all the time grouped by county and city, and lists of fields and job types.",
+                    "required": true,
+                    "index_name": "positions"
                 }
             }
         }
@@ -89,8 +87,7 @@
         "enabled": true,
         "model": {
             "provider": "openai",
-            "name": "gpt-4o-mini",
-            "temperature": 0.1
+            "name": "gpt-4o-mini"
         },
         "allowed_topics": [
             "work",
@@ -98,20 +95,63 @@
             "job",
             "professional",
             "workplace",
-            "employment"
+            "employment",
+            "recruitment",
+            "hiring",
+            "interview",
+            "resume",
+            "cv",
+            "job_search",
+            "job_application",
+            "job_offer",
+            "job_description",
+            "job_requirements",
+            "job_skills",
+            "job_market",
+            "job_trends",
+            "job_industry",
+            "job_roles",
+            "job_titles",
+            "job_levels",
+            "job_salaries",
+            "job_benefits",
+            "job_perks",
+            "job_culture",
+            "job_environment",
+            "job_satisfaction",
+            "smalltalk",
+            "greetings"
         ],
-        "rejection_message": "I can only help with work-related topics. Please ask questions about careers, job search, professional development, or workplace matters."
+        "invalid_topics": [
+            "personal",
+            "politics",
+            "religion",
+            "inappropriate",
+            "programming",
+            "coding",
+            "technical",
+            "math",
+            "science",
+            "history",
+            "geography",
+            "sports",
+            "entertainment",
+            "music",
+            "movies",
+            "games",
+            "books",
+            "art",
+            "literature"
+        ]
     },
     "personal_data_filter": {
         "enabled": true,
         "chain": {
             "model": {
                 "provider": "openai",
-                "name": "gpt-4o-mini",
-                "temperature": 0.0
+                "name": "gpt-4o-mini"
             },
-            "prompt_id": "personal-data-filter-prompt",
-            "debug": false
+            "prompt_id": "personal-data-filter-prompt"
         },
         "sensitive_data_types": [
             "email",
@@ -128,8 +168,7 @@
         "chain": {
             "model": {
                 "provider": "openai",
-                "name": "gpt-4o-mini",
-                "temperature": 0.1
+                "name": "gpt-4o-mini"
             },
             "prompt_id": "supervisor-prompt",
             "debug": false
@@ -142,8 +181,7 @@
         "chain": {
             "model": {
                 "provider": "openai",
-                "name": "gpt-4o-mini",
-                "temperature": 0.0
+                "name": "gpt-4o-mini"
             },
             "prompt_id": "exception-chain-prompt",
             "debug": false

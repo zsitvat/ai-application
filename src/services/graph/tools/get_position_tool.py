@@ -1,39 +1,58 @@
-from langchain_core.tools import tool
 import os
 
+from langchain_core.tools import tool
+from pydantic import Field, create_model
 from redis import Redis
 from redis.commands.search.query import Query
 
+from utils.quote_if_space import quote_if_space
 
-@tool
-def get_position_tool(county, city, field, job_type, index_name="positions"):
-    """
-    Position search tool that finds jobs by county, city, field, and job type using fuzzy metadata filtering in Redis.
 
-    Args:
-        county (str): County
-        city (str): City
-        field (str): Field
-        job_type (str): Job type
-        index_name (str): RediSearch index name
+def make_position_input_model(input_fields):
+    fields = {}
 
-    Returns:
-        list: Found position documents
-    """
-
-    redis = Redis(
-        host=os.getenv("REDIS_HOST", "localhost"),
-        port=int(os.getenv("REDIS_PORT", "6379")),
-        username=os.getenv("REDIS_USER", None),
-        password=os.getenv("REDIS_PASSWORD", None),
-        decode_responses=True,
+    fields["index_name"] = (
+        str,
+        Field("positions", description="Index name (fixed, default: positions)"),
     )
 
-    query_str = (
-        f"@county:%{county}% @city:%{city}% @field:%{field}% @job_type:%{job_type}% "
-        f"@labels:(%{county}%|%{city}%|%{field}%|%{job_type}%)"
-    )
+    for field in input_fields:
+        if field == "index_name":
+            continue
+        description = f"{field.capitalize()} (custom field)"
+        fields[field] = (str, Field(..., description=description))
 
-    query = Query(query_str)
-    results = redis.ft(index_name).search(query)
-    return results.docs
+    return create_model("PositionInput", **fields)
+
+
+def make_get_position_tool(input_fields):
+    position_input_model = make_position_input_model(input_fields)
+
+    def func(**kwargs):
+        redis = Redis(
+            host=os.getenv("REDIS_HOST", "localhost"),
+            port=int(os.getenv("REDIS_PORT", "6380")),
+            username=os.getenv("REDIS_USER", None),
+            password=os.getenv("REDIS_PASSWORD", None),
+            decode_responses=True,
+        )
+
+        query_parts = []
+        label_parts = []
+
+        for field in input_fields:
+            value = quote_if_space(kwargs.get(field, ""))
+            query_parts.append(f"@{field}:%{value}%")
+            label_parts.append(f"%{value}%")
+
+        query_str = " ".join(query_parts)
+
+        if label_parts:
+            query_str += f" @labels:({'|'.join(label_parts)})"
+        index_name = kwargs.get("index_name", "positions")
+        query = Query(query_str)
+        results = redis.ft(index_name).search(query)
+
+        return results.docs
+
+    return tool(args_schema=position_input_model)(func)

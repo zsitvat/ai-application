@@ -2,7 +2,7 @@ from enum import Enum
 
 from pydantic import BaseModel, field_validator
 
-from schemas.model_schema import Model, ModelType
+from schemas.schema import Model, ModelType
 
 
 class OutputType(str, Enum):
@@ -32,7 +32,7 @@ class WebScrapingRequestSchema(BaseModel):
 
     @field_validator("embedding_model")
     @classmethod
-    def validate_embedding_model_type(cls, v):
+    def validate_embedding_type(cls, v):
         if v is not None and v.type != ModelType.EMBEDDING:
             raise ValueError(f"Model type must be 'embedding', got '{v.type}'")
         return v

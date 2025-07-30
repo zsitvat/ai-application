@@ -37,7 +37,7 @@ async def scrape_websites(
                 allowed_domains=request.allowed_domains,
                 content_selectors=request.content_selectors,
                 excluded_selectors=request.excluded_selectors,
-                embedding_model_config=request.embedding_model,
+                embedding_config=request.embedding,
             )
         )
 

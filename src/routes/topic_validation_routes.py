@@ -26,9 +26,9 @@ async def validate_topic(
     try:
         allowed_topics = getattr(request, "allowed_topics", None)
         invalid_topics = getattr(request, "invalid_topics", None)
-        model_config = getattr(request, "model", None)
+        config = getattr(request, "model", None)
 
-        if not model_config:
+        if not config:
             raise HTTPException(
                 status_code=400,
                 detail="Model configuration is required for topic validation",
@@ -36,9 +36,9 @@ async def validate_topic(
 
         is_valid, topic, reason = await validator_service.validate_topic(
             question=request.question,
-            model_provider=model_config.provider.value,
-            model_name=model_config.name,
-            model_deployment=model_config.deployment,
+            provider=config.provider.value,
+            name=config.name,
+            deployment=config.deployment,
             allowed_topics=allowed_topics,
             invalid_topics=invalid_topics,
             raise_on_invalid=False,

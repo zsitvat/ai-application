@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 
-from schemas.model_schema import Model
+from schemas.schema import Model
 
 
 class DocumentIngestRequestSchema(BaseModel):
@@ -49,3 +49,8 @@ class DocumentDeleteResponseSchema(BaseModel):
     success: bool
     message: str
     deleted_count: int
+
+
+class PositionsIngestRequestSchema(BaseModel):
+    file_path: str
+    index_name: str

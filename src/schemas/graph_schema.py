@@ -7,7 +7,7 @@ from langgraph.graph.message import add_messages
 from pydantic import AliasChoices, BaseModel, Field
 from typing_extensions import TypedDict
 
-from .model_schema import Model
+from .schema import Model
 
 
 class AgentState(TypedDict):
@@ -20,6 +20,7 @@ class AgentState(TypedDict):
     context: dict[str, Any]
     parameters: dict[str, Any]
     user_id: str | UUID = uuid4()
+    application_attributes: dict[str, Any] = {}
 
 
 class ApplicationIdentifierSchema(BaseModel):
@@ -104,5 +105,5 @@ class GraphConfig(BaseModel):
     tags: list[str] = []
     enable_checkpointer: bool = True
     checkpointer_type: CheckpointerType = CheckpointerType.MEMORY
-    allow_supervisor_finish: bool = True
+    allow_supervisor_finish: bool = False
     recursion_limit: int = 3

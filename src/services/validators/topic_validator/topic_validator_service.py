@@ -30,9 +30,9 @@ class TopicValidatorService:
     async def validate_topic(
         self,
         question: str,
-        model_provider: str,
-        model_name: str,
-        model_deployment: str,
+        provider: str,
+        name: str,
+        deployment: str,
         allowed_topics: Optional[list[str]] = None,
         invalid_topics: Optional[list[str]] = None,
         raise_on_invalid: bool = False,
@@ -42,9 +42,9 @@ class TopicValidatorService:
 
         Args:
             question (str): Question to validate
-            model_provider (str): LLM provider
-            model_name (str): Model name
-            model_deployment (str): Model deployment
+            provider (str): LLM provider
+            name (str): Model name
+            deployment (str): Model deployment
             valid_topics (list[str], optional): List of valid topics
             invalid_topics (list[str], optional): List of invalid topics
             raise_on_invalid (bool): Whether to raise exception on invalid topic
@@ -85,7 +85,7 @@ class TopicValidatorService:
 
         try:
             topic = await self._classify_with_llm(
-                question, candidate_topics, model_provider, model_name, model_deployment
+                question, candidate_topics, provider, name, deployment
             )
 
             is_allowed = topic in allowed_topics
@@ -118,9 +118,9 @@ class TopicValidatorService:
         self,
         text: str,
         topics: list[str],
-        model_provider: str,
-        model_name: str,
-        model_deployment: str,
+        provider: str,
+        name: str,
+        deployment: str,
     ) -> str:
         """
         Classify text using LLM.
@@ -128,18 +128,18 @@ class TopicValidatorService:
         Args:
             text (str): Text to classify
             topics (list[str]): List of candidate topics
-            model_provider (str): LLM provider
-            model_name (str): Model name
-            model_deployment (str): Model deployment
+            provider (str): LLM provider
+            name (str): Model name
+            deployment (str): Model deployment
 
         Returns:
             str: Classified topic
         """
         try:
             llm = get_chat_model(
-                provider=model_provider,
-                deployment=model_deployment,
-                model=model_name,
+                provider=provider,
+                deployment=deployment,
+                model=name,
             )
 
             prompt = ChatPromptTemplate.from_template(self._default_prompt)

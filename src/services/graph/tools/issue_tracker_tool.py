@@ -1,32 +1,22 @@
 from langchain_core.tools import tool
+from pydantic import BaseModel, Field
 
 
-@tool
-def create_issue_tracker_tool(
-    name="issue_tracker",
-    description="Categorize and save issues using LLM.",
-    priority_levels=None,
-    categories=None,
-    required_fields=None,
-):
+class IssueInput(BaseModel):
+    description: str = Field(..., description="Issue description")
+    priority: str = Field(
+        ..., description="Priority level (low, medium, high, critical)"
+    )
+    category: str = Field(
+        ...,
+        description="Issue category (technical, account, billing, feature_request, bug_report)",
+    )
+
+
+@tool(args_schema=IssueInput)
+def issue_tracker_tool(description: str, priority: str, category: str) -> str:
     """
-    Create an issue tracker tool configuration for LLM-based issue categorization and saving.
-
-    Args:
-        name: Name of the tool
-        description: Description of the tool
-        priority_levels: List of allowed priority levels
-        categories: List of allowed categories
-        required_fields: List of required fields for an issue
-
-    Returns:
-        dict: Tool configuration dictionary
+    Categorize and save issues using LLM.
     """
-    return {
-        "type": name,
-        "description": description,
-        "priority_levels": priority_levels or ["low", "medium", "high", "critical"],
-        "categories": categories
-        or ["technical", "account", "billing", "feature_request", "bug_report"],
-        "required_fields": required_fields or ["description", "priority", "category"],
-    }
+
+    return f"Issue saved: {description}, priority: {priority}, category: {category}"

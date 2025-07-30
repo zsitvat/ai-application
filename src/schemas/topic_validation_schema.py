@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from .model_schema import Model
+from .schema import Model
 
 
 class TopicValidationRequestSchema(BaseModel):

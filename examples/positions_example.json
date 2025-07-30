@@ -8,12 +8,12 @@
         "description": "Vizsgálati és fárasztóberendezések működtetésére, méréstechnikai összeállításokra és mérőeszközök kezelésére keresünk műszaki beállítottságú technikust.\nA munkavégzés három műszakos munkarendben történik, szoros együttműködésben a mérnöki csapattal.\n\nFeladatok:\n- Vizsgálati üzemben lévő teszt berendezések kezelése, beállítása, indítása\n- Mérnökökkel együttműködve az adott vizsgálati méréstechnika összeállítása\n- Szükséges mérővezetékek legyártása, csatlakozókkal, kötésekkel\n- Alkalmazott mérőeszközök időszakos kalibrálása (erőmérő, nyomatékmérő, elmozdulásmérő, stb.)\n- Szervó-hidraulikus fárasztó berendezés működtetése, méréstechnika összeállítása\n- Elektromos hajtáslánc fárasztó berendezések programozása, működtetése, méréstechnika összeállítása\n\nElvárások:\n- Általános méréstechnikai ismeretek\n- Elektrotechnikai végzettség\n- Műszaki, gépészeti ismeretek\n- Felhasználó szintű számítógépes ismeretek\n- Precíz, pontos munkavégzés\n- Esetenként 3 műszakos munkarend vállalása\n\nAmit kínálunk:\n- Stabil háttérrel rendelkező magyar vállalatnál hosszútávú munkalehetőség\n- Teljes munkaidő, határozatlan idejű munkaszerződés megbízható havi jövedelemmel\n- Önkéntes nyugdíjpénztári hozzájárulás\n- Képzési, továbbképzési és előrelépési lehetőség\n- Dolgozói ajánlói program – ahol Te ajánlasz, mi fizetünk!\n\nCéginformáció:\nA Rába Jármű Kft. évtizedek óta meghatározó szereplője a hazai és nemzetközi járműiparnak. Fő tevékenységeink közé tartozik a katonai felépítmények fejlesztése, gyártása és szerelése, katonai logisztikai járművek szervizelése, futóművek fejlesztése és tesztelése, valamint mérnöki szolgáltatások nyújtása egyedi ipari megoldásokhoz.\n\nJelentkezés módja:\nA \"Jelentkezem\" gombra kattintás után kérjük csatolja magyar nyelvű fényképes önéletrajzát!",
         "starts_at": "2025-07-20T08:00:00Z",
         "expires_at": "2025-08-31T17:00:00Z",
-        "labels": [
-            "Győr",
-            "Gépészet / Méréstechnika",
-            "fizikai",
-            "Győr-Moson-Sopron"
-        ],
+        "labels": {
+            "city": "Győr",
+            "field": "Gépészet / Méréstechnika",
+            "job_type": "fizikai",
+            "county": "Győr-Moson-Sopron"
+        },
         "image_url": "https://example.com/images/vizsgalati-technikus-gyor.jpg",
         "application_id": 3
     },
@@ -26,12 +26,12 @@
         "description": "Cégünk agilis csapatába keresünk tapasztalt szoftverfejlesztő mérnököt.\nFeladatok: webes alkalmazások fejlesztése, tesztelése, dokumentálása.\nElvárások: legalább 2 év releváns tapasztalat, JavaScript, Python vagy Java ismeret, csapatmunka.\nAmit kínálunk: versenyképes fizetés, home office lehetőség, szakmai képzések.",
         "starts_at": "2025-07-03T09:30:00Z",
         "expires_at": "2025-11-28T16:00:00Z",
-        "labels": [
-            "Budapest",
-            "Informatika / Szoftverfejlesztés",
-            "szellemi",
-            "Budapest"
-        ],
+        "labels": {
+            "city": "Budapest",
+            "field": "Informatika / Szoftverfejlesztés",
+            "job_type": "szellemi",
+            "county": "Budapest"
+        },
         "image_url": "https://example.com/images/szoftverfejleszto-mernok-budapest.jpg",
         "application_id": 56
     },
@@ -44,12 +44,12 @@
         "description": "Feladatok: toborzás, kiválasztás, munkavállalói adminisztráció, HR projektek támogatása.\nElvárások: releváns végzettség, legalább 1 év HR tapasztalat, jó kommunikációs készség.\nAmit kínálunk: stabil munkahely, cafeteria, fejlődési lehetőség.",
         "starts_at": "2025-08-15T10:00:00Z",
         "expires_at": "2025-12-15T18:00:00Z",
-        "labels": [
-            "Debrecen",
-            "Humán erőforrás",
-            "szellemi",
-            "Hajdú-Bihar"
-        ],
+        "labels": {
+            "city": "Debrecen",
+            "field": "Humán erőforrás",
+            "job_type": "szellemi",
+            "county": "Hajdú-Bihar"
+        },
         "image_url": "https://example.com/images/hr-generalista-debrecen.jpg",
         "application_id": 7
     },
@@ -62,12 +62,12 @@
         "description": "We are looking for a Data Scientist to join our international team.\nResponsibilities: data analysis, machine learning model development, reporting.\nRequirements: MSc in relevant field, experience with Python and ML libraries, strong analytical skills.\nWhat we offer: remote work, competitive salary, professional development.",
         "starts_at": "2025-09-01T08:45:00Z",
         "expires_at": "2025-10-31T17:30:00Z",
-        "labels": [
-            "Távmunkában",
-            "IT / Adattudomány",
-            "szellemi",
-            "Bárhol"
-        ],
+        "labels": {
+            "city": "Távmunkában",
+            "field": "IT / Adattudomány",
+            "job_type": "szellemi",
+            "county": "Bárhol"
+        },
         "image_url": "https://example.com/images/data-scientist-remote.jpg",
         "application_id": 3
     },
@@ -80,12 +80,12 @@
         "description": "Feladatok: online kampányok tervezése és lebonyolítása, social media menedzsment, piackutatás.\nElvárások: marketing végzettség, kreativitás, digitális eszközök ismerete.\nAmit kínálunk: fiatalos csapat, modern iroda, bónusz rendszer.",
         "starts_at": "2025-07-22T11:00:00Z",
         "expires_at": "2025-09-30T15:00:00Z",
-        "labels": [
-            "Szeged",
-            "Marketing / Kommunikáció",
-            "szellemi",
-            "Csongrád-Csanád"
-        ],
+        "labels": {
+            "city": "Szeged",
+            "field": "Marketing / Kommunikáció",
+            "job_type": "szellemi",
+            "county": "Csongrád-Csanád"
+        },
         "image_url": "https://example.com/images/marketing-specialist-szeged.jpg",
         "application_id": 56
     },
@@ -98,12 +98,12 @@
         "description": "Join our finance team as a Junior Accountant.\nTasks: bookkeeping, invoice processing, financial reporting.\nRequirements: degree in accounting, attention to detail, good English skills.\nBenefits: training, career growth, flexible working hours.",
         "starts_at": "2025-07-25T09:15:00Z",
         "expires_at": "2025-12-10T16:45:00Z",
-        "labels": [
-            "London",
-            "Pénzügy / Könyvelés",
-            "szellemi",
-            "Nagy-London"
-        ],
+        "labels": {
+            "city": "London",
+            "field": "Pénzügy / Könyvelés",
+            "job_type": "szellemi",
+            "county": "Nagy-London"
+        },
         "image_url": "https://example.com/images/junior-accountant-london.jpg",
         "application_id": 7
     },
@@ -116,12 +116,12 @@
         "description": "Feladatok: ipari automatizálási rendszerek tervezése, programozása, karbantartása.\nElvárások: villamosmérnöki diploma, PLC ismeret, problémamegoldó képesség.\nAmit kínálunk: versenyképes fizetés, szakmai fejlődés, céges autó.",
         "starts_at": "2025-07-18T10:30:00Z",
         "expires_at": "2025-12-05T17:00:00Z",
-        "labels": [
-            "Miskolc",
-            "Mérnöki / Villamosmérnök",
-            "szellemi",
-            "Borsod-Abaúj-Zemplén"
-        ],
+        "labels": {
+            "city": "Miskolc",
+            "field": "Mérnöki / Villamosmérnök",
+            "job_type": "szellemi",
+            "county": "Borsod-Abaúj-Zemplén"
+        },
         "image_url": "https://example.com/images/villamosmernok-miskolc.jpg",
         "application_id": 3
     },
@@ -134,12 +134,12 @@
         "description": "We are seeking a Customer Support Representative for our Berlin office.\nTasks: handling customer inquiries, troubleshooting, providing product information.\nRequirements: excellent communication skills, fluency in English and German, customer-oriented attitude.\nBenefits: international environment, team events, health insurance.",
         "starts_at": "2025-08-01T08:00:00Z",
         "expires_at": "2025-09-30T17:00:00Z",
-        "labels": [
-            "Berlin",
-            "Ügyfélszolgálat",
-            "szellemi",
-            "Berlin"
-        ],
+        "labels": {
+            "city": "Berlin",
+            "field": "Ügyfélszolgálat",
+            "job_type": "szellemi",
+            "county": "Berlin"
+        },
         "image_url": "https://example.com/images/customer-support-representative-berlin.jpg",
         "application_id": 56
     },
@@ -152,12 +152,12 @@
         "description": "Feladatok: projektek tervezése, koordinálása, riportálás.\nElvárások: projektmenedzseri tapasztalat, jó szervezőkészség, angol nyelvtudás.\nAmit kínálunk: versenyképes fizetés, szakmai fejlődés, modern iroda.",
         "starts_at": "2025-07-30T09:00:00Z",
         "expires_at": "2025-10-25T17:00:00Z",
-        "labels": [
-            "Budapest",
-            "Projektmenedzsment",
-            "szellemi",
-            "Budapest"
-        ],
+        "labels": {
+            "city": "Budapest",
+            "field": "Projektmenedzsment",
+            "job_type": "szellemi",
+            "county": "Budapest"
+        },
         "image_url": "https://example.com/images/projektmenedzser-budapest.jpg",
         "application_id": 7
     },
@@ -170,12 +170,12 @@
         "description": "We are looking for a Sales Manager to expand our market presence.\nTasks: client acquisition, sales strategy, reporting.\nRequirements: sales experience, negotiation skills, English proficiency.\nBenefits: bonus system, company car, international team.",
         "starts_at": "2025-09-15T10:00:00Z",
         "expires_at": "2025-11-20T16:00:00Z",
-        "labels": [
-            "Prága",
-            "Értékesítés",
-            "szellemi",
-            "Prága"
-        ],
+        "labels": {
+            "city": "Prága",
+            "field": "Értékesítés",
+            "job_type": "szellemi",
+            "county": "Prága"
+        },
         "image_url": "https://example.com/images/sales-manager-prague.jpg",
         "application_id": 3
     },
@@ -188,12 +188,12 @@
         "description": "Feladatok: minták előkészítése, laboratóriumi mérések, adminisztráció.\nElvárások: laboratóriumi tapasztalat, precizitás, csapatmunka.\nAmit kínálunk: stabil munkahely, cafeteria, szakmai képzések.",
         "starts_at": "2025-07-28T08:00:00Z",
         "expires_at": "2025-09-15T17:00:00Z",
-        "labels": [
-            "Szeged",
-            "Egészségügy / Labor",
-            "fizikai",
-            "Csongrád-Csanád"
-        ],
+        "labels": {
+            "city": "Szeged",
+            "field": "Egészségügy / Labor",
+            "job_type": "fizikai",
+            "county": "Csongrád-Csanád"
+        },
         "image_url": "https://example.com/images/laboratoriumi-asszisztens-szeged.jpg",
         "application_id": 56
     },
@@ -206,12 +206,12 @@
         "description": "Join our creative team as a Graphic Designer.\nTasks: creating visual content, branding, collaborating with marketing.\nRequirements: portfolio, Adobe Creative Suite skills, creativity.\nBenefits: remote work, flexible hours, professional growth.",
         "starts_at": "2025-08-12T10:00:00Z",
         "expires_at": "2025-12-22T17:30:00Z",
-        "labels": [
-            "Távmunkában",
-            "Design / Kreatív",
-            "szellemi",
-            "Bárhol"
-        ],
+        "labels": {
+            "city": "Távmunkában",
+            "field": "Design / Kreatív",
+            "job_type": "szellemi",
+            "county": "Bárhol"
+        },
         "image_url": "https://example.com/images/graphic-designer-remote.jpg",
         "application_id": 7
     },
@@ -224,12 +224,12 @@
         "description": "Feladatok: szállítások szervezése, raktárkezelés, adminisztráció.\nElvárások: logisztikai tapasztalat, számítógépes ismeretek, precizitás.\nAmit kínálunk: stabil munkahely, fejlődési lehetőség, cafeteria.",
         "starts_at": "2025-08-20T08:00:00Z",
         "expires_at": "2025-12-18T17:00:00Z",
-        "labels": [
-            "Győr",
-            "Logisztika",
-            "fizikai",
-            "Győr-Moson-Sopron"
-        ],
+        "labels": {
+            "city": "Győr",
+            "field": "Logisztika",
+            "job_type": "fizikai",
+            "county": "Győr-Moson-Sopron"
+        },
         "image_url": "https://example.com/images/logisztikai-koordinator-gyor.jpg",
         "application_id": 3
     },
@@ -242,12 +242,12 @@
         "description": "We are seeking a Business Analyst for process optimization.\nTasks: data analysis, reporting, process improvement.\nRequirements: analytical skills, Excel proficiency, English.\nBenefits: training, career growth, international projects.",
         "starts_at": "2025-07-17T10:00:00Z",
         "expires_at": "2025-12-31T17:00:00Z",
-        "labels": [
-            "Varsó",
-            "Üzlet / Elemzés",
-            "szellemi",
-            "Mazóvia"
-        ],
+        "labels": {
+            "city": "Varsó",
+            "field": "Üzlet / Elemzés",
+            "job_type": "szellemi",
+            "county": "Mazóvia"
+        },
         "image_url": "https://example.com/images/business-analyst-warsaw.jpg",
         "application_id": 56
     },
@@ -260,12 +260,12 @@
         "description": "Feladatok: gépek karbantartása, hibakeresés, javítás.\nElvárások: műszaki végzettség, tapasztalat, problémamegoldó képesség.\nAmit kínálunk: versenyképes fizetés, szakmai fejlődés, cafeteria.",
         "starts_at": "2025-07-12T08:00:00Z",
         "expires_at": "2025-09-28T17:00:00Z",
-        "labels": [
-            "Pécs",
-            "Műszaki / Karbantartás",
-            "fizikai",
-            "Baranya"
-        ],
+        "labels": {
+            "city": "Pécs",
+            "field": "Műszaki / Karbantartás",
+            "job_type": "fizikai",
+            "county": "Baranya"
+        },
         "image_url": "https://example.com/images/karbantarto-technikus-pecs.jpg",
         "application_id": 7
     },
@@ -278,12 +278,12 @@
         "description": "We are looking for a Content Writer to create engaging articles.\nTasks: writing, editing, SEO optimization.\nRequirements: excellent writing skills, English proficiency, creativity.\nBenefits: remote work, flexible schedule, professional development.",
         "starts_at": "2025-09-08T08:00:00Z",
         "expires_at": "2025-11-10T17:00:00Z",
-        "labels": [
-            "Távmunkában",
-            "Marketing / Tartalom",
-            "szellemi",
-            "Bárhol"
-        ],
+        "labels": {
+            "city": "Távmunkában",
+            "field": "Marketing / Tartalom",
+            "job_type": "szellemi",
+            "county": "Bárhol"
+        },
         "image_url": "https://example.com/images/content-writer-remote.jpg",
         "application_id": 3
     },
@@ -296,12 +296,12 @@
         "description": "Feladatok: ügyfelek kiszolgálása, panaszkezelés, adminisztráció.\nElvárások: jó kommunikációs készség, ügyfélorientált hozzáállás, számítógépes ismeretek.\nAmit kínálunk: stabil munkahely, cafeteria, csapatépítő programok.",
         "starts_at": "2025-08-25T09:30:00Z",
         "expires_at": "2025-12-29T17:00:00Z",
-        "labels": [
-            "Kecskemét",
-            "Ügyfélszolgálat",
-            "szellemi",
-            "Bács-Kiskun"
-        ],
+        "labels": {
+            "city": "Kecskemét",
+            "field": "Ügyfélszolgálat",
+            "job_type": "szellemi",
+            "county": "Bács-Kiskun"
+        },
         "image_url": "https://example.com/images/ugyfelszolgalati-munkatars-kecskemet.jpg",
         "application_id": 56
     },
@@ -314,12 +314,12 @@
         "description": "Feladatok: áruk átvétele, raktározása, kiadása, leltározás.\nElvárások: precizitás, fizikai terhelhetőség, csapatmunka.\nAmit kínálunk: stabil munkahely, cafeteria, fejlődési lehetőség.",
         "starts_at": "2025-08-10T08:00:00Z",
         "expires_at": "2025-10-30T17:00:00Z",
-        "labels": [
-            "Budapest",
-            "Raktározás",
-            "fizikai",
-            "Budapest"
-        ],
+        "labels": {
+            "city": "Budapest",
+            "field": "Raktározás",
+            "job_type": "fizikai",
+            "county": "Budapest"
+        },
         "image_url": "https://example.com/images/raktaros-budapest.jpg",
         "application_id": 7
     },
@@ -332,12 +332,12 @@
         "description": "Feladatok: dokumentumkezelés, ügyintézés, telefonos kapcsolattartás.\nElvárások: középfokú végzettség, számítógépes ismeretek, jó kommunikációs készség.\nAmit kínálunk: modern iroda, fiatalos csapat, szakmai fejlődés.",
         "starts_at": "2025-09-05T09:00:00Z",
         "expires_at": "2025-12-01T17:00:00Z",
-        "labels": [
-            "Szeged",
-            "Adminisztráció",
-            "szellemi",
-            "Csongrád-Csanád"
-        ],
+        "labels": {
+            "city": "Szeged",
+            "field": "Adminisztráció",
+            "job_type": "szellemi",
+            "county": "Csongrád-Csanád"
+        },
         "image_url": "https://example.com/images/irodai-adminisztrator-szeged.jpg",
         "application_id": 3
     },
@@ -350,12 +350,12 @@
         "description": "Feladatok: gyártási folyamatok optimalizálása, minőségbiztosítás, projektek vezetése.\nElvárások: mérnöki diploma, releváns tapasztalat, problémamegoldó képesség.\nAmit kínálunk: versenyképes fizetés, szakmai képzések, előrelépési lehetőség.",
         "starts_at": "2025-07-28T08:00:00Z",
         "expires_at": "2025-11-15T17:00:00Z",
-        "labels": [
-            "Győr",
-            "Gyártás",
-            "szellemi",
-            "Győr-Moson-Sopron"
-        ],
+        "labels": {
+            "city": "Győr",
+            "field": "Gyártás",
+            "job_type": "szellemi",
+            "county": "Győr-Moson-Sopron"
+        },
         "image_url": "https://example.com/images/gyartasi-mernok-gyor.jpg",
         "application_id": 56
     },
@@ -368,12 +368,12 @@
         "description": "Feladatok: kampányok támogatása, adatgyűjtés, riportok készítése.\nElvárások: marketing végzettség, kreativitás, precizitás.\nAmit kínálunk: szakmai fejlődés, modern iroda, csapatépítő programok.",
         "starts_at": "2025-08-18T10:00:00Z",
         "expires_at": "2025-12-10T17:00:00Z",
-        "labels": [
-            "Pécs",
-            "Marketing",
-            "szellemi",
-            "Baranya"
-        ],
+        "labels": {
+            "city": "Pécs",
+            "field": "Marketing",
+            "job_type": "szellemi",
+            "county": "Baranya"
+        },
         "image_url": "https://example.com/images/marketing-asszisztens-pecs.jpg",
         "application_id": 7
     },
@@ -386,12 +386,12 @@
         "description": "Feladatok: ipari és lakossági villanyszerelési munkák, hibakeresés, javítás.\nElvárások: szakirányú végzettség, tapasztalat, önálló munkavégzés.\nAmit kínálunk: versenyképes fizetés, céges autó, szakmai képzések.",
         "starts_at": "2025-07-15T08:00:00Z",
         "expires_at": "2025-09-30T17:00:00Z",
-        "labels": [
-            "Miskolc",
-            "Villanyszerelés",
-            "fizikai",
-            "Borsod-Abaúj-Zemplén"
-        ],
+        "labels": {
+            "city": "Miskolc",
+            "field": "Villanyszerelés",
+            "job_type": "fizikai",
+            "county": "Borsod-Abaúj-Zemplén"
+        },
         "image_url": "https://example.com/images/villanyszerelo-miskolc.jpg",
         "application_id": 3
     },
@@ -404,12 +404,12 @@
         "description": "Feladatok: szállítások szervezése, fuvarszervezés, adminisztráció.\nElvárások: logisztikai tapasztalat, precizitás, számítógépes ismeretek.\nAmit kínálunk: stabil munkahely, cafeteria, szakmai fejlődés.",
         "starts_at": "2025-08-05T09:00:00Z",
         "expires_at": "2025-11-30T17:00:00Z",
-        "labels": [
-            "Budapest",
-            "Logisztika",
-            "szellemi",
-            "Budapest"
-        ],
+        "labels": {
+            "city": "Budapest",
+            "field": "Logisztika",
+            "job_type": "szellemi",
+            "county": "Budapest"
+        },
         "image_url": "https://example.com/images/logisztikai-ugyintezo-budapest.jpg",
         "application_id": 56
     },
@@ -422,12 +422,12 @@
         "description": "Feladatok: vendégek fogadása, adminisztráció, telefonos ügyintézés.\nElvárások: jó kommunikációs készség, angol nyelvtudás előny, precizitás.\nAmit kínálunk: modern munkahely, cafeteria, csapatépítő programok.",
         "starts_at": "2025-07-25T08:00:00Z",
         "expires_at": "2025-10-20T17:00:00Z",
-        "labels": [
-            "Siófok",
-            "Recepció",
-            "szellemi",
-            "Somogy"
-        ],
+        "labels": {
+            "city": "Siófok",
+            "field": "Recepció",
+            "job_type": "szellemi",
+            "county": "Somogy"
+        },
         "image_url": "https://example.com/images/recepcios-siofok.jpg",
         "application_id": 7
     },
@@ -440,12 +440,12 @@
         "description": "Feladatok: fejlesztő foglalkozások tartása, egyéni és csoportos munka.\nElvárások: gyógypedagógus diploma, empátia, türelem.\nAmit kínálunk: stabil munkahely, szakmai fejlődés, cafeteria.",
         "starts_at": "2025-09-01T09:00:00Z",
         "expires_at": "2025-12-15T17:00:00Z",
-        "labels": [
-            "Debrecen",
-            "Gyógypedagógia",
-            "szellemi",
-            "Hajdú-Bihar"
-        ],
+        "labels": {
+            "city": "Debrecen",
+            "field": "Gyógypedagógia",
+            "job_type": "szellemi",
+            "county": "Hajdú-Bihar"
+        },
         "image_url": "https://example.com/images/gyogypedagogus-debrecen.jpg",
         "application_id": 3
     },
@@ -458,12 +458,12 @@
         "description": "Feladatok: anyagmozgatás, raktári feladatok, leltározás.\nElvárások: targoncavezetői engedély, fizikai terhelhetőség, precizitás.\nAmit kínálunk: versenyképes fizetés, cafeteria, stabil munkahely.",
         "starts_at": "2025-08-12T08:00:00Z",
         "expires_at": "2025-11-25T17:00:00Z",
-        "labels": [
-            "Győr",
-            "Anyagmozgatás",
-            "fizikai",
-            "Győr-Moson-Sopron"
-        ],
+        "labels": {
+            "city": "Győr",
+            "field": "Anyagmozgatás",
+            "job_type": "fizikai",
+            "county": "Győr-Moson-Sopron"
+        },
         "image_url": "https://example.com/images/targoncavezeto-gyor.jpg",
         "application_id": 56
     },
@@ -512,12 +512,12 @@
         "description": "Feladatok: iratok rendezése, adatbevitel, adminisztráció.\nElvárások: aktív tanulói jogviszony, számítógépes ismeretek, precizitás.\nAmit kínálunk: rugalmas munkaidő, fiatalos csapat, szakmai fejlődés.",
         "starts_at": "2025-09-10T09:00:00Z",
         "expires_at": "2025-12-20T17:00:00Z",
-        "labels": [
-            "Szeged",
-            "Adminisztráció",
-            "diákmunka",
-            "Csongrád-Csanád"
-        ],
+        "labels": {
+            "city": "Szeged",
+            "field": "Adminisztráció",
+            "job_type": "diákmunka",
+            "county": "Csongrád-Csanád"
+        },
         "image_url": "https://example.com/images/diakmunka-irodai-asszisztens-szeged.jpg",
         "application_id": 56
     },
@@ -530,12 +530,12 @@
         "description": "Feladatok: irodák, közös helyiségek takarítása.\nElvárások: nyugdíjas státusz, megbízhatóság, precizitás.\nAmit kínálunk: rugalmas beosztás, stabil munkahely, cafeteria.",
         "starts_at": "2025-07-18T08:00:00Z",
         "expires_at": "2025-09-30T17:00:00Z",
-        "labels": [
-            "Pécs",
-            "Takarítás",
-            "nyugdíjas",
-            "Baranya"
-        ],
+        "labels": {
+            "city": "Pécs",
+            "field": "Takarítás",
+            "job_type": "nyugdíjas",
+            "county": "Baranya"
+        },
         "image_url": "https://example.com/images/nyugdijas-takarito-pecs.jpg",
         "application_id": 7
     },
@@ -548,12 +548,12 @@
         "description": "Feladatok: áruk pakolása, raktári rend fenntartása.\nElvárások: aktív tanulói jogviszony, fizikai terhelhetőség.\nAmit kínálunk: versenyképes órabér, rugalmas beosztás, cafeteria.",
         "starts_at": "2025-08-22T08:00:00Z",
         "expires_at": "2025-11-28T17:00:00Z",
-        "labels": [
-            "Győr",
-            "Raktár",
-            "diákmunka",
-            "Győr-Moson-Sopron"
-        ],
+        "labels": {
+            "city": "Győr",
+            "field": "Raktár",
+            "job_type": "diákmunka",
+            "county": "Győr-Moson-Sopron"
+        },
         "image_url": "https://example.com/images/diakmunka-raktari-segedmunkas-gyor.jpg",
         "application_id": 3
     },
@@ -566,12 +566,12 @@
         "description": "Feladatok: rendelések felvétele, kiszolgálás, takarítás.\nElvárások: jó kommunikációs készség, csapatmunka, precizitás.\nAmit kínálunk: rugalmas munkaidő, cafeteria, fejlődési lehetőség.",
         "starts_at": "2025-08-01T08:00:00Z",
         "expires_at": "2025-11-30T17:00:00Z",
-        "labels": [
-            "Budapest",
-            "Vendéglátás",
-            "diákmunka",
-            "Budapest"
-        ],
+        "labels": {
+            "city": "Budapest",
+            "field": "Vendéglátás",
+            "job_type": "diákmunka",
+            "county": "Budapest"
+        },
         "image_url": "https://example.com/images/gyorsettermi-munkatars-budapest.jpg",
         "application_id": 56
     },
@@ -584,12 +584,12 @@
         "description": "Feladatok: könyvek rendezése, olvasók segítése, adminisztráció.\nElvárások: nyugdíjas státusz, precizitás, udvariasság.\nAmit kínálunk: nyugodt munkakörnyezet, rugalmas beosztás, cafeteria.",
         "starts_at": "2025-07-15T09:00:00Z",
         "expires_at": "2025-10-31T17:00:00Z",
-        "labels": [
-            "Pécs",
-            "Könyvtár",
-            "nyugdíjas",
-            "Baranya"
-        ],
+        "labels": {
+            "city": "Pécs",
+            "field": "Könyvtár",
+            "job_type": "nyugdíjas",
+            "county": "Baranya"
+        },
         "image_url": "https://example.com/images/nyugdijas-konyvtaros-pecs.jpg",
         "application_id": 7
     },
@@ -602,12 +602,12 @@
         "description": "Feladatok: adatgyűjtés, kampányok támogatása, adminisztráció.\nElvárások: aktív tanulói jogviszony, kreativitás, precizitás.\nAmit kínálunk: fiatalos csapat, szakmai fejlődés, rugalmas munkaidő.",
         "starts_at": "2025-09-10T10:00:00Z",
         "expires_at": "2025-12-20T17:00:00Z",
-        "labels": [
-            "Győr",
-            "Marketing",
-            "diákmunka",
-            "Győr-Moson-Sopron"
-        ],
+        "labels": {
+            "city": "Győr",
+            "field": "Marketing",
+            "job_type": "diákmunka",
+            "county": "Győr-Moson-Sopron"
+        },
         "image_url": "https://example.com/images/diakmunka-marketing-gyor.jpg",
         "application_id": 3
     },
@@ -620,12 +620,12 @@
         "description": "Feladatok: ügyfelek kiszolgálása, adminisztráció, telefonos kapcsolattartás.\nElvárások: nyugdíjas státusz, udvariasság, precizitás.\nAmit kínálunk: stabil munkahely, rugalmas beosztás, cafeteria.",
         "starts_at": "2025-08-22T08:00:00Z",
         "expires_at": "2025-11-28T17:00:00Z",
-        "labels": [
-            "Szeged",
-            "Ügyfélszolgálat",
-            "nyugdíjas",
-            "Csongrád-Csanád"
-        ],
+        "labels": {
+            "city": "Szeged",
+            "field": "Ügyfélszolgálat",
+            "job_type": "nyugdíjas",
+            "county": "Csongrád-Csanád"
+        },
         "image_url": "https://example.com/images/nyugdijas-ugyfelszolgalati-munkatars-szeged.jpg",
         "application_id": 56
     },
@@ -638,12 +638,12 @@
         "description": "Feladatok: italok és ételek felszolgálása, kasszázás, vendégek kiszolgálása.\nElvárások: aktív tanulói jogviszony, jó kommunikációs készség, precizitás.\nAmit kínálunk: rugalmas munkaidő, fiatalos csapat, cafeteria.",
         "starts_at": "2025-09-05T10:00:00Z",
         "expires_at": "2025-12-15T17:00:00Z",
-        "labels": [
-            "Budapest",
-            "Vendéglátás",
-            "diákmunka",
-            "Budapest"
-        ],
+        "labels": {
+            "city": "Budapest",
+            "field": "Vendéglátás",
+            "job_type": "diákmunka",
+            "county": "Budapest"
+        },
         "image_url": "https://example.com/images/diakmunka-pultos-budapest.jpg",
         "application_id": 7
     },
@@ -656,12 +656,12 @@
         "description": "Feladatok: raktári dokumentáció vezetése, leltározás, adminisztráció.\nElvárások: nyugdíjas státusz, precizitás, számítógépes ismeretek.\nAmit kínálunk: stabil munkahely, rugalmas beosztás, cafeteria.",
         "starts_at": "2025-08-15T08:00:00Z",
         "expires_at": "2025-11-30T17:00:00Z",
-        "labels": [
-            "Győr",
-            "Raktár",
-            "nyugdíjas",
-            "Győr-Moson-Sopron"
-        ],
+        "labels": {
+            "city": "Győr",
+            "field": "Raktár",
+            "job_type": "nyugdíjas",
+            "county": "Győr-Moson-Sopron"
+        },
         "image_url": "https://example.com/images/nyugdijas-raktari-adminisztrator-gyor.jpg",
         "application_id": 3
     },
@@ -674,12 +674,12 @@
         "description": "Feladatok: konyhai előkészítés, takarítás, alapanyagok pakolása.\nElvárások: aktív tanulói jogviszony, fizikai terhelhetőség, precizitás.\nAmit kínálunk: versenyképes órabér, rugalmas beosztás, cafeteria.",
         "starts_at": "2025-08-20T09:00:00Z",
         "expires_at": "2025-12-10T17:00:00Z",
-        "labels": [
-            "Budapest",
-            "Konyha",
-            "diákmunka",
-            "Budapest"
-        ],
+        "labels": {
+            "city": "Budapest",
+            "field": "Konyha",
+            "job_type": "diákmunka",
+            "county": "Budapest"
+        },
         "image_url": "https://example.com/images/diakmunka-konyhai-seged-budapest.jpg",
         "application_id": 56
     },
@@ -692,12 +692,12 @@
         "description": "Feladatok: telefonos ügyintézés, adminisztráció, ügyfelek tájékoztatása.\nElvárások: nyugdíjas státusz, udvariasság, jó kommunikációs készség.\nAmit kínálunk: rugalmas munkaidő, stabil munkahely, cafeteria.",
         "starts_at": "2025-09-01T08:00:00Z",
         "expires_at": "2025-12-20T17:00:00Z",
-        "labels": [
-            "Debrecen",
-            "Telefonos ügyintézés",
-            "nyugdíjas",
-            "Hajdú-Bihar"
-        ],
+        "labels": {
+            "city": "Debrecen",
+            "field": "Telefonos ügyintézés",
+            "job_type": "nyugdíjas",
+            "county": "Hajdú-Bihar"
+        },
         "image_url": "https://example.com/images/nyugdijas-telefonos-ugyintezo-debrecen.jpg",
         "application_id": 7
     },
@@ -746,12 +746,12 @@
         "description": "Feladatok: tanácsadás, adminisztráció, ügyfelek segítése.\nElvárások: aktív tanulói jogviszony, empátia, jó kommunikációs készség.\nAmit kínálunk: rugalmas munkaidő, szakmai fejlődés, cafeteria.",
         "starts_at": "2025-09-10T09:00:00Z",
         "expires_at": "2025-12-20T17:00:00Z",
-        "labels": [
-            "Budapest",
-            "Tanácsadás",
-            "diákmunka",
-            "Budapest"
-        ],
+        "labels": {
+            "city": "Budapest",
+            "field": "Tanácsadás",
+            "job_type": "diákmunka",
+            "county": "Budapest"
+        },
         "image_url": "https://example.com/images/diakmunka-parkapcsolati-tanacsado-budapest.jpg",
         "application_id": 3
     },
@@ -764,12 +764,12 @@
         "description": "Feladatok: parkok, kertek gondozása, növények ültetése.\nElvárások: nyugdíjas státusz, fizikai terhelhetőség, precizitás.\nAmit kínálunk: rugalmas beosztás, stabil munkahely, cafeteria.",
         "starts_at": "2025-07-18T08:00:00Z",
         "expires_at": "2025-09-30T17:00:00Z",
-        "labels": [
-            "Pécs",
-            "Kertészet",
-            "nyugdíjas",
-            "Baranya"
-        ],
+        "labels": {
+            "city": "Pécs",
+            "field": "Kertészet",
+            "job_type": "nyugdíjas",
+            "county": "Baranya"
+        },
         "image_url": "https://example.com/images/nyugdijas-kertesz-pecs.jpg",
         "application_id": 56
     },
@@ -782,12 +782,12 @@
         "description": "Feladatok: rendezvények szervezése, adminisztráció, vendégek fogadása.\nElvárások: aktív tanulói jogviszony, szervezőkészség, precizitás.\nAmit kínálunk: fiatalos csapat, szakmai fejlődés, rugalmas munkaidő.",
         "starts_at": "2025-09-15T10:00:00Z",
         "expires_at": "2025-12-31T17:00:00Z",
-        "labels": [
-            "Szeged",
-            "Rendezvényszervezés",
-            "diákmunka",
-            "Csongrád-Csanád"
-        ],
+        "labels": {
+            "city": "Szeged",
+            "field": "Rendezvényszervezés",
+            "job_type": "diákmunka",
+            "county": "Csongrád-Csanád"
+        },
         "image_url": "https://example.com/images/diakmunka-rendezvenyszervezo-szeged.jpg",
         "application_id": 7
     },
@@ -800,12 +800,12 @@
         "description": "Feladatok: kasszázás, vásárlók kiszolgálása, adminisztráció.\nElvárások: nyugdíjas státusz, precizitás, udvariasság.\nAmit kínálunk: stabil munkahely, rugalmas beosztás, cafeteria.",
         "starts_at": "2025-08-10T08:00:00Z",
         "expires_at": "2025-10-30T17:00:00Z",
-        "labels": [
-            "Budapest",
-            "Kereskedelem",
-            "nyugdíjas",
-            "Budapest"
-        ],
+        "labels": {
+            "city": "Budapest",
+            "field": "Kereskedelem",
+            "job_type": "nyugdíjas",
+            "county": "Budapest"
+        },
         "image_url": "https://example.com/images/nyugdijas-penztaros-budapest.jpg",
         "application_id": 3
     },
@@ -818,12 +818,12 @@
         "description": "Feladatok: dokumentumkezelés, ügyintézés, telefonos kapcsolattartás.\nElvárások: nyugdíjas státusz, precizitás, számítógépes ismeretek.\nAmit kínálunk: modern iroda, stabil munkahely, rugalmas beosztás.",
         "starts_at": "2025-09-05T09:00:00Z",
         "expires_at": "2025-12-01T17:00:00Z",
-        "labels": [
-            "Budapest",
-            "Adminisztráció",
-            "nyugdíjas",
-            "Budapest"
-        ],
+        "labels": {
+            "city": "Budapest",
+            "field": "Adminisztráció",
+            "job_type": "nyugdíjas",
+            "county": "Budapest"
+        },
         "image_url": "https://example.com/images/nyugdijas-irodai-adminisztrator-budapest.jpg",
         "application_id": 56
     },
@@ -836,12 +836,12 @@
         "description": "Feladatok: rendelések felvétele, kiszolgálás, takarítás.\nElvárások: aktív tanulói jogviszony, jó kommunikációs készség, precizitás.\nAmit kínálunk: rugalmas munkaidő, fiatalos csapat, cafeteria.",
         "starts_at": "2025-08-10T08:00:00Z",
         "expires_at": "2025-11-30T17:00:00Z",
-        "labels": [
-            "Pécs",
-            "Vendéglátás",
-            "diákmunka",
-            "Baranya"
-        ],
+        "labels": {
+            "city": "Pécs",
+            "field": "Vendéglátás",
+            "job_type": "diákmunka",
+            "county": "Baranya"
+        },
         "image_url": "https://example.com/images/diakmunka-gyorsettermi-kiszolgalo-pecs.jpg",
         "application_id": 3
     },
@@ -854,12 +854,12 @@
         "description": "Feladatok: vendégek fogadása, adminisztráció, telefonos ügyintézés.\nElvárások: nyugdíjas státusz, udvariasság, precizitás.\nAmit kínálunk: modern munkahely, stabil munkahely, cafeteria.",
         "starts_at": "2025-09-01T09:00:00Z",
         "expires_at": "2025-12-20T17:00:00Z",
-        "labels": [
-            "Budapest",
-            "Recepció",
-            "nyugdíjas",
-            "Budapest"
-        ],
+        "labels": {
+            "city": "Budapest",
+            "field": "Recepció",
+            "job_type": "nyugdíjas",
+            "county": "Budapest"
+        },
         "image_url": "https://example.com/images/nyugdijas-recepcios-budapest.jpg",
         "application_id": 56
     },
@@ -872,12 +872,12 @@
         "description": "Feladatok: iratok rendezése, adatbevitel, adminisztráció.\nElvárások: aktív tanulói jogviszony, számítógépes ismeretek, precizitás.\nAmit kínálunk: rugalmas munkaidő, fiatalos csapat, szakmai fejlődés.",
         "starts_at": "2025-09-10T09:00:00Z",
         "expires_at": "2025-12-20T17:00:00Z",
-        "labels": [
-            "Győr",
-            "Adminisztráció",
-            "diákmunka",
-            "Győr-Moson-Sopron"
-        ],
+        "labels": {
+            "city": "Győr",
+            "field": "Adminisztráció",
+            "job_type": "diákmunka",
+            "county": "Győr-Moson-Sopron"
+        },
         "image_url": "https://example.com/images/diakmunka-adminisztrator-gyor.jpg",
         "application_id": 7
     },
@@ -890,12 +890,12 @@
         "description": "Feladatok: irodák, közös helyiségek takarítása.\nElvárások: nyugdíjas státusz, megbízhatóság, precizitás.\nAmit kínálunk: rugalmas beosztás, stabil munkahely, cafeteria.",
         "starts_at": "2025-07-18T08:00:00Z",
         "expires_at": "2025-09-30T17:00:00Z",
-        "labels": [
-            "Szeged",
-            "Takarítás",
-            "nyugdíjas",
-            "Csongrád-Csanád"
-        ],
+        "labels": {
+            "city": "Szeged",
+            "field": "Takarítás",
+            "job_type": "nyugdíjas",
+            "county": "Csongrád-Csanád"
+        },
         "image_url": "https://example.com/images/nyugdijas-takarito-szeged.jpg",
         "application_id": 3
     },
@@ -908,12 +908,12 @@
         "description": "Feladatok: áruk pakolása, raktári rend fenntartása.\nElvárások: aktív tanulói jogviszony, fizikai terhelhetőség.\nAmit kínálunk: versenyképes órabér, rugalmas beosztás, cafeteria.",
         "starts_at": "2025-08-22T08:00:00Z",
         "expires_at": "2025-11-28T17:00:00Z",
-        "labels": [
-            "Ajka",
-            "Raktár",
-            "diákmunka",
-            "Veszprém"
-        ],
+        "labels": {
+            "city": "Ajka",
+            "field": "Raktár",
+            "job_type": "diákmunka",
+            "county": "Veszprém"
+        },
         "image_url": "https://example.com/images/diakmunka-raktari-seged-ajka.jpg",
         "application_id": 56
     },
@@ -926,12 +926,12 @@
         "description": "Feladatok: épület őrzése, beléptetés, portai adminisztráció.\nElvárások: megbízhatóság, udvariasság, nyugdíjas státusz.\nAmit kínálunk: rugalmas munkaidő, nyugodt munkakörnyezet, cafeteria.",
         "starts_at": "2025-08-05T08:00:00Z",
         "expires_at": "2025-11-30T17:00:00Z",
-        "labels": [
-            "Orosháza",
-            "Portaszolgálat",
-            "nyugdíjas",
-            "Békés"
-        ],
+        "labels": {
+            "city": "Orosháza",
+            "field": "Portaszolgálat",
+            "job_type": "nyugdíjas",
+            "county": "Békés"
+        },
         "image_url": "https://example.com/images/nyugdijas-portas-oroshaza.jpg",
         "application_id": 3
     },
@@ -944,12 +944,12 @@
         "description": "Feladatok: iratok rendezése, adatbevitel, adminisztráció.\nElvárások: aktív tanulói jogviszony, számítógépes ismeretek, precizitás.\nAmit kínálunk: rugalmas munkaidő, fiatalos csapat, szakmai fejlődés.",
         "starts_at": "2025-09-10T09:00:00Z",
         "expires_at": "2025-12-20T17:00:00Z",
-        "labels": [
-            "Sátoraljaújhely",
-            "Adminisztráció",
-            "diákmunka",
-            "Borsod-Abaúj-Zemplén"
-        ],
+        "labels": {
+            "city": "Sátoraljaújhely",
+            "field": "Adminisztráció",
+            "job_type": "diákmunka",
+            "county": "Borsod-Abaúj-Zemplén"
+        },
         "image_url": "https://example.com/images/diakmunka-adminisztrator-satoraljaujhely.jpg",
         "application_id": 7
     },
@@ -962,12 +962,12 @@
         "description": "Feladatok: irodák, közös helyiségek takarítása.\nElvárások: nyugdíjas státusz, megbízhatóság, precizitás.\nAmit kínálunk: rugalmas beosztás, stabil munkahely, cafeteria.",
         "starts_at": "2025-07-18T08:00:00Z",
         "expires_at": "2025-09-30T17:00:00Z",
-        "labels": [
-            "Komló",
-            "Takarítás",
-            "nyugdíjas",
-            "Baranya"
-        ],
+        "labels": {
+            "city": "Komló",
+            "field": "Takarítás",
+            "job_type": "nyugdíjas",
+            "county": "Baranya"
+        },
         "image_url": "https://example.com/images/nyugdijas-takarito-komlo.jpg",
         "application_id": 56
     },
@@ -980,12 +980,12 @@
         "description": "Feladatok: konyhai előkészítés, takarítás, alapanyagok pakolása.\nElvárások: aktív tanulói jogviszony, fizikai terhelhetőség, precizitás.\nAmit kínálunk: versenyképes órabér, rugalmas beosztás, cafeteria.",
         "starts_at": "2025-08-20T09:00:00Z",
         "expires_at": "2025-12-10T17:00:00Z",
-        "labels": [
-            "Zalaegerszeg",
-            "Konyha",
-            "diákmunka",
-            "Zala"
-        ],
+        "labels": {
+            "city": "Zalaegerszeg",
+            "field": "Konyha",
+            "job_type": "diákmunka",
+            "county": "Zala"
+        },
         "image_url": "https://example.com/images/diakmunka-konyhai-seged-zalaegerszeg.jpg",
         "application_id": 3
     },
@@ -998,12 +998,12 @@
         "description": "Feladatok: ügyfelek kiszolgálása, adminisztráció, telefonos kapcsolattartás.\nElvárások: nyugdíjas státusz, udvariasság, precizitás.\nAmit kínálunk: stabil munkahely, rugalmas beosztás, cafeteria.",
         "starts_at": "2025-08-22T08:00:00Z",
         "expires_at": "2025-11-28T17:00:00Z",
-        "labels": [
-            "Mohács",
-            "Ügyfélszolgálat",
-            "nyugdíjas",
-            "Baranya"
-        ],
+        "labels": {
+            "city": "Mohács",
+            "field": "Ügyfélszolgálat",
+            "job_type": "nyugdíjas",
+            "county": "Baranya"
+        },
         "image_url": "https://example.com/images/nyugdijas-ugyfelszolgalati-mohacs.jpg",
         "application_id": 7
     },
@@ -1016,12 +1016,12 @@
         "description": "Feladatok: italok és ételek felszolgálása, kasszázás, vendégek kiszolgálása.\nElvárások: aktív tanulói jogviszony, jó kommunikációs készség, precizitás.\nAmit kínálunk: rugalmas munkaidő, fiatalos csapat, cafeteria.",
         "starts_at": "2025-09-05T10:00:00Z",
         "expires_at": "2025-12-15T17:00:00Z",
-        "labels": [
-            "Balassagyarmat",
-            "Vendéglátás",
-            "diákmunka",
-            "Nógrád"
-        ],
+        "labels": {
+            "city": "Balassagyarmat",
+            "field": "Vendéglátás",
+            "job_type": "diákmunka",
+            "county": "Nógrád"
+        },
         "image_url": "https://example.com/images/diakmunka-pultos-balassagyarmat.jpg",
         "application_id": 56
     },
@@ -1034,12 +1034,12 @@
         "description": "Feladatok: raktári dokumentáció vezetése, leltározás, adminisztráció.\nElvárások: nyugdíjas státusz, precizitás, számítógépes ismeretek.\nAmit kínálunk: stabil munkahely, rugalmas beosztás, cafeteria.",
         "starts_at": "2025-08-15T08:00:00Z",
         "expires_at": "2025-11-30T17:00:00Z",
-        "labels": [
-            "Szerencs",
-            "Raktár",
-            "nyugdíjas",
-            "Borsod-Abaúj-Zemplén"
-        ],
+        "labels": {
+            "city": "Szerencs",
+            "field": "Raktár",
+            "job_type": "nyugdíjas",
+            "county": "Borsod-Abaúj-Zemplén"
+        },
         "image_url": "https://example.com/images/nyugdijas-raktari-adminisztrator-szerencs.jpg",
         "application_id": 3
     },
@@ -1052,12 +1052,12 @@
         "description": "Feladatok: konyhai előkészítés, takarítás, alapanyagok pakolása.\nElvárások: aktív tanulói jogviszony, fizikai terhelhetőség, precizitás.\nAmit kínálunk: versenyképes órabér, rugalmas beosztás, cafeteria.",
         "starts_at": "2025-08-20T09:00:00Z",
         "expires_at": "2025-12-10T17:00:00Z",
-        "labels": [
-            "Tiszaújváros",
-            "Konyha",
-            "diákmunka",
-            "Borsod-Abaúj-Zemplén"
-        ],
+        "labels": {
+            "city": "Tiszaújváros",
+            "field": "Konyha",
+            "job_type": "diákmunka",
+            "county": "Borsod-Abaúj-Zemplén"
+        },
         "image_url": "https://example.com/images/diakmunka-konyhai-seged-tiszaujvaros.jpg",
         "application_id": 56
     },
@@ -1070,12 +1070,12 @@
         "description": "Feladatok: telefonos ügyintézés, adminisztráció, ügyfelek tájékoztatása.\nElvárások: nyugdíjas státusz, udvariasság, jó kommunikációs készség.\nAmit kínálunk: rugalmas munkaidő, stabil munkahely, cafeteria.",
         "starts_at": "2025-09-01T08:00:00Z",
         "expires_at": "2025-12-20T17:00:00Z",
-        "labels": [
-            "Hatvan",
-            "Telefonos ügyintézés",
-            "nyugdíjas",
-            "Heves"
-        ],
+        "labels": {
+            "city": "Hatvan",
+            "field": "Telefonos ügyintézés",
+            "job_type": "nyugdíjas",
+            "county": "Heves"
+        },
         "image_url": "https://example.com/images/nyugdijas-telefonos-ugyintezo-hatvan.jpg",
         "application_id": 7
     }

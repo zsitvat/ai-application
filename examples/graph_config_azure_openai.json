@@ -14,17 +14,11 @@
             "tool_choice": "auto",
             "tools": {
                 "vector_retriever_tool": {
-                    "type": "vector_search",
                     "index_name": "knowledge_base",
                     "search_type": "mmr",
                     "search_kwargs": {
                         "k": 10,
                         "lambda_mult": 0.5
-                    },
-                    "embedding_model": {
-                        "provider": "azure",
-                        "name": "text-embedding-3-large",
-                        "deployment": "chatboss_sweden-central_embedding_text-embedding-3-large_1"
                     }
                 }
             }
@@ -43,7 +37,6 @@
             "tool_choice": "auto",
             "tools": {
                 "issue_tracker_tool": {
-                    "type": "issue_tracker",
                     "priority_levels": [
                         "low",
                         "medium",
@@ -56,11 +49,6 @@
                         "billing",
                         "feature_request",
                         "bug_report"
-                    ],
-                    "required_fields": [
-                        "description",
-                        "priority",
-                        "category"
                     ]
                 }
             }
@@ -80,18 +68,20 @@
             "tool_choice": "auto",
             "tools": {
                 "get_position_tool": {
-                    "type": "position_search",
-                    "description": "Pozíció kereső tool, amely megye, város, szakterület, típus alapján keres fuzzy metadata szűréssel redis adatbázisban.",
+                    "description": "Position search tool that finds jobs by county, city, field, and job type using fuzzy metadata filtering in Redis database.",
                     "input_fields": [
-                        "megye",
-                        "varos",
-                        "szakterulet",
-                        "tipus"
+                        "labels_county",
+                        "labels_city",
+                        "labels_field",
+                        "labels_job_type"
                     ],
-                    "search_mode": "fuzzy",
-                    "index_name": "positions",
-                    "metadata_filter": true,
-                    "backend": "redis"
+                    "index_name": "positions"
+                },
+                "get_labels_tool": {
+                    "type": "label_search",
+                    "description": "Tool to fetch all unique labels all the time grouped by county and city, and lists of fields and job types.",
+                    "required": true,
+                    "index_name": "positions"
                 }
             }
         }
@@ -188,9 +178,7 @@
             },
             "prompt_id": "supervisor-prompt",
             "debug": false
-        },
-        "tool_choice": "auto",
-        "tools": {}
+        }
     },
     "exception_chain": {
         "enabled": true,

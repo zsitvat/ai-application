@@ -17,7 +17,7 @@ from scrapy.http import Request
 from scrapy.linkextractors import LinkExtractor
 from scrapy.spiders import Spider
 
-from schemas.model_schema import Model
+from schemas.schema import Model
 from schemas.web_scraping_schema import OutputType
 from services.web_scraper.scraper_config import (
     CONTENT_SELECTORS,
@@ -932,9 +932,9 @@ class ScrapySpider(Spider):
         if embedding_model_config:
             provider = embedding_model_config.provider.value
             deployment = embedding_model_config.deployment
-            model_name = embedding_model_config.name
+            name = embedding_model_config.name
             embedding_model = get_embedding_model(
-                provider=provider, deployment=deployment, model=model_name
+                provider=provider, deployment=deployment, model=name
             )
         else:
             embedding_model = get_embedding_model()

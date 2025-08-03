@@ -1,4 +1,4 @@
-import logging
+from services.logger.logger_service import LoggerService
 import os
 
 from langchain_anthropic import ChatAnthropic
@@ -36,7 +36,7 @@ def get_embedding_model(
             api_version=os.environ.get("AZURE_API_VERSION", "2023-09-01-preview"),
         )
     else:
-        logging.getLogger("logger").error("Wrong model provider!")
+        LoggerService().error("Wrong model provider!")
         raise KeyError(f"Unsupported provider for embedding model: {provider}")
 
 
@@ -85,10 +85,10 @@ def get_chat_model(
                 name=model, temperature=temperature, timeout=60, stop=None
             )
         else:
-            logging.getLogger("logger").error("Wrong model provider!")
+            LoggerService().error("Wrong model provider!")
             raise KeyError(f"Unsupported provider for chat model: {provider}")
     else:
-        logging.getLogger("logger").error("Wrong model type!")
+        LoggerService().error("Wrong model type!")
         raise KeyError(f"Unsupported model type: {type}")
 
 

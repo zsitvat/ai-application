@@ -1,4 +1,4 @@
-import logging
+from services.logger.logger_service import LoggerService
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
@@ -40,7 +40,7 @@ async def execute_graph(
         return result
 
     except Exception as ex:
-        logging.getLogger("logger").error(f"Error in graph execution: {str(ex)}")
+        LoggerService().error(f"Error in graph execution: {str(ex)}")
         raise HTTPException(
             status_code=500,
             detail=f"Error executing multi-agent graph: {str(ex)}",
@@ -77,9 +77,7 @@ async def execute_graph_stream(
         )
 
     except Exception as ex:
-        logging.getLogger("logger").error(
-            f"Error in graph streaming execution: {str(ex)}"
-        )
+        LoggerService().error(f"Error in graph streaming execution: {str(ex)}")
         raise HTTPException(
             status_code=500,
             detail=f"Error executing streaming multi-agent graph: {str(ex)}",

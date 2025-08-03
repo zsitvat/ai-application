@@ -29,13 +29,15 @@ from services.validators.topic_validator.topic_validator_service import (
 )
 from utils.get_prompt import get_prompt_by_type
 from utils.select_model import get_chat_model
+from services.logger.logger_service import LoggerService
 
 
 class GraphService:
     """Service for handling multi-agent graph execution with supervisor pattern."""
 
     def __init__(self, app_settings_service: AppSettingsService):
-        self.logger = logging.getLogger(__name__)
+
+        self.logger = LoggerService().get_logger(__name__)
         self.app_settings_service = app_settings_service
         self.graph_config: GraphConfig | None = None
         self.workflow = None

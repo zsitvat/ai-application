@@ -1,5 +1,5 @@
 import json
-import logging
+from services.logger.logger_service import LoggerService
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -73,7 +73,7 @@ async def ingest_documents(
         )
 
     except Exception as ex:
-        logging.getLogger("logger").error(f"Error in document ingestion: {str(ex)}")
+        LoggerService().error(f"Error in document ingestion: {str(ex)}")
         raise HTTPException(
             status_code=500,
             detail=f"Error processing documents: {str(ex)}",
@@ -99,7 +99,7 @@ async def delete_documents(
         )
 
     except Exception as ex:
-        logging.getLogger("logger").error(f"Error deleting documents: {str(ex)}")
+        LoggerService().error(f"Error deleting documents: {str(ex)}")
         raise HTTPException(
             status_code=500,
             detail=f"Error deleting documents: {str(ex)}",
@@ -131,7 +131,7 @@ async def ingest_positions(
         )
 
     except Exception as ex:
-        logging.getLogger("logger").error(f"Error in positions ingestion: {str(ex)}")
+        LoggerService().error(f"Error in positions ingestion: {str(ex)}")
         raise HTTPException(
             status_code=500,
             detail=f"Error processing positions: {str(ex)}",

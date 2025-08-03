@@ -13,7 +13,7 @@ class JSONFormatter(logging.Formatter):
             record (LogRecord): The log record object
 
         Returns:
-                str: The formatted log record as JSON
+            str: The formatted log record as JSON
         """
 
         log_data = {
@@ -21,5 +21,18 @@ class JSONFormatter(logging.Formatter):
             "level": record.levelname,
             "message": record.getMessage(),
             "function": record.funcName,
+            "module": record.module,
+            "line": record.lineno,
+            "filename": record.filename,
+            "name": record.name,
+            "process": record.process,
+            "thread": record.thread,
+            "thread_name": record.threadName,
+            "logger": record.name,
+            "stack_info": self.formatStack(record.stack_info),
         }
+
+        if record.exc_info:
+            log_data["exception"] = self.formatException(record.exc_info)
+
         return json.dumps(log_data)

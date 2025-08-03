@@ -8,10 +8,11 @@ from .logs_json_formatter import JSONFormatter
 
 
 class LoggerService:
+    """Service for managing application logging with JSON formatting."""
+
     def __init__(self):
         self._loggers = {}
 
-    # Public methods
     def setup_logger(self, log_level: str = "DEBUG", logger_name: str = "logger"):
         """Setup the logger with JSON formatting for both console and file output.
 
@@ -93,7 +94,6 @@ class LoggerService:
             new_level = self._get_log_level(log_level)
             logger.setLevel(new_level)
 
-            # Update all handlers
             for handler in logger.handlers:
                 handler.setLevel(new_level)
 
@@ -122,7 +122,6 @@ class LoggerService:
 
         return sorted(log_files)
 
-    # Private methods
     def _get_log_level(self, log_level: str = "DEBUG"):
         """Get the log level based on the log level string.
 

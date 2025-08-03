@@ -1,6 +1,7 @@
 import os
 
 import uvicorn
+import logging
 from dotenv.main import find_dotenv, load_dotenv
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
@@ -17,6 +18,7 @@ from routes.topic_validation_routes import router as topic_validation_router
 from routes.web_scraping_routes import router as web_scraping_router
 from services.logger.logger_service import LoggerService
 from services.rate_limit.semaphore import SemaphoreMiddleware
+from services.logger.logs_json_formatter import JSONFormatter
 
 if os.getenv("TRACER_TYPE") == "langfuse":
     langfuse = Langfuse(
@@ -51,6 +53,11 @@ def create_app():
         return RedirectResponse(url="/docs")
 
     LoggerService().setup_logger(os.getenv("LOG_LEVEL", "INFO"))
+
+    for logger_name in ["uvicorn", "uvicorn.error", "uvicorn.access"]:
+        logger = logging.getLogger(logger_name)
+        for handler in logger.handlers:
+            handler.setFormatter(JSONFormatter())
 
     default_limit = int(os.getenv("RATELIMIT", "5"))
     paths_to_limit = [

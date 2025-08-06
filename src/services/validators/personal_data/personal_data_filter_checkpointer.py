@@ -1,6 +1,6 @@
 import copy
 
-from services.validators.personal_data.personal_data_filter_service import (
+from src.services.validators.personal_data.personal_data_filter_service import (
     PersonalDataFilterService,
 )
 

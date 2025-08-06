@@ -2,7 +2,7 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from schemas.dataset_schema import (
+from src.schemas.dataset_schema import (
     DatasetCreationError,
     DatasetNotFoundError,
     DatasetRequestSchema,
@@ -11,9 +11,9 @@ from schemas.dataset_schema import (
     DatasetRunRequestSchema,
     DatasetUpdateError,
 )
-from services.dataset.dataset_service import DatasetService
+from src.services.dataset.dataset_service import DatasetService
 
-router = APIRouter(tags=["Dataset"])
+router = APIRouter(tags=["dataset"])
 
 
 def get_dataset_service():

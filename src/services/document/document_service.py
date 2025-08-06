@@ -18,8 +18,8 @@ from langchain_community.document_loaders import (
 from langchain_redis import RedisConfig, RedisVectorStore
 from redisvl.schema import IndexSchema
 
-from schemas.schema import Model
-from utils.select_model import get_embedding_model
+from src.schemas.schema import Model
+from src.utils.select_model import get_embedding_model
 
 from .default_schema import DEFAULT_INDEX_SCHEMA
 

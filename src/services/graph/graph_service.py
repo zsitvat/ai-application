@@ -1,35 +1,41 @@
 import asyncio
 import importlib
 import json
-import logging
 import os
 from functools import partial
 from typing import Any, AsyncGenerator, Literal
 
-from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.checkpoint.redis.aio import AsyncRedisSaver
 from langgraph.graph import END, StateGraph
 from langgraph.graph.message import add_messages
+from langgraph.config import RunnableConfig
 
-from schemas.graph_schema import Agent, AgentState, CheckpointerType, GraphConfig, Model
-from services.chat_history.redis_chat_history import RedisChatHistoryService
-from services.data_api.app_settings import AppSettingsService
-from services.data_api.chat_history import DataChatHistoryService
-from services.graph.tools.tools_config import AVAILABLE_TOOLS
-from services.validators.personal_data.personal_data_filter_checkpointer import (
+from src.schemas.graph_schema import (
+    Agent,
+    AgentState,
+    CheckpointerType,
+    GraphConfig,
+    Model,
+)
+from src.services.chat_history.redis_chat_history import RedisChatHistoryService
+from src.services.data_api.app_settings import AppSettingsService
+from src.services.data_api.chat_history import DataChatHistoryService
+from src.services.graph.tools.tools_config import AVAILABLE_TOOLS
+from src.services.validators.personal_data.personal_data_filter_checkpointer import (
     PersonalDataFilterCheckpointer,
 )
-from services.validators.personal_data.personal_data_filter_service import (
+from src.services.validators.personal_data.personal_data_filter_service import (
     PersonalDataFilterService,
 )
-from services.validators.topic_validator.topic_validator_service import (
+from src.services.validators.topic_validator.topic_validator_service import (
     TopicValidatorService,
 )
-from utils.get_prompt import get_prompt_by_type
-from utils.select_model import get_chat_model
-from services.logger.logger_service import LoggerService
+from src.utils.get_prompt import get_prompt_by_type
+from src.utils.select_model import get_chat_model
+from src.services.logger.logger_service import LoggerService
 
 
 class GraphService:
@@ -80,7 +86,6 @@ class GraphService:
             initial_state = AgentState(
                 messages=[HumanMessage(content=user_input)],
                 next="",
-                user_input=user_input,
                 context=context or {},
                 parameters=parameters or {},
             )
@@ -127,7 +132,6 @@ class GraphService:
             initial_state = AgentState(
                 messages=[HumanMessage(content=user_input)],
                 next="",
-                user_input=user_input,
                 context=context or {},
                 parameters=parameters or {},
             )
@@ -193,31 +197,71 @@ class GraphService:
     async def _load_graph_configuration(
         self, app_id: int, parameters: dict[str, Any] | None = None
     ) -> None:
-        """Load graph configuration from app settings and parameters."""
+        """Load graph configuration from parameters, app settings, or file path in .env as fallback."""
 
         try:
             graph_config_data = None
 
+            # 1. Try parameters
             if parameters:
                 if "graph_config" in parameters:
                     graph_config_data = parameters["graph_config"]
+                    self.graph_config = GraphConfig(**graph_config_data)
+                    self.logger.debug(
+                        f"[GraphService] Loaded graph config from parameters for app_id: {app_id}"
+                    )
+                    return
                 elif "config" in parameters:
                     graph_config_data = parameters["config"]
-            else:
+                    self.graph_config = GraphConfig(**graph_config_data)
+                    self.logger.debug(
+                        f"[GraphService] Loaded graph config from parameters for app_id: {app_id}"
+                    )
+                    return
+
+            # 2. Try app settings (with error handling)
+            try:
                 app_settings = await self.app_settings_service.get_app_settings(app_id)
                 graph_config_data = app_settings.get("graph_config")
                 if isinstance(graph_config_data, str):
                     graph_config_data = json.loads(graph_config_data)
 
-            if graph_config_data:
-                self.graph_config = GraphConfig(**graph_config_data)
-            else:
-                raise ValueError(
-                    "No graph configuration found in app settings or parameters"
+                if graph_config_data:
+                    self.graph_config = GraphConfig(**graph_config_data)
+                    self.logger.debug(
+                        f"[GraphService] Loaded graph config with {len(self.graph_config.agents)} agents for app_id: {app_id}"
+                    )
+                    return
+            except Exception as app_settings_ex:
+                self.logger.warning(
+                    f"[GraphService] Failed to load app settings for app_id: {app_id}, error: {str(app_settings_ex)}. Will attempt fallback."
                 )
 
-            self.logger.debug(
-                f"[GraphService] Loaded graph config with {len(self.graph_config.agents)} agents for app_id: {app_id}"
+            # 3. Fallback: try file from .env
+            graph_config_path = os.getenv("GRAPH_CONFIG_PATH")
+            if graph_config_path:
+                if os.path.isfile(graph_config_path):
+
+                    def _read_json_file(path):
+                        with open(path, "r", encoding="utf-8") as f:
+                            return json.load(f)
+
+                    graph_config_data = await asyncio.to_thread(
+                        _read_json_file, graph_config_path
+                    )
+                    self.graph_config = GraphConfig(**graph_config_data)
+                    self.logger.warning(
+                        f"[GraphService] Loaded graph config from fallback file {graph_config_path} for app_id: {app_id}"
+                    )
+                    return
+                else:
+                    self.logger.warning(
+                        f"[GraphService] GRAPH_CONFIG_PATH is set but file does not exist: {graph_config_path}"
+                    )
+
+            # 4. If nothing found, raise
+            raise ValueError(
+                "No graph configuration found in parameters, app settings, or fallback file"
             )
 
         except Exception as ex:
@@ -240,7 +284,8 @@ class GraphService:
 
             extract_prompt = (
                 "You are an assistant that extracts applicant attributes from a job application chat history. "
-                "Given the full conversation below, return a JSON object with all available applicant attributes (e.g., name, email, phone, address, skills, experience, etc.) that the applicant provided. "
+                "Given the full conversation below, return a JSON object with all available applicant attributes "
+                "(e.g., name, email, phone, address, skills, experience, etc.) that the applicant provided. "
                 "If an attribute is not present, omit it. Only return the JSON object, nothing else."
             )
 
@@ -607,7 +652,7 @@ Select one of: {available_options}"""
 
         workflow.add_conditional_edges(
             "supervisor",
-            self.should_continue_from_supervisor,
+            self._should_continue_from_supervisor,
             conditional_mapping,
         )
 
@@ -620,7 +665,7 @@ Select one of: {available_options}"""
         if topic_validator_config and getattr(topic_validator_config, "enabled", False):
             workflow.add_conditional_edges(
                 "topic_validator",
-                self.should_continue_from_topic_validator,
+                self._should_continue_from_topic_validator,
                 topic_conditional_mapping,
             )
             workflow.set_entry_point("topic_validator")
@@ -728,10 +773,7 @@ Select one of: {available_options}"""
         else:
             final_response = "No response generated from agents."
 
-        self.logger.debug(
-            "[GraphService] Graph execution completed successfully. Final result: %s",
-            result,
-        )
+        self.logger.debug("[GraphService] Graph execution completed successfully.")
         return final_response
 
     async def _handle_execution_error(self, user_input: str, error_message: str) -> str:
@@ -830,8 +872,8 @@ Select one of: {available_options}"""
                     state,
                 )
                 return state
-
-            if not state["user_input"]:
+            user_input = self._get_user_input_from_state(state)
+            if not user_input:
                 self.logger.warning(
                     f"[GraphService] No user input found for topic validation. State: {state}"
                 )
@@ -847,7 +889,7 @@ Select one of: {available_options}"""
                 raise ValueError("Topic validation model configuration is required")
 
             is_valid, topic, reason = await topic_validator_service.validate_topic(
-                question=state["user_input"],
+                question=user_input,
                 provider=config.provider.value,
                 name=config.name,
                 deployment=config.deployment,
@@ -899,7 +941,8 @@ Select one of: {available_options}"""
                 prompt_id=self.graph_config.exception_chain.chain.prompt_id,
                 tracer_type=self.tracer_type,
             )
-            context = f"User input: {state['user_input']}\nContext: {error_context}"
+            user_input = self._get_user_input_from_state(state)
+            context = f"User input: {user_input}\nContext: {error_context}"
             prompt = prompt.partial(context=context)
         except Exception as e:
             self.logger.error(
@@ -924,6 +967,7 @@ Select one of: {available_options}"""
             return self._handle_exception_chain_fallback(state)
 
     def _handle_exception_chain_fallback(self, state: AgentState) -> AgentState:
+        """Handle fallback when exception chain fails."""
         error_message = AIMessage(
             content="I apologize, but I'm unable to process your request at this time. Please try again later."
         )
@@ -931,7 +975,7 @@ Select one of: {available_options}"""
         state["next"] = "FINISH"
         return state
 
-    def should_continue_from_supervisor(
+    def _should_continue_from_supervisor(
         self, state: AgentState
     ) -> Literal["FINISH"] | str:
         """Determine next step after supervisor node."""
@@ -940,7 +984,7 @@ Select one of: {available_options}"""
             return "FINISH"
         return state["next"]
 
-    def should_continue_from_topic_validator(
+    def _should_continue_from_topic_validator(
         self, state: AgentState
     ) -> Literal["supervisor", "exception_chain", "FINISH"]:
         """Determine next step after topic validator node."""
@@ -952,3 +996,19 @@ Select one of: {available_options}"""
             return "FINISH"
         else:
             return "supervisor"
+
+    def _get_user_input_from_state(self, state: AgentState) -> str:
+        for msg in reversed(state["messages"]):
+            if isinstance(msg, HumanMessage) and hasattr(msg, "content"):
+                return msg.content
+        return ""
+
+
+# For LangGraph Studio integration
+graph_service = GraphService(AppSettingsService())
+
+
+async def get_compiled_workflow_for_studio(config: RunnableConfig):
+    app_id = config.get("app_id")
+    parameters = config.get("parameters")
+    return await graph_service.get_compiled_workflow(app_id, parameters)

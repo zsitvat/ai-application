@@ -4,14 +4,26 @@ Ez az alkalmazás egy több ügynökből álló mesterséges intelligencia rends
 
 ## Indítás lépései
 
-1. **Poetry telepítése (ha még nincs):**
+1. **uv telepítése (ha még nincs):**
    ```bash
-   pip install poetry
+   # macOS és Linux
+   curl -LsSf https://astral.sh/uv/install.sh | sh
+   
+   # Windows
+   powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+   
+   # pip-pel
+   pip install uv
    ```
 
 2. **Függőségek telepítése:**
    ```bash
-   poetry install
+   uv sync
+   ```
+   
+   Vagy csak a produkciós függőségek telepítése:
+   ```bash
+   uv sync --no-dev
    ```
 
 3. **Redis Stack indítása Dockerrel:**
@@ -26,7 +38,7 @@ Ez az alkalmazás egy több ügynökből álló mesterséges intelligencia rends
 
 5. **Alkalmazás indítása:**
    ```bash
-   poetry run python main.py
+   uv run python src/app.py
    ```
    vagy
    ```bash
@@ -47,7 +59,7 @@ További részletek és példák a `/docs` végponton (FastAPI automatikus dokum
 
 ---
 
-Indítás előtt győződj meg róla, hogy minden szükséges környezeti változót beállítottál, és a függőségek telepítve vannak (`poetry install`).
+Indítás előtt győződj meg róla, hogy minden szükséges környezeti változót beállítottál, és a függőségek telepítve vannak (`uv sync`).
 
 
 ## LangGraph Studio használata (lokális fejlesztéshez)
@@ -57,25 +69,25 @@ A LangGraph Studio segítségével vizuálisan tesztelheted és fejlesztheted a 
 ### 1. Telepítsd a LangGraph CLI-t (ha még nincs):
 
 ```bash
-pip install -U "langgraph-cli[inmem]"
+uv add --dev "langgraph-cli[inmem]"
 ```
 
-vagy Poetry-vel:
+vagy pip-pel:
 
 ```bash
-poetry add langgraph-cli[inmem]
+pip install -U "langgraph-cli[inmem]"
 ```
 
 ### 2. Indítsd el a LangGraph fejlesztői szervert:
 
 ```bash
-langgraph dev
+uv run langgraph dev
 ```
 
 Ha Safari böngészőt használsz, vagy problémád van a localhost eléréssel, indítsd a szervert a következőképp:
 
 ```bash
-langgraph dev --tunnel
+uv run langgraph dev --tunnel
 ```
 
 ### 3. Nyisd meg a LangGraph Studio-t böngészőben:
@@ -93,8 +105,45 @@ További információ: [LangGraph Studio Quickstart](https://langchain-ai.github
 Ha lépésenként szeretnéd debuggolni az alkalmazást:
 
 ```bash
-pip install debugpy
-langgraph dev --debug-port 5678
+uv add --dev debugpy
+uv run langgraph dev --debug-port 5678
 ```
 
 Ezután VS Code-ban vagy más IDE-ben csatlakozhatsz a 5678-as portra.
+
+## uv vs Poetry összehasonlítás
+
+A projekt áttért Poetry-ról uv-ra a következő előnyök miatt:
+
+- **Gyorsabb telepítés**: uv Rust-ban íródott, jelentősen gyorsabb dependency resolution és telepítés
+- **Egyszerűbb használat**: kevesebb parancs, egyszerűbb workflow
+- **Modern Python tooling**: korszerű Python projekt menedzsment
+- **Jobb teljesítmény**: virtuális környezetek kezelése és package caching
+- **Kompatibilitás**: teljes PEP 517/518 támogatás
+
+> **Migrációs útmutató**: Ha Poetry-t használtál korábban, olvasd el a `MIGRATION_TO_UV.md` fájlt a részletes migrációs lépésekért.
+
+### Gyakori uv parancsok:
+
+```bash
+# Projekt inicializálása
+uv init
+
+# Függőségek telepítése
+uv sync
+
+# Dependency hozzáadása
+uv add package-name
+
+# Dev dependency hozzáadása
+uv add --dev package-name
+
+# Parancs futtatása virtuális környezetben
+uv run python script.py
+
+# Python script futtatása
+uv run python src/app.py
+
+# Shell aktiválása a virtuális környezetben
+uv shell
+```

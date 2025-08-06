@@ -7,7 +7,7 @@ from langchain_core.tools import BaseTool
 from langchain_google_community import GoogleSearchAPIWrapper
 from pydantic import BaseModel, Field
 
-from schemas.tool_schema import SearchProvider, WebSearchToolInput
+from src.schemas.tool_schema import SearchProvider, WebSearchToolInput
 
 
 class WebSearchTool(BaseTool):

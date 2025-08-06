@@ -5,7 +5,7 @@ from pydantic import Field, create_model
 from redis import Redis
 from redis.commands.search.query import Query
 
-from utils.quote_if_space import quote_if_space
+from src.utils.quote_if_space import quote_if_space
 
 
 def make_position_input_model(input_fields):

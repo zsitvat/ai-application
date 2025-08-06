@@ -17,14 +17,14 @@ from scrapy.http import Request
 from scrapy.linkextractors import LinkExtractor
 from scrapy.spiders import Spider
 
-from schemas.schema import Model
-from schemas.web_scraping_schema import OutputType
-from services.web_scraper.scraper_config import (
+from src.schemas.schema import Model
+from src.schemas.web_scraping_schema import OutputType
+from src.services.web_scraper.scraper_config import (
     CONTENT_SELECTORS,
     EXCLUDED_SELECTORS,
     IGNORED_EXTENSIONS,
 )
-from utils.select_model import get_embedding_model
+from src.utils.select_model import get_embedding_model
 
 
 def install_reactor():

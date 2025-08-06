@@ -4,7 +4,7 @@
     ],
     "graphs": {
         "recruiter_ai_graph": {
-            "path": "src.services.graph.graph_service:GraphService.get_compiled_workflow",
+            "path": "src.services.graph.graph_service:get_compiled_workflow_for_studio",
             "config_schema": {
                 "type": "object",
                 "properties": {
@@ -29,8 +29,11 @@
             }
         }
     },
-    "env": ".env",
+    "env": {
+        "PYTHONPATH": "./src",
+        "ENV_FILE": ".env"
+    },
     "dockerfile_lines": [
-        "RUN pip install --no-cache-dir -r requirements.txt"
+        "RUN poetry install --no-interaction --no-ansi"
     ]
 }

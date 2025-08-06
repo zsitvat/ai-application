@@ -8,10 +8,10 @@ import aiohttp
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, HttpUrl
 
-from services.data_api.app_settings import AppSettingsService
-from services.graph.graph_service import GraphService
+from src.services.data_api.app_settings import AppSettingsService
+from src.services.graph.graph_service import GraphService
 
-router = APIRouter(tags=["Graph Config Loader"])
+router = APIRouter(tags=["graph_config_sloader"])
 
 
 class GraphConfigLoaderSchema(BaseModel):

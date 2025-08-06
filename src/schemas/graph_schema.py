@@ -16,7 +16,6 @@ class AgentState(TypedDict):
     messages: Annotated[list[AnyMessage], add_messages]
     next: str
     last_agent: str | list | None = None
-    user_input: str
     context: dict[str, Any]
     parameters: dict[str, Any]
     user_id: str | UUID = uuid4()

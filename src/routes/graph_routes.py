@@ -1,13 +1,13 @@
-from services.logger.logger_service import LoggerService
+from src.services.logger.logger_service import LoggerService
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 
-from schemas.graph_schema import RestOperationPostSchema
-from services.data_api.app_settings import AppSettingsService
-from services.graph.graph_service import GraphService
+from src.schemas.graph_schema import RestOperationPostSchema
+from src.services.data_api.app_settings import AppSettingsService
+from src.services.graph.graph_service import GraphService
 
-router = APIRouter(tags=["Graph"])
+router = APIRouter(tags=["graph"])
 
 
 def get_app_settings_service():

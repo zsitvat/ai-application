@@ -2,15 +2,15 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from schemas.topic_validation_schema import (
+from src.schemas.topic_validation_schema import (
     TopicValidationRequestSchema,
     TopicValidationResponseSchema,
 )
-from services.validators.topic_validator.topic_validator_service import (
+from src.services.validators.topic_validator.topic_validator_service import (
     TopicValidatorService,
 )
 
-router = APIRouter(tags=["Topic Validation"])
+router = APIRouter(tags=["topic_validation"])
 
 
 def get_topic_validator_service():

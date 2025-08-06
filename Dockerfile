@@ -15,30 +15,19 @@ RUN apt-get update -qq && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/*
 
-# Install Poetry
+# Install uv
 RUN pip install --upgrade pip && \
-  pip install poetry
+  pip install uv
 
-# Configure Poetry
-ENV POETRY_NO_INTERACTION=1 \
-  POETRY_VENV_IN_PROJECT=1 \
-  POETRY_CACHE_DIR=/tmp/poetry_cache \
-  POETRY_HOME="/opt/poetry"
-
-# Add Poetry to PATH
-ENV PATH="$POETRY_HOME/bin:$PATH"
-
-# Copy Poetry files
-COPY pyproject.toml poetry.lock ./
+# Copy project files
+COPY pyproject.toml uv.lock* ./
 
 # Install dependencies
-RUN poetry install --only=main --no-root && rm -rf "$POETRY_CACHE_DIR"
+RUN uv sync --no-dev --frozen
 
 # Copy application code
 COPY . .
 
 EXPOSE 5000
 
-WORKDIR /app/src
-
-CMD ["poetry", "run", "python", "app.py"]
+CMD ["uv", "run", "python", "src/app.py"]

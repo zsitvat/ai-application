@@ -7,18 +7,17 @@ from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
 from langfuse import Langfuse
 
-from routes.dataset_routes import router as dataset_router
-from routes.document_routes import router as document_router
-from routes.graph_config_loader_routes import router as graph_config_loader_router
-from routes.graph_routes import router as graph_router
-from routes.graph_studio_routes import router as graph_studio_router
-from routes.personal_data_filter_routes import router as personal_data_filter_router
-from routes.system_routes import router as system_router
-from routes.topic_validation_routes import router as topic_validation_router
-from routes.web_scraping_routes import router as web_scraping_router
-from services.logger.logger_service import LoggerService
-from services.rate_limit.semaphore import SemaphoreMiddleware
-from services.logger.logs_json_formatter import JSONFormatter
+from src.routes.dataset_routes import router as dataset_router
+from src.routes.document_routes import router as document_router
+from src.routes.graph_config_loader_routes import router as graph_config_loader_router
+from src.routes.graph_routes import router as graph_router
+from src.routes.personal_data_filter_routes import router as personal_data_filter_router
+from src.routes.system_routes import router as system_router
+from src.routes.topic_validation_routes import router as topic_validation_router
+from src.routes.web_scraping_routes import router as web_scraping_router
+from src.services.logger.logger_service import LoggerService
+from src.services.rate_limit.semaphore import SemaphoreMiddleware
+from src.services.logger.logs_json_formatter import JSONFormatter
 
 if os.getenv("TRACER_TYPE") == "langfuse":
     langfuse = Langfuse(
@@ -39,7 +38,6 @@ def create_app():
     )
 
     app.include_router(graph_router)
-    app.include_router(graph_studio_router)
     app.include_router(graph_config_loader_router)
     app.include_router(personal_data_filter_router)
     app.include_router(topic_validation_router)
@@ -59,11 +57,10 @@ def create_app():
         for handler in logger.handlers:
             handler.setFormatter(JSONFormatter())
 
-    default_limit = int(os.getenv("RATELIMIT", "5"))
+    default_limit = int(os.getenv("RATELIMIT", "20"))
     paths_to_limit = [
         "/api/graph",
         "/api/graph/stream",
-        "/api/graph-studio",
         "/api/health-check",
     ]
     app.add_middleware(

@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup
 from langchain_core.tools import BaseTool
 from pydantic import BaseModel, Field
 
-from schemas.tool_schema import DocumentLinkAnalyzerInput
+from src.schemas.tool_schema import DocumentLinkAnalyzerInput
 
 logger = logging.getLogger(__name__)
 

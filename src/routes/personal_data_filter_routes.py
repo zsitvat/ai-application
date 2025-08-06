@@ -2,15 +2,15 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from schemas.personal_data_filter_schema import (
+from src.schemas.personal_data_filter_schema import (
     PersonalDataFilterRequestSchema,
     PersonalDataFilterResponseSchema,
 )
-from services.validators.personal_data.personal_data_filter_service import (
+from src.services.validators.personal_data.personal_data_filter_service import (
     PersonalDataFilterService,
 )
 
-router = APIRouter(tags=["Personal Data Filter"])
+router = APIRouter(tags=["personal_data_sfilter"])
 
 
 def get_personal_data_filter_service():

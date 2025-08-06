@@ -6,7 +6,7 @@ import httpx
 from langchain.smith.evaluation import run_on_dataset
 from langsmith import Client
 
-from schemas.dataset_schema import (
+from src.schemas.dataset_schema import (
     DatasetCreationError,
     DatasetNotFoundError,
     DatasetRunConfigSchema,

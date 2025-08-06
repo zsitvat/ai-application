@@ -3,13 +3,13 @@ from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from schemas.system_schema import (
+from src.schemas.system_schema import (
     HealthCheckResponseSchema,
     LogsResponseSchema,
 )
-from services.system.system_service import SystemService
+from src.services.system.system_service import SystemService
 
-router = APIRouter(tags=["System"])
+router = APIRouter(tags=["system"])
 
 
 def get_system_service():

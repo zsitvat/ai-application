@@ -1,4 +1,4 @@
-from services.logger.logger_service import LoggerService
+from src.services.logger.logger_service import LoggerService
 import os
 
 from langchain_anthropic import ChatAnthropic

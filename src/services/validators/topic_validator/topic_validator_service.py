@@ -5,7 +5,7 @@ from typing import Optional
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 
-from utils.select_model import get_chat_model
+from src.utils.select_model import get_chat_model
 
 
 class InvalidTopicException(Exception):

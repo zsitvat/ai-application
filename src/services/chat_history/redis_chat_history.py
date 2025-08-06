@@ -1,5 +1,5 @@
 import json
-from services.logger.logger_service import LoggerService
+from src.services.logger.logger_service import LoggerService
 import os
 from datetime import datetime
 from typing import Any

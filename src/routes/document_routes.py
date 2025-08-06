@@ -1,22 +1,22 @@
 import json
-from services.logger.logger_service import LoggerService
+from src.services.logger.logger_service import LoggerService
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from schemas.document_schema import (
+from src.schemas.document_schema import (
     DocumentDeleteResponseSchema,
     DocumentIngestRequestSchema,
     DocumentIngestResponseSchema,
 )
-from services.document.document_service import DocumentService
+from src.services.document.document_service import DocumentService
 
 
 def get_document_service():
     return DocumentService()
 
 
-router = APIRouter(tags=["Documents"])
+router = APIRouter(tags=["documents"])
 
 
 def get_document_service():

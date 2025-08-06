@@ -5,8 +5,8 @@ from langchain_core.tools import tool
 from langchain_core.tools.retriever import create_retriever_tool
 from langchain_core.vectorstores import VectorStoreRetriever
 
-from schemas.schema import Model
-from services.document.document_service import DocumentService
+from src.schemas.schema import Model
+from src.services.document.document_service import DocumentService
 
 
 @tool

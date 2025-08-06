@@ -2,7 +2,7 @@ import os
 
 from langchain_core.tools import tool
 
-from schemas.tool_schema import SearchProvider
+from src.schemas.tool_schema import SearchProvider
 
 from .document_link_analyzer_tool import DocumentLinkAnalyzerTool
 from .web_search_tool import WebSearchTool

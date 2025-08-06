@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 
-from schemas.schema import Model
+from src.schemas.schema import Model
 
 
 class DocumentIngestRequestSchema(BaseModel):

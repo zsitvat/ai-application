@@ -1,9 +1,9 @@
 import logging
 import os
 
-from schemas.personal_data_filter_schema import PersonalDataFilterConfigSchema
-from utils.get_prompt import get_prompt_by_type
-from utils.select_model import get_chat_model
+from src.schemas.personal_data_filter_schema import PersonalDataFilterConfigSchema
+from src.utils.get_prompt import get_prompt_by_type
+from src.utils.select_model import get_chat_model
 
 
 class PersonalDataFilterService:

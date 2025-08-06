@@ -1,11 +1,11 @@
 import logging
 
-from schemas.token_validation_schema import (
+from src.schemas.token_validation_schema import (
     TokenCountResult,
     TokenEstimationResult,
     TruncationResult,
 )
-from utils.token_counter import token_counter
+from src.utils.token_counter import token_counter
 
 
 class TokenValidationService:

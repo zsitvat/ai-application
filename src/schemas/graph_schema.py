@@ -10,16 +10,63 @@ from typing_extensions import TypedDict
 from .schema import Model
 
 
-class AgentState(TypedDict):
+def create_empty_application_attributes() -> dict[str, str]:
+    """Create an empty application attributes dictionary with all required keys."""
+    return {
+        "applicant_name": "",
+        "phone_number": "",
+        "email": "",
+        "position_name": "",
+        "position_id": "",
+        "application_reason": "",
+        "language_skills": "",
+        "experience": "",
+        "other_information": "",
+    }
+
+
+class ApplicationAttributes(TypedDict):
+    """Structured application attributes for job applicants."""
+
+    applicant_name: str
+    phone_number: str
+    email: str
+    position_name: str
+    position_id: str
+    application_reason: str
+    language_skills: str
+    experience: str
+    other_information: str
+
+
+class AgentState(BaseModel):
     """State shared between agents in the graph."""
 
-    messages: Annotated[list[AnyMessage], add_messages]
-    next: str
+    messages: Annotated[list[AnyMessage], add_messages] = Field(default_factory=list)
+    next: str = ""
     last_agent: str | list | None = None
-    context: dict[str, Any]
-    parameters: dict[str, Any]
-    user_id: str | UUID = uuid4()
-    application_attributes: dict[str, Any] = {}
+    context: dict[str, Any] = Field(default_factory=dict)
+    parameters: dict[str, Any] = Field(default_factory=dict)
+    user_id: str | UUID = Field(default_factory=uuid4)
+    application_attributes: dict[str, str] = Field(
+        default_factory=create_empty_application_attributes
+    )
+
+    class Config:
+        arbitrary_types_allowed = True
+
+    # Dictionary-like access for LangGraph compatibility
+    def __getitem__(self, key: str):
+        """Allow dictionary-style access for LangGraph compatibility."""
+        return getattr(self, key)
+
+    def __setitem__(self, key: str, value):
+        """Allow dictionary-style assignment for LangGraph compatibility."""
+        setattr(self, key, value)
+
+    def get(self, key: str, default=None):
+        """Dict-like get method for LangGraph compatibility."""
+        return getattr(self, key, default)
 
 
 class ApplicationIdentifierSchema(BaseModel):
@@ -54,6 +101,7 @@ class CheckpointerType(str, Enum):
 class Chain(BaseModel):
     model: Model
     prompt_id: str
+    description: str = ""
     debug: bool = False
 
 

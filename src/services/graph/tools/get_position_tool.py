@@ -8,6 +8,37 @@ from redis.commands.search.query import Query
 from src.utils.quote_if_space import quote_if_space
 
 
+def _filter_document_fields(doc):
+    """Filter out unwanted fields from a document."""
+    unwanted_fields = {"_index_name", "application_id", "starts_at", "expires_at", "id", "payload", "embedding"}
+    filtered_doc = {}
+    for key, value in doc.__dict__.items():
+        if key not in unwanted_fields:
+            filtered_doc[key] = value
+    return filtered_doc
+
+
+def _build_query_parts(input_fields, kwargs):
+    """Build query parts for Redis search."""
+    query_parts = []
+    for field in input_fields:
+        value = kwargs.get(field, "")
+        if value:
+            if "-" in value:
+                parts = value.split("-")
+                escaped_parts = [
+                    quote_if_space(part.strip()) for part in parts if part.strip()
+                ]
+                or_query = " | ".join(
+                    [f"@{field}:*{part}*" for part in escaped_parts]
+                )
+                query_parts.append(f"({or_query})")
+            else:
+                escaped_value = quote_if_space(value)
+                query_parts.append(f"@{field}:*{escaped_value}*")
+    return query_parts
+
+
 def make_position_input_model(input_fields):
     fields = {}
 
@@ -20,39 +51,63 @@ def make_position_input_model(input_fields):
         if field == "index_name":
             continue
         description = f"{field.capitalize()} (custom field)"
-        fields[field] = (str, Field(..., description=description))
+        fields[field] = (str, Field("", description=description))
 
     return create_model("PositionInput", **fields)
 
 
-def make_get_position_tool(input_fields):
+def get_position_tool(input_fields):
     position_input_model = make_position_input_model(input_fields)
 
-    def func(**kwargs):
+    @tool(args_schema=position_input_model)
+    def position_search_tool(**kwargs):
+        """Search positions in a RedisSearch index using the provided input_fields as filters and return matching documents.
+
+        Parameters:
+        - index_name: Name of the RedisSearch index (default: positions)
+        - other fields listed in input_fields: Used to build a fuzzy query for each field and labels
+
+        Returns:
+        - A list of matched documents (RedisSearch results.docs)
+        """
         redis = Redis(
             host=os.getenv("REDIS_HOST", "localhost"),
-            port=int(os.getenv("REDIS_PORT", "6380")),
-            username=os.getenv("REDIS_USER", None),
-            password=os.getenv("REDIS_PASSWORD", None),
+            port=int(os.getenv("REDIS_PORT")),
+            username=os.getenv("REDIS_USER"),
+            password=os.getenv("REDIS_PASSWORD"),
             decode_responses=True,
         )
 
         query_parts = []
-        label_parts = []
 
         for field in input_fields:
-            value = quote_if_space(kwargs.get(field, ""))
-            query_parts.append(f"@{field}:%{value}%")
-            label_parts.append(f"%{value}%")
+            value = kwargs.get(field, "")
+            if value:
+                if "-" in value:
+
+                    parts = value.split("-")
+                    escaped_parts = [
+                        quote_if_space(part.strip()) for part in parts if part.strip()
+                    ]
+                    or_query = " | ".join(
+                        [f"@{field}:*{part}*" for part in escaped_parts]
+                    )
+                    query_parts.append(f"({or_query})")
+                else:
+                    escaped_value = quote_if_space(value)
+                    query_parts.append(f"@{field}:*{escaped_value}*")
 
         query_str = " ".join(query_parts)
-
-        if label_parts:
-            query_str += f" @labels:({'|'.join(label_parts)})"
         index_name = kwargs.get("index_name", "positions")
         query = Query(query_str)
         results = redis.ft(index_name).search(query)
 
-        return results.docs
 
-    return tool(args_schema=position_input_model)(func)
+        filtered_docs = []
+        for doc in results.docs:
+            filtered_doc = _filter_document_fields(doc)
+            filtered_docs.append(filtered_doc)
+
+        return filtered_docs
+
+    return position_search_tool

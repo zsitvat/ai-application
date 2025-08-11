@@ -78,17 +78,37 @@ class TopicValidatorService:
         if allowed_set.intersection(invalid_set):
             raise ValueError("A topic cannot be allowed and invalid at the same time.")
 
-        if "other" not in invalid_set and "other" not in allowed_set:
+        # Only add "other" to invalid_set if it's not explicitly in allowed_topics
+        if "other" not in allowed_set and "other" not in invalid_set:
             invalid_set.add("other")
+            self.logger.debug("Added 'other' to invalid_set")
 
         candidate_topics = list(allowed_set.union(invalid_set))
+        self.logger.debug(f"candidate_topics: {candidate_topics}")
 
         try:
             topic = await self._classify_with_llm(
                 question, candidate_topics, provider, name, deployment
             )
 
-            is_allowed = topic in allowed_topics
+            self.logger.debug(f"LLM classified topic as: {topic}")
+
+            normalized_topic = topic.strip().lower()
+            normalized_allowed_topics = [t.strip().lower() for t in allowed_topics]
+
+            is_allowed = normalized_topic in normalized_allowed_topics
+            self.logger.debug(
+                f"Topic '{topic}' (normalized: '{normalized_topic}') in allowed_topics: {is_allowed}"
+            )
+
+            # Find the original topic name for consistent response
+            if is_allowed:
+                original_topic = None
+                for orig_topic in allowed_topics:
+                    if orig_topic.strip().lower() == normalized_topic:
+                        original_topic = orig_topic
+                        break
+                topic = original_topic or topic
 
             if is_allowed:
                 reason = f"Question classified as '{topic}' which is an allowed topic."
@@ -148,8 +168,12 @@ class TopicValidatorService:
 
             response = await chain.ainvoke({"text": text, "topics": ", ".join(topics)})
 
+            self.logger.debug(f"LLM raw response: {response}")
+
             if isinstance(response, dict) and "topic" in response:
-                return response["topic"]
+                topic = response["topic"]
+                self.logger.debug(f"Extracted topic from response: '{topic}'")
+                return topic
             else:
                 self.logger.warning(f"Unexpected LLM response format: {response}")
                 return "other"

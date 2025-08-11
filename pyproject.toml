@@ -25,6 +25,7 @@ dependencies = [
     "langchain-redis",
     "langchain-google-community",
     "langgraph",
+    "langgraph-checkpoint-redis",
     "langchain-tavily",
     "google-api-python-client",
     "tavily-python",

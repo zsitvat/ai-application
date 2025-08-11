@@ -9,6 +9,7 @@
                     "deployment": "chatboss_sweden-central_chat_gpt-4o-mini"
                 },
                 "prompt_id": "retriever-agent-prompt",
+                "description": "Searches and retrieves relevant information about the company from the knowledge base to answer user questions",
                 "debug": false
             },
             "tool_choice": "auto",
@@ -32,6 +33,7 @@
                     "deployment": "chatboss_sweden-central_chat_gpt-4o-mini"
                 },
                 "prompt_id": "issue-reporter-agent-prompt",
+                "description": "Handles user complaints, feedback, and issue reporting with appropriate categorization and priority assignment. At getting applicant informations do not use this if user don't want to report an issue, just don't want to give email or phone numbers",
                 "debug": false
             },
             "tool_choice": "auto",
@@ -63,6 +65,7 @@
                     "temperature": 0.25
                 },
                 "prompt_id": "recruiter",
+                "description": "Assists users with job searching, finding positions, and providing career guidance based on location, field, and job type preferences, apply to the positions or getting user application informations",
                 "debug": false
             },
             "tool_choice": "auto",
@@ -78,7 +81,6 @@
                     "index_name": "positions"
                 },
                 "get_labels_tool": {
-                    "type": "label_search",
                     "description": "Tool to fetch all unique labels all the time grouped by county and city, and lists of fields and job types.",
                     "required": true,
                     "index_name": "positions"
@@ -94,37 +96,38 @@
             "deployment": "chatboss_sweden-central_chat_gpt-4o-mini"
         },
         "allowed_topics": [
-            "work",
-            "career",
-            "job",
-            "professional",
-            "workplace",
+            "job_search",
             "employment",
             "recruitment",
             "hiring",
-            "interview",
-            "resume",
-            "cv",
-            "job_search",
             "job_application",
             "job_offer",
+            "job_interview",
+            "resume",
+            "cv",
+            "cities-county",
             "job_description",
             "job_requirements",
             "job_skills",
-            "job_market",
-            "job_trends",
-            "job_industry",
-            "job_roles",
-            "job_titles",
-            "job_levels",
-            "job_salaries",
-            "job_benefits",
-            "job_perks",
-            "job_culture",
-            "job_environment",
-            "job_satisfaction",
+            "job_positions",
+            "job_openings",
+            "job_companies",
+            "company_information",
+            "company_culture",
+            "company_benefits",
+            "salary",
+            "workplace",
+            "career",
+            "professional",
+            "work",
+            "complaint",
+            "issue_reporting",
+            "problem",
+            "feedback",
+            "concern",
+            "greetings",
             "smalltalk",
-            "greetings"
+            "other"
         ],
         "invalid_topics": [
             "personal",
@@ -133,11 +136,8 @@
             "inappropriate",
             "programming",
             "coding",
-            "technical",
             "math",
-            "science",
             "history",
-            "geography",
             "sports",
             "entertainment",
             "music",
@@ -145,7 +145,11 @@
             "games",
             "books",
             "art",
-            "literature"
+            "literature",
+            "health",
+            "medical",
+            "finance",
+            "investment"
         ]
     },
     "personal_data_filter": {
@@ -177,6 +181,7 @@
                 "deployment": "chatboss_sweden-central_chat_gpt-4o-mini"
             },
             "prompt_id": "supervisor-prompt",
+            "description": "Manages and routes user requests to the appropriate specialized agent based on the content and context of the conversation",
             "debug": false
         }
     },
@@ -189,6 +194,7 @@
                 "deployment": "chatboss_sweden-central_chat_gpt-4o-mini"
             },
             "prompt_id": "exception-chain-prompt",
+            "description": "Handles errors, invalid requests, and off-topic conversations with appropriate responses and guidance",
             "debug": false
         },
         "tool_choice": "auto",

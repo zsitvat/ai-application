@@ -4,11 +4,13 @@ import json
 import os
 from functools import partial
 from typing import Any, AsyncGenerator, Literal
+from uuid import uuid4
 
-from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
+import aiohttp
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langgraph.checkpoint.memory import InMemorySaver
-from langgraph.checkpoint.redis.aio import AsyncRedisSaver
+from langgraph.checkpoint.redis import AsyncRedisSaver
 from langgraph.graph import END, StateGraph
 from langgraph.graph.message import add_messages
 from langgraph.config import RunnableConfig
@@ -85,9 +87,9 @@ class GraphService:
 
             initial_state = AgentState(
                 messages=[HumanMessage(content=user_input)],
-                next="",
                 context=context or {},
                 parameters=parameters or {},
+                user_id=user_id or uuid4(),
             )
 
             recursion_limit = getattr(self.graph_config, "recursion_limit", 1)
@@ -131,7 +133,6 @@ class GraphService:
 
             initial_state = AgentState(
                 messages=[HumanMessage(content=user_input)],
-                next="",
                 context=context or {},
                 parameters=parameters or {},
             )
@@ -283,31 +284,113 @@ class GraphService:
             )
 
             extract_prompt = (
-                "You are an assistant that extracts applicant attributes from a job application chat history. "
-                "Given the full conversation below, return a JSON object with all available applicant attributes "
-                "(e.g., name, email, phone, address, skills, experience, etc.) that the applicant provided. "
-                "If an attribute is not present, omit it. Only return the JSON object, nothing else."
+                "Extract applicant data from a job application conversation. "
+                "Based on the entire conversation, return a JSON object with the following fields: "
+                "- applicant_name: applicant's name (required) "
+                "- phone_number: phone number (required) "
+                "- email: email address "
+                "- position_name: position name (required) "
+                "- position_id: position identifier (required) "
+                "- application_reason: why they applied for the job (required) "
+                "- language_skills: language skills "
+                "- experience: experience (required) "
+                "- other_information: other information "
+                "If a field is not available, leave it empty. Return only the JSON object, nothing else."
             )
 
             messages_text = "\n".join(
                 [
                     f"{msg.__class__.__name__}: {getattr(msg, 'content', str(msg))}"
-                    for msg in state["messages"]
+                    for msg in state.messages
                 ]
             )
-            full_prompt = f"{extract_prompt}\n\nConversation History:\n{messages_text}"
+            full_prompt = f"{extract_prompt}\n\nConversation history:\n{messages_text}"
 
             response = await llm.ainvoke(full_prompt)
 
-            extracted = json.loads(response.content)
-            if isinstance(extracted, dict):
-                state["application_attributes"].update(extracted)
+            try:
+                extracted = json.loads(response.content)
+                if isinstance(extracted, dict):
+                    for key, value in extracted.items():
+                        if key in state.application_attributes and value:
+                            state.application_attributes[key] = str(value)
+
+                    # Check if all required fields are present and call endpoint if so
+                    if self._check_required_fields_complete(
+                        state.application_attributes
+                    ):
+                        await self._submit_application_data(
+                            state.application_attributes
+                        )
+
+            except json.JSONDecodeError:
+                self.logger.warning(
+                    f"[GraphService|_applicant_attributes_extractor_node] Failed to parse JSON response: {response.content}"
+                )
 
             return state
 
         except Exception as ex:
             self.logger.error(
                 f"[GraphService|_applicant_attributes_extractor_node] error: {str(ex)}"
+            )
+            return state
+        return state
+
+    def _check_required_fields_complete(self, application_attributes: dict) -> bool:
+        """Check if all required application attributes are present and not empty."""
+        required_fields = [
+            "applicant_name",
+            "phone_number",
+            "position_name",
+            "position_id",
+            "application_reason",
+            "experience",
+        ]
+
+        for field in required_fields:
+            value = application_attributes.get(field, "").strip()
+            if not value:
+                self.logger.debug(
+                    f"[GraphService] Required field '{field}' is missing or empty"
+                )
+                return False
+
+        self.logger.debug("[GraphService] All required fields are complete")
+        return True
+
+    async def _submit_application_data(self, application_attributes: dict) -> None:
+        """Submit application data to the configured endpoint."""
+        base_url = os.getenv("DATA_API_BASE_URL", "").rstrip("/")
+        endpoint_path = os.getenv("APPLICATION_SUBMIT_ENDPOINT", "")
+
+        if not base_url or not endpoint_path:
+            self.logger.warning(
+                "[GraphService] DATA_API_BASE_URL or APPLICATION_SUBMIT_ENDPOINT not configured in .env"
+            )
+            return
+
+        endpoint_url = f"{base_url}/{endpoint_path.lstrip('/')}"
+
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
+                    endpoint_url,
+                    json=application_attributes,
+                    headers={"Content-Type": "application/json"},
+                ) as response:
+                    if response.status == 200:
+                        self.logger.info(
+                            f"[GraphService] Successfully submitted application data to {endpoint_url}"
+                        )
+                    else:
+                        response_text = await response.text()
+                        self.logger.error(
+                            f"[GraphService] Failed to submit application data. Status: {response.status}, Response: {response_text}"
+                        )
+        except Exception as ex:
+            self.logger.error(
+                f"[GraphService] Error submitting application data to {endpoint_url}: {str(ex)}"
             )
 
     async def _agent_node(
@@ -327,34 +410,136 @@ class GraphService:
             )
 
             prompt = self._inject_tool_info_into_prompt(prompt, agent_config)
+
+            prompt_with_messages = ChatPromptTemplate.from_messages(
+                [prompt, MessagesPlaceholder(variable_name="messages")]
+            )
+
             allowed_tool_names = self._get_allowed_tool_names(agent_config)
             tools_to_bind = [AVAILABLE_TOOLS[name] for name in allowed_tool_names]
-            chain = prompt | llm.bind_tools(
+            chain = prompt_with_messages | llm.bind_tools(
                 tools_to_bind, tool_choice=agent_config.tool_choice
             )
-            response = await chain.ainvoke({"messages": state["messages"]})
 
-            tool_name, tool_args = self._extract_tool_call(response)
-            tool_func = self._find_tool_func(tool_name, tools_to_bind)
+            prompt_context = {"messages": state.messages}
 
-            if (
-                tool_name
-                and tool_name in agent_config.tools
-                and isinstance(tool_args, dict)
-            ):
-                tool_args = self._merge_tool_args_with_config(
-                    tool_args, agent_config.tools[tool_name]
-                )
+            if state.context:
+                prompt_context.update(state.context)
+            if state.parameters:
+                prompt_context.update(state.parameters)
 
-            tool_result_message = await self._execute_tool_func(
-                tool_func, tool_name, tool_args, agent_config
+            prompt_context["application_attributes"] = state.application_attributes
+
+            if "user_information" not in prompt_context:
+                prompt_context["user_information"] = ""
+            if "labels" not in prompt_context:
+                prompt_context["labels"] = []
+            if "positions" not in prompt_context:
+                prompt_context["positions"] = []
+
+            # Check for required tools and execute them first
+            required_tools_executed = await self._execute_required_tools(agent_config)
+
+            self._update_context_with_tool_results(
+                prompt_context, required_tools_executed, state.application_attributes
             )
 
+            self.logger.debug(
+                f"[GraphService] Agent '{agent_name}' application_attributes after required tools: {state.application_attributes}"
+            )
+            self.logger.debug(
+                f"[GraphService] Agent '{agent_name}' prompt_context keys after required tools: {list(prompt_context.keys())}"
+            )
+
+            response = await chain.ainvoke(prompt_context)
+
+            tool_name, tool_args, tool_call_id = self._extract_tool_call(response)
+            tool_func = self._find_tool_func(tool_name, tools_to_bind)
+
             state["messages"] = add_messages(state["messages"], [response])
-            if tool_result_message:
-                state["messages"] = add_messages(
-                    state["messages"], [tool_result_message]
+
+            if tool_name and tool_func:
+                self.logger.debug(
+                    f"[GraphService] Original tool args from LLM for '{tool_name}': {tool_args}"
                 )
+
+                if "input_fields" in tool_args and isinstance(
+                    tool_args["input_fields"], dict
+                ):
+                    search_values = tool_args["input_fields"]
+                    tool_args = search_values.copy()
+
+                    if tool_name in agent_config.tools:
+                        config_input_fields = agent_config.tools[tool_name].get(
+                            "input_fields", []
+                        )
+                        if config_input_fields:
+                            mapped_args = {}
+                            for field_name in config_input_fields:
+                                if field_name in search_values:
+                                    mapped_args[field_name] = search_values[field_name]
+                                elif (
+                                    field_name.startswith("labels_")
+                                    and field_name[7:] in search_values
+                                ):
+                                    mapped_args[field_name] = search_values[
+                                        field_name[7:]
+                                    ]
+                            tool_args = mapped_args
+
+                if tool_name in agent_config.tools and isinstance(tool_args, dict):
+                    tool_args = self._merge_tool_args_with_config(
+                        tool_args, agent_config.tools[tool_name]
+                    )
+                    self.logger.debug(
+                        f"[GraphService] Tool args after merge for '{tool_name}': {tool_args}"
+                    )
+
+                tool_result_message = await self._execute_tool_function(
+                    tool_func, tool_name, tool_args, agent_config
+                )
+
+                if tool_result_message:
+                    if isinstance(tool_result_message, ToolMessage):
+                        tool_result_message.tool_call_id = (
+                            tool_call_id or tool_name or "unknown_tool"
+                        )
+
+                    state["messages"] = add_messages(
+                        state["messages"], [tool_result_message]
+                    )
+
+                    var_name = None
+                    if (
+                        hasattr(agent_config, "tools")
+                        and tool_name in agent_config.tools
+                    ):
+                        var_name = agent_config.tools[tool_name].get("variable_name")
+
+                    self._update_context_with_tool_results(
+                        prompt_context,
+                        [
+                            {
+                                "tool_name": tool_name,
+                                "message": tool_result_message,
+                                "variable_name": var_name,
+                            }
+                        ],
+                        state.application_attributes,
+                    )
+
+                    prompt_context["messages"] = self._filter_problematic_messages(
+                        state.messages
+                    )
+
+                    follow_up_response = await chain.ainvoke(prompt_context)
+                    state["messages"] = add_messages(
+                        state["messages"], [follow_up_response]
+                    )
+
+                    self.logger.debug(
+                        f"[GraphService] Agent '{agent_name}' generated follow-up response after tool execution: {str(follow_up_response)[:100]}..."
+                    )
 
             self.logger.debug(
                 f"[GraphService] Agent node '{agent_name}' completed processing."
@@ -390,7 +575,10 @@ class GraphService:
     def _get_allowed_tool_names(self, agent_config):
         allowed_tool_names = []
         if hasattr(agent_config, "tools") and isinstance(agent_config.tools, dict):
-            for tool_name in agent_config.tools.keys():
+            for tool_name, tool_config in agent_config.tools.items():
+                # Skip required tools
+                if tool_config.get("required", False):
+                    continue
                 if tool_name in AVAILABLE_TOOLS:
                     allowed_tool_names.append(tool_name)
         return allowed_tool_names
@@ -398,24 +586,45 @@ class GraphService:
     def _extract_tool_call(self, response):
         tool_name = None
         tool_args = None
-        if hasattr(response, "additional_kwargs") and response.additional_kwargs.get(
+        tool_call_id = None
+
+        if hasattr(response, "tool_calls") and response.tool_calls:
+            try:
+                tool_call = response.tool_calls[0]
+                tool_name = tool_call.get("name")
+                tool_call_id = tool_call.get("id")
+                tool_args = tool_call.get("args", {})
+                if isinstance(tool_args, str):
+                    tool_args = json.loads(tool_args)
+            except Exception as e:
+                self.logger.warning(f"Error parsing tool_calls: {e}")
+                tool_name = None
+                tool_args = None
+                tool_call_id = None
+
+        elif hasattr(response, "additional_kwargs") and response.additional_kwargs.get(
             "function_call"
         ):
             try:
                 fc = response.additional_kwargs["function_call"]
                 tool_name = fc.get("name")
                 tool_args = json.loads(fc.get("arguments", "{}"))
-            except Exception:
+                tool_call_id = tool_name
+            except Exception as e:
+                self.logger.warning(f"Error parsing function_call: {e}")
                 tool_name = None
                 tool_args = None
-        return tool_name, tool_args
+                tool_call_id = None
+
+        return tool_name, tool_args, tool_call_id
 
     def _find_tool_func(self, tool_name, tools_to_bind):
         if tool_name:
             for t in tools_to_bind:
                 if hasattr(t, "name") and t.name == tool_name:
                     return t
-        return None
+
+        return AVAILABLE_TOOLS.get(tool_name)
 
     def _merge_tool_args_with_config(self, tool_args, config_defaults):
         merged_args = dict(tool_args)
@@ -423,25 +632,235 @@ class GraphService:
             merged_args[k] = v
         return merged_args
 
-    async def _execute_tool_func(self, tool_func, tool_name, tool_args, agent_config):
+    async def _execute_tool_function(
+        self, tool_func, tool_name, tool_args, agent_config
+    ):
         if tool_func and callable(tool_func):
-            filtered_args = tool_args
             try:
                 input_fields = []
                 if tool_name and tool_name in agent_config.tools:
                     input_fields = agent_config.tools[tool_name].get("input_fields", [])
-                if input_fields and isinstance(filtered_args, dict):
-                    filtered_args = {
-                        k: v for k, v in filtered_args.items() if k in input_fields
+
+                if tool_name == "get_position_tool" and input_fields:
+                    actual_tool = tool_func(input_fields)
+                    tool_func = actual_tool
+                    self.logger.debug(
+                        f"[GraphService] Created position tool with input_fields: {input_fields}"
+                    )
+
+                filtered_args = {}
+                if input_fields:
+
+                    config_keys = {
+                        "type",
+                        "job_type",
+                        "input_fields",
+                        "description",
+                        "required",
+                        "variable_name",
                     }
-                if asyncio.iscoroutinefunction(tool_func):
-                    tool_result = await tool_func(**filtered_args)
+                    filtered_args = {
+                        k: v for k, v in tool_args.items() if k not in config_keys
+                    }
                 else:
-                    tool_result = tool_func(**filtered_args)
-                return AIMessage(content=f"Tool '{tool_name}' result: {tool_result}")
-            except Exception as tool_ex:
-                return AIMessage(content=f"Tool '{tool_name}' error: {tool_ex}")
-        return None
+                    config_keys = {
+                        "type",
+                        "job_type",
+                        "input_fields",
+                        "description",
+                        "required",
+                        "variable_name",
+                    }
+                    filtered_args = {
+                        k: v for k, v in tool_args.items() if k not in config_keys
+                    }
+
+                self.logger.debug(
+                    f"[GraphService] Executing tool '{tool_name}' with filtered_args: {filtered_args}"
+                )
+
+                tool_result = await tool_func.ainvoke(filtered_args)
+
+                if isinstance(tool_result, ToolMessage):
+                    return tool_result
+                elif isinstance(tool_result, AIMessage):
+                    return ToolMessage(
+                        content=tool_result.content, tool_call_id="temp_id"
+                    )
+                else:
+                    return ToolMessage(content=str(tool_result), tool_call_id="temp_id")
+
+            except Exception as ex:
+                self.logger.error(
+                    f"[GraphService] Error executing tool '{tool_name}': {str(ex)}"
+                )
+                return ToolMessage(
+                    content=f"Error executing tool '{tool_name}': {str(ex)}",
+                    tool_call_id="temp_id",
+                )
+
+    async def _execute_required_tools(self, agent_config):
+        """Execute all required tools for an agent automatically."""
+
+        required_tool_results = []
+
+        if not (
+            hasattr(agent_config, "tools") and isinstance(agent_config.tools, dict)
+        ):
+            return required_tool_results
+
+        for tool_name, tool_config in agent_config.tools.items():
+            if not tool_config.get("required", False):
+                continue
+
+            self.logger.debug(
+                f"[GraphService] Processing required tool '{tool_name}' for agent"
+            )
+
+            tool_func = AVAILABLE_TOOLS.get(tool_name)
+
+            if not tool_func:
+                self.logger.warning(
+                    f"[GraphService] Required tool '{tool_name}' not found in AVAILABLE_TOOLS."
+                )
+                continue
+
+            try:
+                tool_args = dict(tool_config)
+                tool_result = await self._execute_tool_function(
+                    tool_func, tool_name, tool_args, agent_config
+                )
+                if tool_result:
+                    var_name = tool_config.get("variable_name")
+                    required_tool_results.append(
+                        {
+                            "tool_name": tool_name,
+                            "message": tool_result,
+                            "variable_name": var_name,
+                        }
+                    )
+                    self.logger.debug(
+                        f"[GraphService] Required tool '{tool_name}' executed successfully (context only, not added to messages). Result content: {str(getattr(tool_result, 'content', tool_result))[:200]}..."
+                    )
+            except Exception as ex:
+                self.logger.error(
+                    f"[GraphService] Failed to execute required tool '{tool_name}': {str(ex)}"
+                )
+
+        return required_tool_results
+
+    def _update_context_with_tool_results(
+        self, prompt_context, required_tools_executed, application_attributes=None
+    ):
+        """Update prompt context with data from required tools results."""
+        for result in required_tools_executed:
+            tool_name = result.get("tool_name")
+            tool_message = result.get("message")
+            var_name = result.get("variable_name")
+
+            if not tool_message:
+                continue
+
+            content = getattr(tool_message, "content", "")
+
+            self._update_prompt_context(
+                prompt_context, tool_name, var_name, content, tool_message
+            )
+
+            if application_attributes is not None and content:
+                self._update_application_attributes_from_tool(
+                    application_attributes, tool_name, content
+                )
+
+    def _update_prompt_context(
+        self, prompt_context, tool_name, var_name, content, tool_message
+    ):
+        """Update prompt context with tool result."""
+        if var_name:
+            prompt_context[var_name] = content or str(tool_message)
+        elif tool_name == "get_labels_tool":
+            prompt_context["labels"] = content or str(tool_message)
+
+    def _update_application_attributes_from_tool(
+        self, application_attributes, tool_name, content
+    ):
+        """Update application attributes based on tool results."""
+        try:
+            if content.strip().startswith("{") or content.strip().startswith("["):
+                parsed_content = json.loads(content)
+                self._process_structured_tool_data(
+                    application_attributes, tool_name, parsed_content
+                )
+            else:
+                self._process_text_tool_data(application_attributes, tool_name, content)
+
+            self.logger.debug(
+                f"[GraphService] Updated application_attributes from required tool '{tool_name}'"
+            )
+
+        except (json.JSONDecodeError, TypeError) as ex:
+            self.logger.debug(
+                f"[GraphService] Could not parse tool result as JSON for '{tool_name}': {ex}"
+            )
+            self._process_text_tool_data(application_attributes, tool_name, content)
+
+    def _process_structured_tool_data(
+        self, application_attributes, tool_name, parsed_content
+    ):
+        """Process structured JSON data from tools."""
+        if tool_name == "get_positions_tool" and isinstance(parsed_content, list):
+            self._extract_position_info_from_list(
+                application_attributes, parsed_content
+            )
+        elif tool_name == "get_labels_tool" and isinstance(parsed_content, dict):
+            self._extract_location_info_from_labels(
+                application_attributes, parsed_content
+            )
+
+    def _extract_position_info_from_list(self, application_attributes, positions):
+        """Extract position information from positions data."""
+        for position in positions:
+            if isinstance(position, dict):
+                if "id" in position and not application_attributes.get("position_id"):
+                    application_attributes["position_id"] = str(position["id"])
+                if "title" in position and not application_attributes.get(
+                    "position_name"
+                ):
+                    application_attributes["position_name"] = str(position["title"])
+                break
+
+    def _extract_location_info_from_labels(self, application_attributes, labels_data):
+        """Extract location information from labels."""
+        if "counties" in labels_data:
+            counties = labels_data["counties"]
+            if counties and not application_attributes.get("other_information"):
+                application_attributes["other_information"] = (
+                    f"Available locations: {', '.join(counties[:5])}"
+                )
+
+    def _process_text_tool_data(self, application_attributes, tool_name, content):
+        """Process text content from tools."""
+        if tool_name == "get_positions_tool" and "position" in content.lower():
+            self._extract_position_info_from_text(application_attributes, content)
+
+    def _extract_position_info_from_text(self, application_attributes, content):
+        """Extract position info from text content."""
+        lines = content.split("\n")
+        for line in lines[:3]:
+            if "id:" in line.lower() and not application_attributes.get("position_id"):
+                try:
+                    pos_id = line.split(":")[-1].strip()
+                    application_attributes["position_id"] = pos_id
+                except (IndexError, AttributeError):
+                    pass
+            elif "title:" in line.lower() and not application_attributes.get(
+                "position_name"
+            ):
+                try:
+                    pos_title = line.split(":")[-1].strip()
+                    application_attributes["position_name"] = pos_title
+                except (IndexError, AttributeError):
+                    pass
 
     def _build_supervisor_prompt(
         self, available_options: list[str], last_agent=None
@@ -451,7 +870,11 @@ class GraphService:
         agent_descriptions = []
         for name, agent in self.graph_config.agents.items():
             if agent.enabled:
-                agent_descriptions.append(f"- {name}")
+                description = (
+                    getattr(agent.chain, "description", "")
+                    or "No description available"
+                )
+                agent_descriptions.append(f"- {name}: {description}")
 
         system_prompt_ending = ""
         if self.graph_config.allow_supervisor_finish:
@@ -459,13 +882,19 @@ class GraphService:
         else:
             system_prompt_ending = "Based on the user input and conversation history, decide which agent should handle this next. You must select one of the available agents."
 
+        if (
+            "recruiter_agent" in self.graph_config.agents.keys()
+            or "recruiter" in self.graph_config.agents.keys()
+        ):
+            system_prompt_ending += "If the user input is smalltalk or asking about the positions. Always choose recruiter agent."
+
         last_agent_str = (
             f"\nThe last agent selected was: {last_agent}."
             if last_agent
             else "No last agent selected."
         )
 
-        return f"""You are a supervisor managing a team of AI agents. Your job is to decide which agent should handle the user's request{'' if not self.graph_config.allow_supervisor_finish else ' or if the task is complete'}.
+        return f"""You are a supervisor managing a team of AI agents. Your job is to decide which agent should handle the user's request{'' if not self.graph_config.allow_supervisor_finish else ' or if the task is complete.'}.
 
 Available agents and their capabilities:
 {chr(10).join(agent_descriptions)}
@@ -499,21 +928,29 @@ Select one of: {available_options}"""
     def _extract_next_agent_from_response(self, response) -> str | None:
         """Extract the next agent from LLM response."""
 
+        if hasattr(response, "tool_calls") and response.tool_calls:
+            try:
+                tool_call = response.tool_calls[0]
+                if hasattr(tool_call, "function") and hasattr(
+                    tool_call.function, "arguments"
+                ):
+                    args = json.loads(tool_call.function.arguments)
+                    return args.get("chain", None)
+                elif isinstance(tool_call, dict):
+                    return tool_call.get("args", {}).get("chain", None)
+            except Exception:
+                pass
+
         if hasattr(response, "additional_kwargs") and response.additional_kwargs.get(
             "function_call"
         ):
             try:
-                fc = response.additional_kwargs["function_call"]
-                args = json.loads(fc.get("arguments", "{}"))
+                call = response.additional_kwargs["function_call"]
+                args = json.loads(call.get("arguments", "{}"))
                 return args.get("chain", None)
             except Exception:
-                return None
+                pass
 
-        if hasattr(response, "tool_calls") and response.tool_calls:
-            try:
-                return response.tool_calls[0].get("args", {}).get("chain", None)
-            except Exception:
-                return None
         return None
 
     def _create_supervisor_node(self):
@@ -558,11 +995,15 @@ Select one of: {available_options}"""
                     ]
                 ).partial(options=str(available_options))
 
-                chain = prompt | llm.bind_functions(
-                    functions=[function_def], function_call="route"
+                tool_def = {"type": "function", "function": function_def}
+
+                chain = prompt | llm.bind_tools(
+                    tools=[tool_def], tool_choice="required"
                 )
 
-                response = await chain.ainvoke({"messages": state["messages"]})
+                # Filter out ToolMessage objects to avoid OpenAI API errors
+                filtered_messages = self._filter_problematic_messages(state.messages)
+                response = await chain.ainvoke({"messages": filtered_messages})
 
                 next_agent = self._extract_next_agent_from_response(response)
 
@@ -572,7 +1013,7 @@ Select one of: {available_options}"""
                     else:
                         next_agent = enabled_agents[0]
 
-                state["next"] = next_agent
+                state.next = next_agent
 
                 agent_name = None
                 if response.additional_kwargs.get("function_call"):
@@ -586,7 +1027,7 @@ Select one of: {available_options}"""
                     agent_name = (
                         response.tool_calls[0].get("args", {}).get("chain", None)
                     )
-                state["last_agent"] = agent_name
+                state.last_agent = agent_name
 
                 self.logger.debug(
                     f"[GraphService] Supervisor node decided next action: {state['next']}. State: {state}"
@@ -600,6 +1041,84 @@ Select one of: {available_options}"""
                 raise
 
         return supervisor_node
+
+    def _extract_tool_call_ids(self, tool_calls):
+        """Extract tool call IDs from tool_calls."""
+        tool_call_ids = set()
+        for tool_call in tool_calls:
+            if hasattr(tool_call, "id"):
+                tool_call_ids.add(tool_call.id)
+            elif isinstance(tool_call, dict) and "id" in tool_call:
+                tool_call_ids.add(tool_call["id"])
+        return tool_call_ids
+
+    def _collect_tool_messages(self, messages, start_index, expected_tool_call_ids):
+        """Collect ToolMessages that match expected tool_call_ids."""
+        j = start_index
+        found_tool_messages = []
+        found_tool_call_ids = set()
+
+        while j < len(messages) and isinstance(messages[j], ToolMessage):
+            tool_msg = messages[j]
+            if (
+                hasattr(tool_msg, "tool_call_id")
+                and tool_msg.tool_call_id in expected_tool_call_ids
+            ):
+                found_tool_messages.append(tool_msg)
+                found_tool_call_ids.add(tool_msg.tool_call_id)
+            j += 1
+
+        return found_tool_messages, found_tool_call_ids, j
+
+    def _process_ai_message_with_tools(self, msg, messages, i, filtered):
+        """Process AIMessage that has tool_calls."""
+        tool_call_ids = self._extract_tool_call_ids(msg.tool_calls)
+
+        # Collect following ToolMessages
+        found_tool_messages, found_tool_call_ids, next_index = (
+            self._collect_tool_messages(messages, i + 1, tool_call_ids)
+        )
+
+        # If we have unmatched tool_calls, convert this AIMessage to a regular message
+        if tool_call_ids and tool_call_ids != found_tool_call_ids:
+            content = msg.content if msg.content else "Tool execution completed."
+            filtered.append(AIMessage(content=content))
+        else:
+            # Keep the AIMessage and its corresponding ToolMessages
+            filtered.append(msg)
+            filtered.extend(found_tool_messages)
+
+        return next_index
+
+    def _filter_problematic_messages(self, messages):
+        """Filter out problematic message sequences that cause OpenAI API errors."""
+        if not messages:
+            return []
+
+        filtered = []
+        i = 0
+
+        while i < len(messages):
+            msg = messages[i]
+
+            # If this is an AIMessage with tool_calls
+            if (
+                isinstance(msg, AIMessage)
+                and hasattr(msg, "tool_calls")
+                and msg.tool_calls
+            ):
+                i = self._process_ai_message_with_tools(msg, messages, i, filtered)
+            elif isinstance(msg, ToolMessage):
+                # Orphaned ToolMessage - convert to AIMessage
+                converted_msg = AIMessage(content=f"[Tool Result]: {msg.content}")
+                filtered.append(converted_msg)
+                i += 1
+            else:
+                # Regular message
+                filtered.append(msg)
+                i += 1
+
+        return filtered
 
     def _build_workflow(self) -> StateGraph:
         """Build the LangGraph workflow with supervisor pattern."""
@@ -838,7 +1357,6 @@ Select one of: {available_options}"""
 
         if self.graph_config.exception_chain:
             state["next"] = "exception_chain"
-            state["error_context"] = f"Topic validation failed: {reason}"
             self.logger.debug(
                 f"[GraphService] Question rejected by topic validator, routing to exception chain. Reason: {reason}, State: {state}"
             )
@@ -908,6 +1426,8 @@ Select one of: {available_options}"""
             self.logger.debug(
                 f"[GraphService] Topic validation passed, proceeding to supervisor. State: {state}"
             )
+
+            state["next"] = "supervisor"
             return state
 
         except Exception as ex:
@@ -916,13 +1436,11 @@ Select one of: {available_options}"""
             )
             if self.graph_config.exception_chain:
                 state["next"] = "exception_chain"
-                state["error_context"] = f"Topic validation error: {str(ex)}"
                 return state
             return state
 
     async def _exception_chain_node(self, state: AgentState) -> AgentState:
         """Exception chain node for handling errors and invalid inputs."""
-        error_context = state.get("error_context", "General error occurred")
         try:
             llm = get_chat_model(
                 provider=self.graph_config.exception_chain.chain.model.provider.value,
@@ -942,7 +1460,7 @@ Select one of: {available_options}"""
                 tracer_type=self.tracer_type,
             )
             user_input = self._get_user_input_from_state(state)
-            context = f"User input: {user_input}\nContext: {error_context}"
+            context = f"User input: {user_input}"
             prompt = prompt.partial(context=context)
         except Exception as e:
             self.logger.error(
@@ -953,7 +1471,9 @@ Select one of: {available_options}"""
         try:
             chain = prompt | llm
 
-            response = await chain.ainvoke({"messages": state["messages"]})
+            # Filter out ToolMessage objects to avoid OpenAI API errors
+            filtered_messages = self._filter_problematic_messages(state["messages"])
+            response = await chain.ainvoke({"messages": filtered_messages})
             state["messages"] = add_messages(state["messages"], [response])
             state["next"] = "FINISH"
             self.logger.debug(

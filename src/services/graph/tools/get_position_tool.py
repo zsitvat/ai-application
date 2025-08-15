@@ -10,33 +10,20 @@ from src.utils.quote_if_space import quote_if_space
 
 def _filter_document_fields(doc):
     """Filter out unwanted fields from a document."""
-    unwanted_fields = {"_index_name", "application_id", "starts_at", "expires_at", "id", "payload", "embedding"}
+    unwanted_fields = {
+        "_index_name",
+        "application_id",
+        "starts_at",
+        "expires_at",
+        "id",
+        "payload",
+        "embedding",
+    }
     filtered_doc = {}
     for key, value in doc.__dict__.items():
         if key not in unwanted_fields:
             filtered_doc[key] = value
     return filtered_doc
-
-
-def _build_query_parts(input_fields, kwargs):
-    """Build query parts for Redis search."""
-    query_parts = []
-    for field in input_fields:
-        value = kwargs.get(field, "")
-        if value:
-            if "-" in value:
-                parts = value.split("-")
-                escaped_parts = [
-                    quote_if_space(part.strip()) for part in parts if part.strip()
-                ]
-                or_query = " | ".join(
-                    [f"@{field}:*{part}*" for part in escaped_parts]
-                )
-                query_parts.append(f"({or_query})")
-            else:
-                escaped_value = quote_if_space(value)
-                query_parts.append(f"@{field}:*{escaped_value}*")
-    return query_parts
 
 
 def make_position_input_model(input_fields):
@@ -66,6 +53,7 @@ def get_position_tool(input_fields):
         Parameters:
         - index_name: Name of the RedisSearch index (default: positions)
         - other fields listed in input_fields: Used to build a fuzzy query for each field and labels
+            Always use all the fields if there are data for them.s
 
         Returns:
         - A list of matched documents (RedisSearch results.docs)
@@ -99,9 +87,8 @@ def get_position_tool(input_fields):
 
         query_str = " ".join(query_parts)
         index_name = kwargs.get("index_name", "positions")
-        query = Query(query_str)
+        query = Query(query_str).paging(0, 100)
         results = redis.ft(index_name).search(query)
-
 
         filtered_docs = []
         for doc in results.docs:

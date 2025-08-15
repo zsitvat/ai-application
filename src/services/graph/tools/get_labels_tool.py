@@ -6,18 +6,40 @@ from redis.asyncio import Redis
 from redis.commands.search.query import Query
 
 
+def _build_county_city_field_string(labels):
+    """Build formatted string of counties with cities and their fields."""
+    county_data = {}
+
+    for label in labels:
+        county = label.get("county")
+        city = label.get("city")
+        field = label.get("field")
+
+        if county and city and field:
+            if county not in county_data:
+                county_data[county] = {}
+            if city not in county_data[county]:
+                county_data[county][city] = set()
+            county_data[county][city].add(field)
+
+    result_parts = []
+    for county, cities in county_data.items():
+        city_parts = []
+        for city, fields in cities.items():
+            fields_str = ", ".join(sorted(fields))
+            city_parts.append(f"{city} ({fields_str})")
+
+        cities_str = ", ".join(city_parts)
+        result_parts.append(f"{county}: {cities_str}")
+
+    return ", ".join(result_parts)
+
+
 @tool
 async def get_labels_tool(
-    index_name: str = "positions", job_type: Optional[str] = None, **kwargs
-) -> dict:
-    """
-    Get all unique labels from the vector database index.
-    Optionally filter by job type (e.g., 'physical', 'intellectual', 'retired',  'student').
-
-    Args:
-        index_name (str): Redis index name (default: "positions")
-        job_type (str): Filter by job type
-    """
+    index_name: str = "positions", job_type: Optional[str] = None
+):
+    """Get all unique labels organized by counties, cities and fields in formatted string."""
 
     redis = Redis(
         host=os.getenv("REDIS_HOST"),
@@ -45,36 +67,18 @@ async def get_labels_tool(
         )
 
     results = await redis.ft(index_name).search(query)
-    county_city = {}
-    county_field = {}
-    job_type_set = set()
+
+    docs = []
     for doc in results.docs:
+        doc_dict = {
+            "county": getattr(doc, "labels_county", None),
+            "city": getattr(doc, "labels_city", None),
+            "field": getattr(doc, "labels_field", None),
+        }
+        docs.append(doc_dict)
 
-        city = getattr(doc, "labels_city", None)
-        field = getattr(doc, "labels_field", None)
-        doc_job_type = getattr(doc, "labels_job_type", None)
-        county = getattr(doc, "labels_county", None)
-
-        if county and city:
-            if county not in county_city:
-                county_city[county] = set()
-            county_city[county].add(city)
-
-        if county and field:
-            if county not in county_field:
-                county_field[county] = set()
-            county_field[county].add(field)
-
-        if doc_job_type:
-            job_type_set.add(doc_job_type)
-
-    counties_with_cities = {k: list(v) for k, v in county_city.items()}
-    counties_with_fields = {k: list(v) for k, v in county_field.items()}
+    formatted_string = _build_county_city_field_string(docs)
 
     await redis.close()
 
-    return {
-        "county_city": counties_with_cities,
-        "county_field": counties_with_fields,
-        "job_type": list(job_type_set),
-    }
+    return formatted_string

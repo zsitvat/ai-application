@@ -76,7 +76,8 @@
                         "labels_county",
                         "labels_city",
                         "labels_field",
-                        "labels_job_type"
+                        "labels_job_type",
+                        "name"
                     ],
                     "index_name": "positions"
                 },
@@ -184,6 +185,15 @@
             "description": "Manages and routes user requests to the appropriate specialized agent based on the content and context of the conversation",
             "debug": false
         }
+    },
+    "applicant_attributes_extractor": {
+        "model": {
+            "provider": "azure",
+            "name": "gpt-4o-mini",
+            "deployment": "chatboss_sweden-central_chat_gpt-4o-mini"
+        },
+        "prompt_id": "applicant-attributes-extractor-prompt",
+        "debug": false
     },
     "exception_chain": {
         "enabled": true,

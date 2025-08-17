@@ -695,7 +695,7 @@
         "labels": {
             "city": "Debrecen",
             "field": "Telefonos ügyintézés",
-            "job_type": "nyugdíjas",
+            "job_type": "szellemi",
             "county": "Hajdú-Bihar"
         },
         "image_url": "https://st2.depositphotos.com/1005730/44184/i/450/depositphotos_441847876-stock-photo-office-worker-his-desk-scratching.jpg",
@@ -730,7 +730,7 @@
         "expires_at": "2025-12-20T17:00:00Z",
         "labels": [
             "Debrecen",
-            "Telefonos ügyintézés",
+            "Telefonos ügyfélszolgálati munkatárs",
             "nyugdíjas",
             "Hajdú-Bihar"
         ],
@@ -814,14 +814,14 @@
         "slug": "nyugdijas-irodai-adminisztrator-budapest",
         "external_id": "AA100N",
         "status": "OPEN",
-        "name": "Nyugdíjas irodai adminisztrátor",
+        "name": "Irodai adminisztrátor",
         "description": "Feladatok: dokumentumkezelés, ügyintézés, telefonos kapcsolattartás.\nElvárások: nyugdíjas státusz, precizitás, számítógépes ismeretek.\nAmit kínálunk: modern iroda, stabil munkahely, rugalmas beosztás.",
         "starts_at": "2025-09-05T09:00:00Z",
         "expires_at": "2025-12-01T17:00:00Z",
         "labels": {
             "city": "Budapest",
             "field": "Adminisztráció",
-            "job_type": "nyugdíjas",
+            "job_type": "szellemi",
             "county": "Budapest"
         },
         "image_url": "https://st2.depositphotos.com/1005730/44184/i/450/depositphotos_441847876-stock-photo-office-worker-his-desk-scratching.jpg",
@@ -1030,14 +1030,14 @@
         "slug": "nyugdijas-raktari-adminisztrator-szerencs",
         "external_id": "MM112N",
         "status": "OPEN",
-        "name": "Nyugdíjas raktári adminisztrátor",
+        "name": "Raktári adminisztrátor",
         "description": "Feladatok: raktári dokumentáció vezetése, leltározás, adminisztráció.\nElvárások: nyugdíjas státusz, precizitás, számítógépes ismeretek.\nAmit kínálunk: stabil munkahely, rugalmas beosztás, cafeteria.",
         "starts_at": "2025-08-15T08:00:00Z",
         "expires_at": "2025-11-30T17:00:00Z",
         "labels": {
             "city": "Szerencs",
             "field": "Raktár",
-            "job_type": "nyugdíjas",
+            "job_type": "fizikai",
             "county": "Borsod-Abaúj-Zemplén"
         },
         "image_url": "https://st2.depositphotos.com/1005730/44184/i/450/depositphotos_441847876-stock-photo-office-worker-his-desk-scratching.jpg",
@@ -1078,5 +1078,329 @@
         },
         "image_url": "https://st2.depositphotos.com/1005730/44184/i/450/depositphotos_441847876-stock-photo-office-worker-his-desk-scratching.jpg",
         "application_id": 7
+    },
+    {
+        "id": 61,
+        "slug": "gyor-ipari-csomagolo",
+        "external_id": "PP115F",
+        "status": "OPEN",
+        "name": "Ipari csomagoló",
+        "description": "Feladatok: termékek csomagolása, minőségellenőrzés, raktári feladatok.\nElvárások: precizitás, fizikai terhelhetőség, csapatmunka.\nAmit kínálunk: stabil munkahely, cafeteria, fejlődési lehetőség.",
+        "starts_at": "2025-09-01T08:00:00Z",
+        "expires_at": "2025-12-31T17:00:00Z",
+        "labels": {
+            "city": "Győr",
+            "field": "Ipar / Csomagolás",
+            "job_type": "fizikai",
+            "county": "Győr-Moson-Sopron"
+        },
+        "image_url": "https://st2.depositphotos.com/1005730/44184/i/450/depositphotos_441847876-stock-photo-office-worker-his-desk-scratching.jpg",
+        "application_id": 3
+    },
+    {
+        "id": 62,
+        "slug": "gyor-minosegbiztosito-munkatars",
+        "external_id": "QQ116S",
+        "status": "OPEN",
+        "name": "Minőségbiztosító munkatárs",
+        "description": "Feladatok: gyártási folyamatok ellenőrzése, hibák feltárása, dokumentáció vezetése.\nElvárások: műszaki végzettség, precizitás, problémamegoldó képesség.\nAmit kínálunk: versenyképes fizetés, szakmai fejlődés, cafeteria.",
+        "starts_at": "2025-09-10T09:00:00Z",
+        "expires_at": "2025-12-20T17:00:00Z",
+        "labels": {
+            "city": "Győr",
+            "field": "Minőségbiztosítás",
+            "job_type": "szellemi",
+            "county": "Győr-Moson-Sopron"
+        },
+        "image_url": "https://st2.depositphotos.com/1005730/44184/i/450/depositphotos_441847876-stock-photo-office-worker-his-desk-scratching.jpg",
+        "application_id": 56
+    },
+    {
+        "id": 63,
+        "slug": "budapest-elektromos-karbantarto",
+        "external_id": "RR117F",
+        "status": "OPEN",
+        "name": "Elektromos karbantartó",
+        "description": "Feladatok: elektromos berendezések karbantartása, hibakeresés, javítás.\nElvárások: villanyszerelő végzettség, tapasztalat, önálló munkavégzés.\nAmit kínálunk: versenyképes fizetés, szakmai képzések, cafeteria.",
+        "starts_at": "2025-09-15T08:00:00Z",
+        "expires_at": "2025-12-31T17:00:00Z",
+        "labels": {
+            "city": "Budapest",
+            "field": "Karbantartás / Villanyszerelés",
+            "job_type": "fizikai",
+            "county": "Budapest"
+        },
+        "image_url": "https://st2.depositphotos.com/1005730/44184/i/450/depositphotos_441847876-stock-photo-office-worker-his-desk-scratching.jpg",
+        "application_id": 7
+    },
+    {
+        "id": 64,
+        "slug": "budapest-irodai-koordinator",
+        "external_id": "SS118S",
+        "status": "OPEN",
+        "name": "Irodai koordinátor",
+        "description": "Feladatok: irodai folyamatok szervezése, adminisztráció, kapcsolattartás.\nElvárások: középfokú végzettség, szervezőkészség, számítógépes ismeretek.\nAmit kínálunk: modern iroda, fiatalos csapat, szakmai fejlődés.",
+        "starts_at": "2025-09-20T09:00:00Z",
+        "expires_at": "2025-12-20T17:00:00Z",
+        "labels": {
+            "city": "Budapest",
+            "field": "Adminisztráció / Koordináció",
+            "job_type": "szellemi",
+            "county": "Budapest"
+        },
+        "image_url": "https://st2.depositphotos.com/1005730/44184/i/450/depositphotos_441847876-stock-photo-office-worker-his-desk-scratching.jpg",
+        "application_id": 56
+    },
+    {
+        "id": 65,
+        "slug": "gyor-muszaki-rajzolo",
+        "external_id": "TT119S",
+        "status": "OPEN",
+        "name": "Műszaki rajzoló",
+        "description": "Feladatok: műszaki rajzok készítése, dokumentáció, mérnökök támogatása.\nElvárások: CAD ismeret, precizitás, műszaki végzettség.\nAmit kínálunk: versenyképes fizetés, szakmai fejlődés, cafeteria.",
+        "starts_at": "2025-09-25T08:00:00Z",
+        "expires_at": "2025-12-31T17:00:00Z",
+        "labels": {
+            "city": "Győr",
+            "field": "Műszaki rajz",
+            "job_type": "szellemi",
+            "county": "Győr-Moson-Sopron"
+        },
+        "image_url": "https://st2.depositphotos.com/1005730/44184/i/450/depositphotos_441847876-stock-photo-office-worker-his-desk-scratching.jpg",
+        "application_id": 3
+    },
+    {
+        "id": 66,
+        "slug": "gyor-anyagmozgato",
+        "external_id": "UU120F",
+        "status": "OPEN",
+        "name": "Anyagmozgató",
+        "description": "Feladatok: anyagok mozgatása, raktári feladatok, leltározás.\nElvárások: fizikai terhelhetőség, precizitás, csapatmunka.\nAmit kínálunk: stabil munkahely, cafeteria, fejlődési lehetőség.",
+        "starts_at": "2025-09-28T08:00:00Z",
+        "expires_at": "2025-12-31T17:00:00Z",
+        "labels": {
+            "city": "Győr",
+            "field": "Anyagmozgatás",
+            "job_type": "fizikai",
+            "county": "Győr-Moson-Sopron"
+        },
+        "image_url": "https://st2.depositphotos.com/1005730/44184/i/450/depositphotos_441847876-stock-photo-office-worker-his-desk-scratching.jpg",
+        "application_id": 56
+    },
+    {
+        "id": 67,
+        "slug": "budapest-irodai-asszisztens",
+        "external_id": "VV121S",
+        "status": "OPEN",
+        "name": "Irodai asszisztens",
+        "description": "Feladatok: adminisztráció, dokumentumkezelés, telefonos kapcsolattartás.\nElvárások: középfokú végzettség, számítógépes ismeretek, precizitás.\nAmit kínálunk: modern iroda, fiatalos csapat, szakmai fejlődés.",
+        "starts_at": "2025-09-30T09:00:00Z",
+        "expires_at": "2025-12-20T17:00:00Z",
+        "labels": {
+            "city": "Budapest",
+            "field": "Adminisztráció",
+            "job_type": "szellemi",
+            "county": "Budapest"
+        },
+        "image_url": "https://st2.depositphotos.com/1005730/44184/i/450/depositphotos_441847876-stock-photo-office-worker-his-desk-scratching.jpg",
+        "application_id": 7
+    },
+    {
+        "id": 68,
+        "slug": "budapest-raktari-munkatars",
+        "external_id": "WW122F",
+        "status": "OPEN",
+        "name": "Raktári munkatárs",
+        "description": "Feladatok: áruk átvétele, raktározása, kiadása, leltározás.\nElvárások: precizitás, fizikai terhelhetőség, csapatmunka.\nAmit kínálunk: stabil munkahely, cafeteria, fejlődési lehetőség.",
+        "starts_at": "2025-10-01T08:00:00Z",
+        "expires_at": "2025-12-31T17:00:00Z",
+        "labels": {
+            "city": "Budapest",
+            "field": "Raktár",
+            "job_type": "fizikai",
+            "county": "Budapest"
+        },
+        "image_url": "https://st2.depositphotos.com/1005730/44184/i/450/depositphotos_441847876-stock-photo-office-worker-his-desk-scratching.jpg",
+        "application_id": 56
+    },
+    {
+        "id": 69,
+        "slug": "szoftverfejleszto-java-budapest",
+        "external_id": "XX123S",
+        "status": "OPEN",
+        "name": "Java szoftverfejlesztő",
+        "description": "Feladatok: Java alapú backend rendszerek fejlesztése, tesztelése, dokumentálása.\nElvárások: legalább 2 év Java tapasztalat, Spring vagy egyéb framework ismeret, csapatmunka.\nAmit kínálunk: versenyképes fizetés, home office lehetőség, szakmai képzések.",
+        "starts_at": "2025-10-05T09:00:00Z",
+        "expires_at": "2026-01-31T17:00:00Z",
+        "labels": {
+            "city": "Budapest",
+            "field": "Informatika / Java fejlesztés",
+            "job_type": "szellemi",
+            "county": "Budapest"
+        },
+        "image_url": "https://st2.depositphotos.com/1005730/44184/i/450/depositphotos_441847876-stock-photo-office-worker-his-desk-scratching.jpg",
+        "application_id": 56
+    },
+    {
+        "id": 70,
+        "slug": "szoftverfejleszto-python-budapest",
+        "external_id": "YY124S",
+        "status": "OPEN",
+        "name": "Python szoftverfejlesztő",
+        "description": "Feladatok: Python alapú alkalmazások fejlesztése, adatfeldolgozás, API-k készítése.\nElvárások: legalább 2 év Python tapasztalat, Flask vagy Django ismeret, csapatmunka.\nAmit kínálunk: versenyképes fizetés, rugalmas munkaidő, szakmai fejlődés.",
+        "starts_at": "2025-10-10T09:00:00Z",
+        "expires_at": "2026-02-28T17:00:00Z",
+        "labels": {
+            "city": "Budapest",
+            "field": "Informatika / Python fejlesztés",
+            "job_type": "szellemi",
+            "county": "Budapest"
+        },
+        "image_url": "https://st2.depositphotos.com/1005730/44184/i/450/depositphotos_441847876-stock-photo-office-worker-his-desk-scratching.jpg",
+        "application_id": 56
+    },
+    {
+        "id": 71,
+        "slug": "szoftverfejleszto-javascript-budapest",
+        "external_id": "ZZ125S",
+        "status": "OPEN",
+        "name": "JavaScript szoftverfejlesztő",
+        "description": "Feladatok: modern webes frontend fejlesztés React vagy Vue.js keretrendszerrel.\nElvárások: legalább 2 év JavaScript tapasztalat, React vagy Vue.js ismeret, csapatmunka.\nAmit kínálunk: versenyképes fizetés, home office lehetőség, szakmai képzések.",
+        "starts_at": "2025-10-15T09:00:00Z",
+        "expires_at": "2026-03-31T17:00:00Z",
+        "labels": {
+            "city": "Budapest",
+            "field": "Informatika / JavaScript fejlesztés",
+            "job_type": "szellemi",
+            "county": "Budapest"
+        },
+        "image_url": "https://st2.depositphotos.com/1005730/44184/i/450/depositphotos_441847876-stock-photo-office-worker-his-desk-scratching.jpg",
+        "application_id": 56
+    },
+    {
+        "id": 72,
+        "slug": "szoftverfejleszto-csharp-budapest",
+        "external_id": "AA126S",
+        "status": "OPEN",
+        "name": "C# szoftverfejlesztő",
+        "description": "Feladatok: .NET alapú alkalmazások fejlesztése, tesztelése, dokumentálása.\nElvárások: legalább 2 év C# tapasztalat, .NET Core ismeret, csapatmunka.\nAmit kínálunk: versenyképes fizetés, rugalmas munkaidő, szakmai fejlődés.",
+        "starts_at": "2025-10-20T09:00:00Z",
+        "expires_at": "2026-04-30T17:00:00Z",
+        "labels": {
+            "city": "Budapest",
+            "field": "Informatika / C# fejlesztés",
+            "job_type": "szellemi",
+            "county": "Budapest"
+        },
+        "image_url": "https://st2.depositphotos.com/1005730/44184/i/450/depositphotos_441847876-stock-photo-office-worker-his-desk-scratching.jpg",
+        "application_id": 56
+    },
+    {
+        "id": 73,
+        "slug": "szoftverfejleszto-php-budapest",
+        "external_id": "BB127S",
+        "status": "OPEN",
+        "name": "PHP szoftverfejlesztő",
+        "description": "Feladatok: PHP alapú webes rendszerek fejlesztése, tesztelése, karbantartása.\nElvárások: legalább 2 év PHP tapasztalat, Laravel vagy Symfony ismeret, csapatmunka.\nAmit kínálunk: versenyképes fizetés, home office lehetőség, szakmai képzések.",
+        "starts_at": "2025-10-25T09:00:00Z",
+        "expires_at": "2026-05-31T17:00:00Z",
+        "labels": {
+            "city": "Budapest",
+            "field": "Informatika / PHP fejlesztés",
+            "job_type": "szellemi",
+            "county": "Budapest"
+        },
+        "image_url": "https://st2.depositphotos.com/1005730/44184/i/450/depositphotos_441847876-stock-photo-office-worker-his-desk-scratching.jpg",
+        "application_id": 56
+    },
+    {
+        "id": 74,
+        "slug": "szoftverfejleszto-go-budapest",
+        "external_id": "CC128S",
+        "status": "OPEN",
+        "name": "Go szoftverfejlesztő",
+        "description": "Feladatok: Go alapú backend rendszerek fejlesztése, API-k készítése.\nElvárások: legalább 2 év Go tapasztalat, REST API ismeret, csapatmunka.\nAmit kínálunk: versenyképes fizetés, rugalmas munkaidő, szakmai fejlődés.",
+        "starts_at": "2025-10-30T09:00:00Z",
+        "expires_at": "2026-06-30T17:00:00Z",
+        "labels": {
+            "city": "Budapest",
+            "field": "Informatika / Go fejlesztés",
+            "job_type": "szellemi",
+            "county": "Budapest"
+        },
+        "image_url": "https://st2.depositphotos.com/1005730/44184/i/450/depositphotos_441847876-stock-photo-office-worker-his-desk-scratching.jpg",
+        "application_id": 56
+    },
+    {
+        "id": 75,
+        "slug": "szoftverfejleszto-typescript-budapest",
+        "external_id": "DD129S",
+        "status": "OPEN",
+        "name": "TypeScript szoftverfejlesztő",
+        "description": "Feladatok: TypeScript alapú frontend és backend fejlesztés, tesztelés, dokumentálás.\nElvárások: legalább 2 év TypeScript tapasztalat, Node.js vagy Angular ismeret, csapatmunka.\nAmit kínálunk: versenyképes fizetés, home office lehetőség, szakmai képzések.",
+        "starts_at": "2025-11-05T09:00:00Z",
+        "expires_at": "2026-07-31T17:00:00Z",
+        "labels": {
+            "city": "Budapest",
+            "field": "Informatika / TypeScript fejlesztés",
+            "job_type": "szellemi",
+            "county": "Budapest"
+        },
+        "image_url": "https://st2.depositphotos.com/1005730/44184/i/450/depositphotos_441847876-stock-photo-office-worker-his-desk-scratching.jpg",
+        "application_id": 56
+    },
+    {
+        "id": 76,
+        "slug": "szoftverfejleszto-kotlin-budapest",
+        "external_id": "EE130S",
+        "status": "OPEN",
+        "name": "Kotlin szoftverfejlesztő",
+        "description": "Feladatok: Android alkalmazások fejlesztése Kotlin nyelven, tesztelés, dokumentálás.\nElvárások: legalább 2 év Kotlin tapasztalat, Android Studio ismeret, csapatmunka.\nAmit kínálunk: versenyképes fizetés, rugalmas munkaidő, szakmai fejlődés.",
+        "starts_at": "2025-11-10T09:00:00Z",
+        "expires_at": "2026-08-31T17:00:00Z",
+        "labels": {
+            "city": "Budapest",
+            "field": "Informatika / Kotlin fejlesztés",
+            "job_type": "szellemi",
+            "county": "Budapest"
+        },
+        "image_url": "https://st2.depositphotos.com/1005730/44184/i/450/depositphotos_441847876-stock-photo-office-worker-his-desk-scratching.jpg",
+        "application_id": 56
+    },
+    {
+        "id": 77,
+        "slug": "szoftverfejleszto-ruby-budapest",
+        "external_id": "FF131S",
+        "status": "OPEN",
+        "name": "Ruby szoftverfejlesztő",
+        "description": "Feladatok: Ruby on Rails alapú webes alkalmazások fejlesztése, tesztelése, karbantartása.\nElvárások: legalább 2 év Ruby tapasztalat, Rails ismeret, csapatmunka.\nAmit kínálunk: versenyképes fizetés, home office lehetőség, szakmai képzések.",
+        "starts_at": "2025-11-15T09:00:00Z",
+        "expires_at": "2026-09-30T17:00:00Z",
+        "labels": {
+            "city": "Budapest",
+            "field": "Informatika / Ruby fejlesztés",
+            "job_type": "szellemi",
+            "county": "Budapest"
+        },
+        "image_url": "https://st2.depositphotos.com/1005730/44184/i/450/depositphotos_441847876-stock-photo-office-worker-his-desk-scratching.jpg",
+        "application_id": 56
+    },
+    {
+        "id": 78,
+        "slug": "szoftverfejleszto-cpp-budapest",
+        "external_id": "GG132S",
+        "status": "OPEN",
+        "name": "C++ szoftverfejlesztő",
+        "description": "Feladatok: C++ alapú rendszerek fejlesztése, optimalizálása, tesztelése.\nElvárások: legalább 2 év C++ tapasztalat, STL vagy Boost ismeret, csapatmunka.\nAmit kínálunk: versenyképes fizetés, rugalmas munkaidő, szakmai fejlődés.",
+        "starts_at": "2025-11-20T09:00:00Z",
+        "expires_at": "2026-10-31T17:00:00Z",
+        "labels": {
+            "city": "Budapest",
+            "field": "Informatika / C++ fejlesztés",
+            "job_type": "szellemi",
+            "county": "Budapest"
+        },
+        "image_url": "https://st2.depositphotos.com/1005730/44184/i/450/depositphotos_441847876-stock-photo-office-worker-his-desk-scratching.jpg",
+        "application_id": 56
     }
 ]

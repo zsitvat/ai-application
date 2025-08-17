@@ -1,15 +1,17 @@
-DEFAULT_INDEX_SCHEMA = [
-    {"name": "content", "type": "text"},
-    {"name": "source", "type": "text"},
-    {"name": "document_index", "type": "numeric"},
-    {
-        "name": "vector",
-        "type": "vector",
-        "attrs": {
+DEFAULT_INDEX_SCHEMA = {
+    "text": [
+        {"name": "text"},
+        {"name": "source"},
+    ],
+    "vector": [
+        {
+            "name": "embedding",
+            "algorithm": "FLAT",
+            "block_size": 1000,
+            "datatype": "FLOAT32",
             "dims": 1536,
-            "distance_metric": "cosine",
-            "algorithm": "flat",
-            "datatype": "float32",
-        },
-    },
-]
+            "distance_metric": "COSINE",
+            "initial_cap": 20000,
+        }
+    ],
+}

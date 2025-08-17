@@ -1,5 +1,4 @@
 import json
-from src.services.logger.logger_service import LoggerService
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -10,6 +9,7 @@ from src.schemas.document_schema import (
     DocumentIngestResponseSchema,
 )
 from src.services.document.document_service import DocumentService
+from src.services.logger.logger_service import LoggerService
 
 
 def get_document_service():

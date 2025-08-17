@@ -194,9 +194,19 @@ class DocumentService:
         documents = []
         temp_files_to_cleanup = []
 
+        expanded_files = []
         for file_path in files:
-            try:
+            if os.path.isdir(file_path):
+                for entry in os.listdir(file_path):
+                    full_path = os.path.join(file_path, entry)
+                    if os.path.isfile(full_path):
+                        expanded_files.append(full_path)
+            else:
+                expanded_files.append(file_path)
 
+        for file_path in expanded_files:
+
+            try:
                 current_file_path = file_path.strip()
                 if self._is_url(file_path):
                     self.logger.debug(f"Downloading file from URL: {file_path}")
@@ -357,6 +367,7 @@ class DocumentService:
         model: Model = None,
         index_schema: list[dict] = None,
         search_kwargs: dict | None = None,
+        search_type: str = "similarity",
     ):
         """
         Get a retriever for the Redis vector database.
@@ -371,6 +382,8 @@ class DocumentService:
             Retriever: LangChain retriever object
         """
         try:
+            from langchain_community.vectorstores.redis import Redis
+
             embeddings_model = get_embedding_model(
                 provider=(
                     model.provider
@@ -387,24 +400,19 @@ class DocumentService:
                 ),
             )
 
-            if index_schema is None:
-                fields = DEFAULT_INDEX_SCHEMA
-            else:
-                fields = index_schema
-
-            schema_dict = {
-                "index": {"name": index_name, "storage_type": "hash"},
-                "fields": fields,
-            }
-            schema = IndexSchema.from_dict(schema_dict)
-            config = RedisConfig.from_schema(schema, redis_url=self.redis_url)
-
-            vector_store = RedisVectorStore(embeddings_model, config=config)
-
             if search_kwargs is None:
-                search_kwargs = {"k": 5}
+                search_kwargs = {"k": 10}
 
-            return vector_store.as_retriever(search_kwargs=search_kwargs)
+            vector_store = Redis.from_existing_index(
+                embedding=embeddings_model,
+                index_name=index_name,
+                schema=index_schema,
+                redis_url=self.redis_url,
+            )
+
+            return vector_store.as_retriever(
+                search_type=search_type, search_kwargs=search_kwargs
+            )
 
         except Exception as e:
             self.logger.error(f"Error getting retriever: {str(e)}")

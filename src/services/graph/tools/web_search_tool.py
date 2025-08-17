@@ -8,6 +8,9 @@ from langchain_google_community import GoogleSearchAPIWrapper
 from pydantic import BaseModel, Field
 
 from src.schemas.tool_schema import SearchProvider, WebSearchToolInput
+from src.services.logger.logger_service import LoggerService
+
+logger = LoggerService().get_logger(__name__)
 
 
 class WebSearchTool(BaseTool):
@@ -151,19 +154,27 @@ class WebSearchTool(BaseTool):
         try:
             if self.provider == SearchProvider.TAVILY:
                 results = self._search_wrapper.invoke({"query": query})
+                logger.debug(f"Tavily results for query '{query}': {results}")
                 return self._format_tavily_results(results, query)
             else:
                 if hasattr(self._search_wrapper, "results"):
                     results = self._search_wrapper.results(query, self.k)
                 else:
                     result_text = self._search_wrapper.run(query)
+                    logger.debug(
+                        f"SerpAPI result text for query '{query}': {result_text}"
+                    )
                     return (
                         f"Search results from SerpAPI for '{query}':\n\n{result_text}"
                     )
 
+                logger.debug(
+                    f"Results for query '{query}' from {self.provider.title()}: {results}"
+                )
                 return self._format_results(results, query, self.provider.title())
 
         except Exception as e:
+            logger.error(f"Search failed for query '{query}': {str(e)}")
             return f"Search failed: {str(e)}"
 
     def _format_results(self, results: list, query: str, provider: str) -> str:

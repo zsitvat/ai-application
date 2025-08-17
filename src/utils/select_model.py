@@ -1,4 +1,3 @@
-from src.services.logger.logger_service import LoggerService
 import os
 
 from langchain_anthropic import ChatAnthropic
@@ -10,6 +9,8 @@ from langchain_openai import (
     OpenAI,
     OpenAIEmbeddings,
 )
+
+from src.services.logger.logger_service import LoggerService
 
 
 def get_embedding_model(

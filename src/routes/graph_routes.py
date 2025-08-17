@@ -1,11 +1,10 @@
-from src.services.logger.logger_service import LoggerService
-
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 
 from src.schemas.graph_schema import RestOperationPostSchema
 from src.services.data_api.app_settings import AppSettingsService
 from src.services.graph.graph_service import GraphService
+from src.services.logger.logger_service import LoggerService
 
 router = APIRouter(tags=["graph"])
 

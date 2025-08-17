@@ -18,7 +18,6 @@ tavily_search_tool_instance = create_tavily_search_tool()
 document_link_analyzer_tool_instance = create_document_link_analyzer_tool()
 
 AVAILABLE_TOOLS = {
-    "redis_vector_search_tool": redis_vector_search_tool,
     "google_search_tool": google_search_tool_instance,
     "bing_search_tool": bing_search_tool_instance,
     "serpapi_search_tool": serpapi_search_tool_instance,
@@ -28,4 +27,5 @@ AVAILABLE_TOOLS = {
     "get_position_tool": get_position_tool,
     "get_labels_tool": get_labels_tool,
     "web_search_tool": WebSearchTool,
+    "vector_retriever_tool": redis_vector_search_tool,
 }

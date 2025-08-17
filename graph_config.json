@@ -9,10 +9,9 @@
                     "deployment": "chatboss_sweden-central_chat_gpt-4o-mini"
                 },
                 "prompt_id": "retriever-agent-prompt",
-                "description": "Searches and retrieves relevant information about the company from the knowledge base to answer user questions",
-                "debug": false
+                "description": "Searches and retrieves relevant information about the company from the knowledge base to answer user questions"
             },
-            "tool_choice": "auto",
+            "tool_choice": "required",
             "tools": {
                 "vector_retriever_tool": {
                     "index_name": "knowledge_base",
@@ -33,8 +32,7 @@
                     "deployment": "chatboss_sweden-central_chat_gpt-4o-mini"
                 },
                 "prompt_id": "issue-reporter-agent-prompt",
-                "description": "Handles user complaints, feedback, and issue reporting with appropriate categorization and priority assignment. At getting applicant informations do not use this if user don't want to report an issue, just don't want to give email or phone numbers",
-                "debug": false
+                "description": "Handles user complaints, feedback, and issue reporting with appropriate categorization and priority assignment. Use this agent if the user explicitly wants to report an issue, complaint, feedback, or if the user describes a problem with the application process, technical difficulties, or cannot apply for a position. Do NOT use this agent if the user is only asked for email or phone number for job application and does not want to provide it."
             },
             "tool_choice": "auto",
             "tools": {
@@ -65,8 +63,7 @@
                     "temperature": 0.25
                 },
                 "prompt_id": "recruiter",
-                "description": "Assists users with job searching, finding positions, and providing career guidance based on location, field, and job type preferences, apply to the positions or getting user application informations",
-                "debug": false
+                "description": "Assists users with job searching, finding positions, and providing career guidance based on location, field, and job type preferences, apply to the positions or getting user application informations"
             },
             "tool_choice": "auto",
             "tools": {
@@ -76,7 +73,7 @@
                         "labels_county",
                         "labels_city",
                         "labels_field",
-                        "labels_job_type"
+                        "name"
                     ],
                     "index_name": "positions"
                 },
@@ -130,7 +127,6 @@
             "other"
         ],
         "invalid_topics": [
-            "personal",
             "politics",
             "religion",
             "inappropriate",
@@ -181,9 +177,16 @@
                 "deployment": "chatboss_sweden-central_chat_gpt-4o-mini"
             },
             "prompt_id": "supervisor-prompt",
-            "description": "Manages and routes user requests to the appropriate specialized agent based on the content and context of the conversation",
-            "debug": false
+            "description": "Manages and routes user requests to the appropriate specialized agent based on the content and context of the conversation. If the user is asked for personal data (such as email or phone number) for job application or position-related purposes, always select the recruiter_agent. Select issue_reporter_agent if the user explicitly wants to report an issue, complaint, feedback, or if the user describes a problem with the application process, technical difficulties, or cannot apply for a position. Never select issue_reporter_agent just because the user does not want to provide email or phone number for job application."
         }
+    },
+    "applicant_attributes_extractor": {
+        "model": {
+            "provider": "azure",
+            "name": "gpt-4o-mini",
+            "deployment": "chatboss_sweden-central_chat_gpt-4o-mini"
+        },
+        "prompt_id": "applicant-extractor-prompt"
     },
     "exception_chain": {
         "enabled": true,
@@ -194,8 +197,7 @@
                 "deployment": "chatboss_sweden-central_chat_gpt-4o-mini"
             },
             "prompt_id": "exception-chain-prompt",
-            "description": "Handles errors, invalid requests, and off-topic conversations with appropriate responses and guidance",
-            "debug": false
+            "description": "Handles errors, invalid requests, and off-topic conversations with appropriate responses and guidance"
         },
         "tool_choice": "auto",
         "tools": {}

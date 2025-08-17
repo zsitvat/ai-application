@@ -5,8 +5,11 @@ from langchain_core.tools import tool
 from langchain_core.tools.retriever import create_retriever_tool
 from langchain_core.vectorstores import VectorStoreRetriever
 
-from src.schemas.schema import Model
+from src.schemas.schema import Model, ModelType
 from src.services.document.document_service import DocumentService
+from src.services.logger.logger_service import LoggerService
+
+logger = LoggerService().get_logger(__name__)
 
 
 @tool
@@ -33,34 +36,42 @@ def create_vector_retriever_tool(
 
 
 @tool
-def redis_vector_search_tool(
-    index_name: str, query: str, search_kwargs: dict = None
+async def redis_vector_search_tool(
+    question: str, index_name: str = "knowledge_base", search_kwargs: dict = None
 ) -> list:
     """
-    Keresés a Redis vector store-ban. Paraméterek: index_name (str), query (str), search_kwargs (dict, pl. k, lambda_mult, stb.).
+    Search in the Redis vector store.
+    Parameters:
+        question (str): The user question to search for.
+    Returns:
+        list: A list of documents that match the question.
     """
-    document_service = DocumentService()
-    model = Model(
-        name=os.getenv("EMBEDDING_MODEL", "text-embedding-3-large"),
-        type=os.getenv("EMBEDDING_MODEL_TYPE", "embedding"),
-        deployment=os.getenv(
-            "EMBEDDING_DEPLOYMENT",
-            "chatboss_sweden-central_embedding_text-embedding-3-large_1",
-        ),
-        provider=os.getenv("EMBEDDING_PROVIDER", "azure"),
+    logger.debug(
+        f"Received question for Redis vector search: {question} with index_name: {index_name} and search_kwargs: {search_kwargs}"
     )
+
+    document_service = DocumentService()
 
     if search_kwargs is None:
-        search_kwargs = {"k": 5, "lambda_mult": 0.5}
+        search_kwargs = {"k": 10, "lambda_mult": 0.5}
 
-    retriever = asyncio.run(
-        document_service.get_retriever(
-            index_name=index_name,
-            model=model,
-            index_schema=None,
-            search_kwargs=search_kwargs,
+    try:
+
+        retriever = await asyncio.to_thread(
+            document_service.get_retriever,
+            index_name,
+            None,
+            None,
+            search_kwargs,
         )
-    )
 
-    results = asyncio.run(retriever.aget_relevant_documents(query))
-    return [doc.page_content for doc in results]
+        results = await retriever.aget_relevant_documents(question)
+
+        if len(results) == 0:
+            return ["No relevant documents found."]
+
+        return [doc.page_content for doc in results]
+
+    except Exception as e:
+        logger.error(f"Error during Redis vector search: {e}")
+        return ["Error occurred during search."]

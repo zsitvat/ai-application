@@ -11,7 +11,7 @@ from pydantic import BaseModel, HttpUrl
 from src.services.data_api.app_settings import AppSettingsService
 from src.services.graph.graph_service import GraphService
 
-router = APIRouter(tags=["graph_config_sloader"])
+router = APIRouter(tags=["graph_config_loader"])
 
 
 class GraphConfigLoaderSchema(BaseModel):

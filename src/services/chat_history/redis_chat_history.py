@@ -1,11 +1,12 @@
 import json
-from src.services.logger.logger_service import LoggerService
 import os
 from datetime import datetime
 from typing import Any
 
 import redis.asyncio as redis
 from dotenv import find_dotenv, load_dotenv
+
+from src.services.logger.logger_service import LoggerService
 
 load_dotenv(find_dotenv())
 

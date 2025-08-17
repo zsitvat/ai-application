@@ -7,8 +7,7 @@
                     "provider": "openai",
                     "name": "gpt-4o-mini"
                 },
-                "prompt_id": "retriever-agent-prompt",
-                "debug": false
+                "prompt_id": "retriever-agent-prompt"
             },
             "tool_choice": "auto",
             "tools": {
@@ -29,8 +28,7 @@
                     "provider": "openai",
                     "name": "gpt-4o-mini"
                 },
-                "prompt_id": "issue-reporter-agent-prompt",
-                "debug": false
+                "prompt_id": "issue-reporter-agent-prompt"
             },
             "tool_choice": "auto",
             "tools": {
@@ -59,8 +57,7 @@
                     "name": "gpt-4o-mini",
                     "temperature": 0.25
                 },
-                "prompt_id": "recruiter",
-                "debug": false
+                "prompt_id": "recruiter"
             },
             "tool_choice": "auto",
             "tools": {
@@ -170,11 +167,17 @@
                 "provider": "openai",
                 "name": "gpt-4o-mini"
             },
-            "prompt_id": "supervisor-prompt",
-            "debug": false
+            "prompt_id": "supervisor-prompt"
         },
         "tool_choice": "auto",
         "tools": {}
+    },
+    "applicant_attributes_extractor": {
+        "model": {
+            "provider": "openai",
+            "name": "gpt-4o-mini"
+        },
+        "prompt_id": "applicant-attributes-extractor-prompt"
     },
     "exception_chain": {
         "enabled": true,
@@ -183,8 +186,7 @@
                 "provider": "openai",
                 "name": "gpt-4o-mini"
             },
-            "prompt_id": "exception-chain-prompt",
-            "debug": false
+            "prompt_id": "exception-chain-prompt"
         },
         "tool_choice": "auto",
         "tools": {}

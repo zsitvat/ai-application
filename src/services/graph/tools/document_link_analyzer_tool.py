@@ -1,4 +1,3 @@
-import logging
 import re
 from urllib.parse import urlparse
 
@@ -8,8 +7,9 @@ from langchain_core.tools import BaseTool
 from pydantic import BaseModel, Field
 
 from src.schemas.tool_schema import DocumentLinkAnalyzerInput
+from src.services.logger.logger_service import LoggerService
 
-logger = logging.getLogger(__name__)
+logger = LoggerService().get_logger(__name__)
 
 
 class DocumentLinkAnalyzerTool(BaseTool):

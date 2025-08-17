@@ -1,4 +1,3 @@
-# LangGraph és pickle checkpoint/vektor fájlok
 .langgraph_*.pckl
 store.pckl
 store.vectors.pckl
@@ -14,7 +13,10 @@ files/
 .vscode/tasks.json
 venv/*
 myenv/*
+*.lock
+uv.lock
 
+app.log*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -7,18 +7,21 @@ from typing import Any, AsyncGenerator, Literal
 from uuid import uuid4
 
 import aiohttp
+from langchain.prompts import ChatPromptTemplate
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.checkpoint.redis import AsyncRedisSaver
+from langgraph.config import RunnableConfig
 from langgraph.graph import END, StateGraph
 from langgraph.graph.message import add_messages
-from langgraph.config import RunnableConfig
 
 from src.schemas.graph_schema import (
     Agent,
     AgentState,
+    ApplicationAttributes,
     CheckpointerType,
+    ExtractorConfig,
     GraphConfig,
     Model,
 )
@@ -26,6 +29,7 @@ from src.services.chat_history.redis_chat_history import RedisChatHistoryService
 from src.services.data_api.app_settings import AppSettingsService
 from src.services.data_api.chat_history import DataChatHistoryService
 from src.services.graph.tools.tools_config import AVAILABLE_TOOLS
+from src.services.logger.logger_service import LoggerService
 from src.services.validators.personal_data.personal_data_filter_checkpointer import (
     PersonalDataFilterCheckpointer,
 )
@@ -35,9 +39,9 @@ from src.services.validators.personal_data.personal_data_filter_service import (
 from src.services.validators.topic_validator.topic_validator_service import (
     TopicValidatorService,
 )
+from src.utils.extract_message_content import extract_message_content
 from src.utils.get_prompt import get_prompt_by_type
 from src.utils.select_model import get_chat_model
-from src.services.logger.logger_service import LoggerService
 
 
 class GraphService:
@@ -85,10 +89,12 @@ class GraphService:
                 app_id, parameters, user_input
             )
 
+            initial_parameters = dict(parameters) if parameters else {}
+            initial_parameters["app_id"] = app_id
             initial_state = AgentState(
                 messages=[HumanMessage(content=user_input)],
                 context=context or {},
-                parameters=parameters or {},
+                parameters=initial_parameters,
                 user_id=user_id or uuid4(),
             )
 
@@ -277,56 +283,55 @@ class GraphService:
         """Node that extracts applicant attributes from all messages using LLM and updates application_attributes."""
 
         try:
+            extractor_config: ExtractorConfig = getattr(
+                self.graph_config, "applicant_attributes_extractor", None
+            )
+            if extractor_config is None:
+                return state
+
             llm = get_chat_model(
-                provider=self.graph_config.supervisor.chain.model.provider.value,
-                deployment=self.graph_config.supervisor.chain.model.deployment,
-                model=self.graph_config.supervisor.chain.model.name,
+                provider=extractor_config.model.provider.value,
+                deployment=extractor_config.model.deployment,
+                model=extractor_config.model.name,
+            ).with_structured_output(schema=ApplicationAttributes)
+
+            prompt = await get_prompt_by_type(
+                prompt_id=extractor_config.prompt_id, tracer_type=self.tracer_type
             )
 
-            extract_prompt = (
-                "Extract applicant data from a job application conversation. "
-                "Based on the entire conversation, return a JSON object with the following fields: "
-                "- applicant_name: applicant's name (required) "
-                "- phone_number: phone number (required) "
-                "- email: email address "
-                "- position_name: position name (required) "
-                "- position_id: position identifier (required) "
-                "- application_reason: why they applied for the job (required) "
-                "- language_skills: language skills "
-                "- experience: experience (required) "
-                "- other_information: other information "
-                "If a field is not available, leave it empty. Return only the JSON object, nothing else."
+            messages_str = "\n".join(
+                [extract_message_content(m) for m in state.messages]
             )
 
-            messages_text = "\n".join(
-                [
-                    f"{msg.__class__.__name__}: {getattr(msg, 'content', str(msg))}"
-                    for msg in state.messages
-                ]
+            extractor_context = dict(state.context) if state.context else {}
+
+            for var in getattr(prompt, "input_variables", []):
+                if var != "messages":
+                    extractor_context[var] = ""
+
+            response = await (prompt | llm).ainvoke(
+                {"messages": messages_str, **extractor_context}
             )
-            full_prompt = f"{extract_prompt}\n\nConversation history:\n{messages_text}"
 
-            response = await llm.ainvoke(full_prompt)
+            if isinstance(response, dict):
+                for key, value in response.items():
+                    if key in state.application_attributes and value:
+                        state.application_attributes[key] = str(value)
 
-            try:
-                extracted = json.loads(response.content)
-                if isinstance(extracted, dict):
-                    for key, value in extracted.items():
-                        if key in state.application_attributes and value:
-                            state.application_attributes[key] = str(value)
+                # Check if all required fields are present and call endpoint if so
+                if self._check_required_fields_complete(state.application_attributes):
+                    await self._submit_application_data(state.application_attributes)
 
-                    # Check if all required fields are present and call endpoint if so
-                    if self._check_required_fields_complete(
-                        state.application_attributes
-                    ):
-                        await self._submit_application_data(
-                            state.application_attributes
+                    state.application_attributes = dict.fromkeys(
+                        state.application_attributes, ""
+                    )
+
+                    state.messages.append(
+                        ToolMessage(
+                            content="Application attributes saved.",
+                            tool_call_id="application_attributes_saved",
                         )
-
-            except json.JSONDecodeError:
-                self.logger.warning(
-                    f"[GraphService|_applicant_attributes_extractor_node] Failed to parse JSON response: {response.content}"
-                )
+                    )
 
             return state
 
@@ -335,7 +340,6 @@ class GraphService:
                 f"[GraphService|_applicant_attributes_extractor_node] error: {str(ex)}"
             )
             return state
-        return state
 
     def _check_required_fields_complete(self, application_attributes: dict) -> bool:
         """Check if all required application attributes are present and not empty."""
@@ -346,14 +350,12 @@ class GraphService:
             "position_id",
             "application_reason",
             "experience",
+            "email",
         ]
 
         for field in required_fields:
             value = application_attributes.get(field, "").strip()
             if not value:
-                self.logger.debug(
-                    f"[GraphService] Required field '{field}' is missing or empty"
-                )
                 return False
 
         self.logger.debug("[GraphService] All required fields are complete")
@@ -416,12 +418,34 @@ class GraphService:
             )
 
             allowed_tool_names = self._get_allowed_tool_names(agent_config)
-            tools_to_bind = [AVAILABLE_TOOLS[name] for name in allowed_tool_names]
+            tools_to_bind = []
+            for name in allowed_tool_names:
+                tool_func = AVAILABLE_TOOLS[name]
+                if name == "get_position_tool" and name in agent_config.tools:
+                    input_fields = agent_config.tools[name].get("input_fields", [])
+                    tool_func = tool_func(input_fields if input_fields else [])
+                    self.logger.debug(
+                        f"[GraphService] Created position tool for binding with input_fields: {input_fields if input_fields else '[]'}"
+                    )
+                tools_to_bind.append(tool_func)
             chain = prompt_with_messages | llm.bind_tools(
                 tools_to_bind, tool_choice=agent_config.tool_choice
             )
 
             prompt_context = {"messages": state.messages}
+
+            if hasattr(state, "parameters") and state.parameters:
+                app_id_val = state.parameters.get("app_id")
+                if app_id_val is not None:
+                    prompt_context["app_id"] = app_id_val
+
+            # Add all tool config values to prompt_context
+            if hasattr(agent_config, "tools") and isinstance(agent_config.tools, dict):
+                for tool_name, tool_config in agent_config.tools.items():
+                    if isinstance(tool_config, dict):
+                        for k, v in tool_config.items():
+                            if k not in prompt_context:
+                                prompt_context[k] = v
 
             if state.context:
                 prompt_context.update(state.context)
@@ -437,11 +461,19 @@ class GraphService:
             if "positions" not in prompt_context:
                 prompt_context["positions"] = []
 
+            # Save all prompt_context keys except 'messages' to state.context
+            for k, v in prompt_context.items():
+                if k != "messages":
+                    state.context[k] = v
+
             # Check for required tools and execute them first
             required_tools_executed = await self._execute_required_tools(agent_config)
 
             self._update_context_with_tool_results(
-                prompt_context, required_tools_executed, state.application_attributes
+                prompt_context,
+                required_tools_executed,
+                state.application_attributes,
+                state=state,
             )
 
             self.logger.debug(
@@ -478,13 +510,6 @@ class GraphService:
                             for field_name in config_input_fields:
                                 if field_name in search_values:
                                     mapped_args[field_name] = search_values[field_name]
-                                elif (
-                                    field_name.startswith("labels_")
-                                    and field_name[7:] in search_values
-                                ):
-                                    mapped_args[field_name] = search_values[
-                                        field_name[7:]
-                                    ]
                             tool_args = mapped_args
 
                 if tool_name in agent_config.tools and isinstance(tool_args, dict):
@@ -496,7 +521,11 @@ class GraphService:
                     )
 
                 tool_result_message = await self._execute_tool_function(
-                    tool_func, tool_name, tool_args, agent_config
+                    tool_func,
+                    tool_name,
+                    tool_args,
+                    agent_config,
+                    app_id=state.parameters.get("app_id"),
                 )
 
                 if tool_result_message:
@@ -526,13 +555,16 @@ class GraphService:
                             }
                         ],
                         state.application_attributes,
+                        state=state,
                     )
 
                     prompt_context["messages"] = self._filter_problematic_messages(
                         state.messages
                     )
 
-                    follow_up_response = await chain.ainvoke(prompt_context)
+                    follow_up_response = await (prompt_with_messages | llm).ainvoke(
+                        prompt_context
+                    )
                     state["messages"] = add_messages(
                         state["messages"], [follow_up_response]
                     )
@@ -633,7 +665,7 @@ class GraphService:
         return merged_args
 
     async def _execute_tool_function(
-        self, tool_func, tool_name, tool_args, agent_config
+        self, tool_func, tool_name, tool_args, agent_config, app_id=None, state=None
     ):
         if tool_func and callable(tool_func):
             try:
@@ -649,31 +681,20 @@ class GraphService:
                     )
 
                 filtered_args = {}
-                if input_fields:
+                config_keys = {
+                    "type",
+                    "job_type",
+                    "input_fields",
+                    "description",
+                    "required",
+                    "variable_name",
+                }
 
-                    config_keys = {
-                        "type",
-                        "job_type",
-                        "input_fields",
-                        "description",
-                        "required",
-                        "variable_name",
-                    }
-                    filtered_args = {
-                        k: v for k, v in tool_args.items() if k not in config_keys
-                    }
-                else:
-                    config_keys = {
-                        "type",
-                        "job_type",
-                        "input_fields",
-                        "description",
-                        "required",
-                        "variable_name",
-                    }
-                    filtered_args = {
-                        k: v for k, v in tool_args.items() if k not in config_keys
-                    }
+                filtered_args = {
+                    k: v for k, v in tool_args.items() if k not in config_keys
+                }
+
+                filtered_args["app_id"] = app_id
 
                 self.logger.debug(
                     f"[GraphService] Executing tool '{tool_name}' with filtered_args: {filtered_args}"
@@ -750,9 +771,13 @@ class GraphService:
         return required_tool_results
 
     def _update_context_with_tool_results(
-        self, prompt_context, required_tools_executed, application_attributes=None
+        self,
+        prompt_context,
+        required_tools_executed,
+        application_attributes=None,
+        state=None,
     ):
-        """Update prompt context with data from required tools results."""
+        """Update prompt context and state.context with data from required tools results."""
         for result in required_tools_executed:
             tool_name = result.get("tool_name")
             tool_message = result.get("message")
@@ -766,6 +791,10 @@ class GraphService:
             self._update_prompt_context(
                 prompt_context, tool_name, var_name, content, tool_message
             )
+
+            # Save every tool result in state.context[tool_name]
+            if state is not None and tool_name:
+                state.context[tool_name] = content
 
             if application_attributes is not None and content:
                 self._update_application_attributes_from_tool(
@@ -886,7 +915,7 @@ class GraphService:
             "recruiter_agent" in self.graph_config.agents.keys()
             or "recruiter" in self.graph_config.agents.keys()
         ):
-            system_prompt_ending += "If the user input is smalltalk or asking about the positions. Always choose recruiter agent."
+            system_prompt_ending += "If the user input is smalltalk or asking about the jobs. Always choose recruiter agent."
 
         last_agent_str = (
             f"\nThe last agent selected was: {last_agent}."
@@ -1101,7 +1130,6 @@ Select one of: {available_options}"""
         while i < len(messages):
             msg = messages[i]
 
-            # If this is an AIMessage with tool_calls
             if (
                 isinstance(msg, AIMessage)
                 and hasattr(msg, "tool_calls")
@@ -1109,12 +1137,10 @@ Select one of: {available_options}"""
             ):
                 i = self._process_ai_message_with_tools(msg, messages, i, filtered)
             elif isinstance(msg, ToolMessage):
-                # Orphaned ToolMessage - convert to AIMessage
                 converted_msg = AIMessage(content=f"[Tool Result]: {msg.content}")
                 filtered.append(converted_msg)
                 i += 1
             else:
-                # Regular message
                 filtered.append(msg)
                 i += 1
 

@@ -57,8 +57,6 @@ class LoggerService:
                 file_handler.setFormatter(JSONFormatter())
                 logger.addHandler(file_handler)
 
-                logger.info(f"File logging enabled: {log_file_path}")
-
             except Exception as e:
                 logger.error(f"Failed to setup file logging: {str(e)}")
 

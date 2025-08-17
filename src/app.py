@@ -1,7 +1,7 @@
+import logging
 import os
 
 import uvicorn
-import logging
 from dotenv.main import find_dotenv, load_dotenv
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
@@ -16,8 +16,8 @@ from src.routes.system_routes import router as system_router
 from src.routes.topic_validation_routes import router as topic_validation_router
 from src.routes.web_scraping_routes import router as web_scraping_router
 from src.services.logger.logger_service import LoggerService
-from src.services.rate_limit.semaphore import SemaphoreMiddleware
 from src.services.logger.logs_json_formatter import JSONFormatter
+from src.services.rate_limit.semaphore import SemaphoreMiddleware
 
 if os.getenv("TRACER_TYPE") == "langfuse":
     langfuse = Langfuse(

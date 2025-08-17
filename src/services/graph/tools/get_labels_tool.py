@@ -5,6 +5,10 @@ from langchain_core.tools import tool
 from redis.asyncio import Redis
 from redis.commands.search.query import Query
 
+from src.services.logger.logger_service import LoggerService
+
+logger = LoggerService().get_logger(__name__)
+
 
 def _build_county_city_field_string(labels):
     """Build formatted string of counties with cities and their fields."""
@@ -37,7 +41,9 @@ def _build_county_city_field_string(labels):
 
 @tool
 async def get_labels_tool(
-    index_name: str = "positions", job_type: Optional[str] = None
+    index_name: str = "positions",
+    job_type: Optional[str] = None,
+    app_id: Optional[str | int] = None,
 ):
     """Get all unique labels organized by counties, cities and fields in formatted string."""
 
@@ -49,23 +55,23 @@ async def get_labels_tool(
         decode_responses=True,
     )
 
-    if job_type:
-        query = (
-            Query(f"@labels_job_type:{job_type}")
-            .return_fields(
-                "labels_city", "labels_field", "labels_job_type", "labels_county"
-            )
-            .paging(0, 10000)
-        )
-    else:
-        query = (
-            Query("*")
-            .return_fields(
-                "labels_city", "labels_field", "labels_job_type", "labels_county"
-            )
-            .paging(0, 10000)
-        )
+    query_parts = []
 
+    if job_type:
+        query_parts.append(f"@labels_job_type:{job_type}")
+    if app_id is not None:
+        query_parts.append(f"@application_id:{app_id}")
+
+    query_str = " ".join(query_parts) if query_parts else "*"
+    query = (
+        Query(query_str)
+        .return_fields(
+            "labels_city", "labels_field", "labels_job_type", "labels_county"
+        )
+        .paging(0, 10000)
+    )
+
+    logger.debug(f"[get_labels_tool] Query: {query.query_string}")
     results = await redis.ft(index_name).search(query)
 
     docs = []
@@ -81,4 +87,5 @@ async def get_labels_tool(
 
     await redis.close()
 
+    logger.debug(f"[get_labels_tool] Result: {formatted_string}")
     return formatted_string

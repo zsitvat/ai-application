@@ -102,7 +102,6 @@ class Chain(BaseModel):
     model: Model
     prompt_id: str
     description: str = ""
-    debug: bool = False
 
 
 class Embedding(BaseModel):
@@ -138,12 +137,18 @@ class PersonalDataFilterConfig(BaseModel):
     mask_char: str = "*"
 
 
+class ExtractorConfig(BaseModel):
+    model: Model
+    prompt_id: str
+
+
 class GraphConfig(BaseModel):
     agents: dict[str, Agent]
     supervisor: Agent
     exception_chain: Agent | None = None
     topic_validator: TopicValidatorConfig | None = None
     personal_data_filter: PersonalDataFilterConfig | None = None
+    applicant_attributes_extractor: ExtractorConfig | None = None
     max_input_length: int = -1
     chat_memory_db: int | None = None
     chat_memory_index_name: str = "chat_memory"

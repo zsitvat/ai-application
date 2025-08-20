@@ -41,18 +41,18 @@ jobs:
 
       - name: Verify linting tools installation
         run: |
-          uv pip run black --version
-          uv pip run isort --version
-          uv pip run flake8 --version
+          .venv/bin/black --version
+          .venv/bin/isort --version
+          .venv/bin/flake8 --version
 
       - name: Comprehensive lint check
         run: |
-          uv pip run black --check src tests
-          uv pip run isort --check-only src tests
-          uv pip run flake8 src tests
+          .venv/bin/black --check src tests
+          .venv/bin/isort --check-only src tests
+          .venv/bin/flake8 src tests
 
       - name: Type checking
-        run: uv pip run mypy src || true
+        run: .venv/bin/mypy src || true
 
       - name: Run comprehensive tests
         run: |

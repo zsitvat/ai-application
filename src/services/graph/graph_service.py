@@ -986,7 +986,10 @@ Select one of: {available_options}"""
                 elif isinstance(tool_call, dict):
                     return tool_call.get("args", {}).get("chain", None)
             except Exception:
-                pass
+                self.logger.warning(
+                    f"[GraphService] Error extracting next agent from tool_calls: {str(response.tool_calls)}"
+                )
+                return None
 
         if hasattr(response, "additional_kwargs") and response.additional_kwargs.get(
             "function_call"

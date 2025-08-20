@@ -24,7 +24,7 @@ async def scrape_websites(
 
     try:
         logging.getLogger("logger").debug(
-            f"Received web scraping request with parameters: {request.dict()}"
+            f"Received web scraping request with parameters: {request.model_dump()}"
         )
 
         success, message, scraped_urls, failed_urls, content = (
@@ -33,11 +33,11 @@ async def scrape_websites(
                 max_depth=request.max_depth,
                 output_type=request.output_type.value,
                 output_path=request.output_path,
-                vector_db_index=request.vector_db_index,
+                vector_db_index=request.vector_db_index or "",
                 allowed_domains=request.allowed_domains,
                 content_selectors=request.content_selectors,
                 excluded_selectors=request.excluded_selectors,
-                embedding_config=request.embedding,
+                embedding_model_config=request.embedding_model,
             )
         )
 
@@ -45,6 +45,11 @@ async def scrape_websites(
             f"Scraping completed. Success: {success}, Message: {message}, Scraped URLs: {scraped_urls}, Failed URLs: {failed_urls}"
         )
 
+        # Ensure content is a string for response schema
+        import json
+
+        if isinstance(content, (list, dict)):
+            content = json.dumps(content)
         return WebScrapingResponseSchema(
             success=success,
             message=message,

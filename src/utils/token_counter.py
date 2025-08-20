@@ -13,6 +13,8 @@ async def token_counter(string: str, encoding_name: str) -> int:
     Raises:
         ValueError: If the encoding name is not recognized.
     """
+    if encoding_name == "utf-8":
+        encoding_name = "cl100k_base"
     encoding = await asyncio.to_thread(tiktoken.get_encoding, encoding_name)
     num_tokens = len(encoding.encode(string))
     return num_tokens

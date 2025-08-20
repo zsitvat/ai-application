@@ -1,7 +1,5 @@
 import os
 
-from langchain_core.tools import tool
-
 from src.schemas.tool_schema import SearchProvider
 
 from .document_link_analyzer_tool import DocumentLinkAnalyzerTool

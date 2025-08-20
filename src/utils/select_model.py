@@ -12,6 +12,8 @@ from langchain_openai import (
 
 from src.services.logger.logger_service import LoggerService
 
+logger = LoggerService().setup_logger()
+
 
 def get_embedding_model(
     provider: str = "openai",
@@ -37,14 +39,14 @@ def get_embedding_model(
             api_version=os.environ.get("AZURE_API_VERSION", "2023-09-01-preview"),
         )
     else:
-        LoggerService().error("Wrong model provider!")
+        logger.error("Wrong model provider!")
         raise KeyError(f"Unsupported provider for embedding model: {provider}")
 
 
 def get_chat_model(
     provider: str,
     deployment: str | None = None,
-    model: str = "gpt-4o-mini",
+    model: str | None = "gpt-4o-mini",
     type: str = "chat",
     temperature: float = 0,
 ) -> OpenAI | AzureOpenAI | ChatOpenAI | AzureChatOpenAI | ChatAnthropic:
@@ -74,6 +76,8 @@ def get_chat_model(
             )
     if type == "chat":
         if provider == "openai":
+            if model is None:
+                raise ValueError("Model cannot be None")
             return ChatOpenAI(model=model, temperature=temperature)
         elif provider == "azure":
             return AzureChatOpenAI(
@@ -82,21 +86,23 @@ def get_chat_model(
                 temperature=temperature,
             )
         elif provider == "anthropic":
+            if model is None:
+                raise ValueError("Model cannot be None")
             return ChatAnthropic(
                 name=model, temperature=temperature, timeout=60, stop=None
             )
         else:
-            LoggerService().error("Wrong model provider!")
+            logger.error("Wrong model provider!")
             raise KeyError(f"Unsupported provider for chat model: {provider}")
     else:
-        LoggerService().error("Wrong model type!")
+        logger.error("Wrong model type!")
         raise KeyError(f"Unsupported model type: {type}")
 
 
 def get_model(
     provider: str,
     deployment: str | None = None,
-    model: str = "gpt-4o-mini",
+    model: str | None = "gpt-4o-mini",
     type: str = "chat",
     temperature: float = 0,
 ) -> (
@@ -108,8 +114,9 @@ def get_model(
     | OpenAIEmbeddings
     | AzureOpenAIEmbeddings
 ):
-    """Alias for get_chat_model for backward compatibility."""
+    """Get the model based on the provider, deployment, model name, type, and temperature."""
     if type == "embedding":
-        return get_embedding_model(provider, deployment, model)
+        embedding_model = model if model is not None else "text-embedding-3-large"
+        return get_embedding_model(provider, deployment, embedding_model)
     else:
         return get_chat_model(provider, deployment, model, type, temperature)

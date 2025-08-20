@@ -72,6 +72,12 @@ class TopicValidatorService:
                 "allowed_topics must be set and contain at least one topic."
             )
 
+        # Treat empty or whitespace-only questions as invalid
+        if not isinstance(question, str) or not question.strip():
+            reason = "Question is empty or invalid."
+            self.logger.debug(reason)
+            return False, "error", reason
+
         allowed_set = set(allowed_topics)
         invalid_set = set(invalid_topics)
 

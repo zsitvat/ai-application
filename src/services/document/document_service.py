@@ -8,7 +8,6 @@ import aiofiles
 import redis
 import requests
 from langchain.schema import Document
-from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import (
     Docx2txtLoader,
     PyPDFLoader,
@@ -16,6 +15,7 @@ from langchain_community.document_loaders import (
     UnstructuredExcelLoader,
 )
 from langchain_redis import RedisConfig, RedisVectorStore
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from redisvl.schema import IndexSchema
 
 from src.schemas.schema import Model
@@ -36,13 +36,13 @@ class DocumentService:
 
     async def ingest_documents(
         self,
-        model: Model | None,
-        files: list[str] = None,
-        vector_db_index: str = None,
-        chunk_size: int = None,
-        chunk_overlap: int = None,
-        index_schema: list[dict] = None,
-        json_data: list[dict] = None,
+        vector_db_index: str,
+        chunk_size: int = 5000,
+        chunk_overlap: int = 250,
+        files: list[str] = [],
+        index_schema: list[dict] | None = None,
+        json_data: list[dict] = [],
+        model: Model | None = None,
     ) -> tuple[bool, str, list[str], list[str]]:
         """
         Process and ingest documents into vector database.
@@ -97,12 +97,12 @@ class DocumentService:
 
     def ingest_documents_from_json(
         self,
-        model: Model | None,
-        vector_db_index: str = None,
-        chunk_size: int = None,
-        chunk_overlap: int = None,
-        index_schema: list[dict] = None,
-        json_data: list[dict] = None,
+        vector_db_index: str,
+        chunk_size: int = 5000,
+        chunk_overlap: int = 250,
+        index_schema: list[dict] | None = None,
+        json_data: list[dict] | None = None,
+        model: Model | None = None,
     ) -> tuple[bool, str, list[str], list[str]]:
         self.logger.info(
             f"Starting document ingestion from direct JSON data into index '{vector_db_index}'"
@@ -112,21 +112,21 @@ class DocumentService:
             provider=(
                 model.provider
                 if model and model.provider
-                else os.getenv("EMBEDDING_PROVIDER")
+                else os.getenv("EMBEDDING_PROVIDER", "")
             ),
             deployment=(
                 model.deployment
                 if model and model.deployment
-                else os.getenv("AZURE_EMBEDDING_DEPLOYMENT_NAME")
+                else os.getenv("AZURE_EMBEDDING_DEPLOYMENT_NAME", "")
             ),
             model=(
-                model.name if model and model.name else os.getenv("EMBEDDING_MODEL")
+                model.name if model and model.name else os.getenv("EMBEDDING_MODEL", "")
             ),
         )
 
         processed_files = ["json_data"]
         failed_files = []
-        documents = self._process_json_data(json_data)
+        documents = self._process_json_data(json_data if json_data is not None else [])
 
         chunk_count = self._create_vector_store_and_ingest(
             documents=documents,
@@ -150,12 +150,12 @@ class DocumentService:
 
     async def ingest_documents_from_files(
         self,
-        model: Model | None,
-        files: list[str] = None,
-        vector_db_index: str = None,
-        chunk_size: int = None,
-        chunk_overlap: int = None,
-        index_schema: list[dict] = None,
+        vector_db_index: str,
+        chunk_size: int = 5000,
+        chunk_overlap: int = 250,
+        files: list[str] = [],
+        index_schema: list[dict] | None = None,
+        model: Model | None = None,
     ) -> tuple[bool, str, list[str], list[str]]:
         """Process and ingest documents from files into vector database.
         Args:
@@ -170,22 +170,22 @@ class DocumentService:
         """
 
         self.logger.info(
-            f"Starting document ingestion for {len(files)} files into index '{vector_db_index}'"
+            f"Starting document ingestion for {len(files) if files is not None else 0} files into index '{vector_db_index}'"
         )
 
         embeddings_model = get_embedding_model(
             provider=(
                 model.provider
                 if model and model.provider
-                else os.getenv("EMBEDDING_PROVIDER")
+                else os.getenv("EMBEDDING_PROVIDER", "")
             ),
             deployment=(
                 model.deployment
                 if model and model.deployment
-                else os.getenv("AZURE_EMBEDDING_DEPLOYMENT_NAME")
+                else os.getenv("AZURE_EMBEDDING_DEPLOYMENT_NAME", "")
             ),
             model=(
-                model.name if model and model.name else os.getenv("EMBEDDING_MODEL")
+                model.name if model and model.name else os.getenv("EMBEDDING_MODEL", "")
             ),
         )
 
@@ -314,7 +314,7 @@ class DocumentService:
             if isinstance(item, dict):
                 content = item.get("content", json.dumps(item, ensure_ascii=False))
                 metadata = {k: str(v) for k, v in item.items() if k != "content"}
-                metadata["document_index"] = i
+                metadata["document_index"] = str(i)
                 doc = Document(page_content=str(content), metadata=metadata)
                 documents.append(doc)
             else:
@@ -364,8 +364,8 @@ class DocumentService:
     def get_retriever(
         self,
         index_name: str,
-        model: Model = None,
-        index_schema: list[dict] = None,
+        model: Model | None = None,
+        index_schema: list[dict] | None = None,
         search_kwargs: dict | None = None,
         search_type: str = "similarity",
     ):
@@ -374,8 +374,8 @@ class DocumentService:
 
         Args:
             index_name (str): Name of the Redis index
-            model (Model): Model configuration for embeddings
-            index_schema (list[dict], optional): Custom index schema for Redis
+            model (Model | None): Model configuration for embeddings
+            index_schema (list[dict] | None): Custom index schema for Redis
             search_kwargs (dict | None): Search parameters
 
         Returns:
@@ -388,25 +388,29 @@ class DocumentService:
                 provider=(
                     model.provider
                     if model and model.provider
-                    else os.getenv("EMBEDDING_PROVIDER")
+                    else os.getenv("EMBEDDING_PROVIDER", "")
                 ),
                 deployment=(
                     model.deployment
                     if model and model.deployment
-                    else os.getenv("AZURE_EMBEDDING_DEPLOYMENT_NAME")
+                    else os.getenv("AZURE_EMBEDDING_DEPLOYMENT_NAME", "")
                 ),
                 model=(
-                    model.name if model and model.name else os.getenv("EMBEDDING_MODEL")
+                    model.name
+                    if model and model.name
+                    else os.getenv("EMBEDDING_MODEL", "")
                 ),
             )
 
             if search_kwargs is None:
                 search_kwargs = {"k": 10}
 
+            index_schema = index_schema or [{"name": "content", "type": "text"}]
+
             vector_store = Redis.from_existing_index(
                 embedding=embeddings_model,
                 index_name=index_name,
-                schema=index_schema,
+                schema={"fields": index_schema},
                 redis_url=self.redis_url,
             )
 
@@ -607,7 +611,7 @@ class DocumentService:
         vector_db_index: str,
         chunk_size: int,
         chunk_overlap: int,
-        index_schema: list[dict] = None,
+        index_schema: list[dict] | None = None,
     ) -> int:
         """Create vector store and ingest documents.
 

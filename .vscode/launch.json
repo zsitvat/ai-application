@@ -33,6 +33,30 @@
             "cwd": "${workspaceFolder}",
             "justMyCode": true,
             "envFile": "${workspaceFolder}/.env"
+        },
+        {
+            "name": "Python: pytest (tests folder)",
+            "type": "python",
+            "request": "launch",
+            "module": "pytest",
+            "args": [
+                "tests/"
+            ],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "Python: unittest (tests folder)",
+            "type": "python",
+            "request": "launch",
+            "module": "unittest",
+            "args": [
+                "discover",
+                "-s",
+                "tests"
+            ],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}"
         }
     ]
 }

@@ -8,6 +8,7 @@ from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlparse
 
+import aiofiles
 from docx import Document
 from langchain_redis import RedisConfig, RedisVectorStore
 from reportlab.pdfbase import pdfmetrics
@@ -68,7 +69,7 @@ class ScrapySpider(Spider):
         self.failed_urls = set()
 
         self.link_extractor = LinkExtractor(
-            allow_domains=self.allowed_domains if self.allowed_domains else None,
+            allow_domains=self.allowed_domains if self.allowed_domains else [],
             deny_extensions=IGNORED_EXTENSIONS,
         )
 
@@ -574,7 +575,7 @@ class ScrapySpider(Spider):
         self,
         scraped_data: dict,
         output_type: str = "text",
-        output_path: str = None,
+        output_path: str | None = None,
     ) -> str:
         """
         Save scraped content to a file.
@@ -619,14 +620,14 @@ class ScrapySpider(Spider):
     async def scrape_websites(
         self,
         urls: list[str],
+        vector_db_index: str,
         max_depth: int = 1,
         output_type: str = "string",
-        output_path: str = None,
-        vector_db_index: str = None,
-        allowed_domains: list[str] = None,
-        content_selectors: list[str] = None,
-        excluded_selectors: list[str] = None,
-        embedding_model_config: Model = None,
+        output_path: str | None = None,
+        allowed_domains: list[str] | None = None,
+        content_selectors: list[str] | None = None,
+        excluded_selectors: list[str] | None = None,
+        embedding_model_config: Model | None = None,
     ) -> tuple[bool, str, list[str], list[str], str | list]:
         """
         Scrape multiple websites and return results in the format expected by the API.
@@ -651,7 +652,7 @@ class ScrapySpider(Spider):
             )
 
             scraped_results = await self._process_multiple_urls(
-                urls, max_depth, allowed_domains, scraping_config
+                urls, max_depth, allowed_domains or [], scraping_config or {}
             )
 
             content = await self._generate_output(
@@ -682,7 +683,7 @@ class ScrapySpider(Spider):
         urls: list[str],
         max_depth: int,
         allowed_domains: list[str],
-        scraping_config: dict = None,
+        scraping_config: dict | None = None,
     ) -> dict:
         """Process multiple URLs and collect results."""
         all_scraped_data = {}
@@ -732,9 +733,9 @@ class ScrapySpider(Spider):
         self,
         scraped_data: dict,
         output_type: str,
-        output_path: str,
+        output_path: str | None,
         vector_db_index: str,
-        embedding_model_config: Model = None,
+        embedding_model_config: Model | None = None,
     ) -> str | list:
         """Generate output content based on the specified type."""
         if output_type.lower() == OutputType.STRING.value:
@@ -872,8 +873,11 @@ class ScrapySpider(Spider):
 
             if os.path.exists(temp_file_path):
                 logging.info(f"Reading scraped data from temp file: {temp_file_path}")
-                with open(temp_file_path, "r", encoding="utf-8") as temp_file:
-                    scraped_data = json.load(temp_file)
+                async with aiofiles.open(
+                    temp_file_path, "r", encoding="utf-8"
+                ) as temp_file:
+                    temp_content = await temp_file.read()
+                    scraped_data = json.loads(temp_content)
                 logging.info(
                     f"Successfully read {len(scraped_data)} items from temp file"
                 )
@@ -882,10 +886,12 @@ class ScrapySpider(Spider):
                 logging.info(
                     f"Reading scraped data from output file: {output_file_path}"
                 )
-                with open(output_file_path, "r", encoding="utf-8") as output_file:
-                    scraped_data = json.load(output_file)
+                async with aiofiles.open(
+                    output_file_path, "r", encoding="utf-8"
+                ) as output_file:
+                    scraped_data = await output_file.read()
+                    scraped_data = json.loads(scraped_data)
 
-                # Don't delete the file immediately - keep it for debugging
                 logging.info(
                     f"Successfully read {len(scraped_data)} items from {output_file_path}"
                 )
@@ -913,7 +919,7 @@ class ScrapySpider(Spider):
         self,
         scraped_data: dict,
         vector_db_index: str,
-        embedding_model_config: Model = None,
+        embedding_model_config: Model | None = None,
     ) -> None:
         """
         Save scraped content to a Redis vector database.
@@ -932,7 +938,11 @@ class ScrapySpider(Spider):
         if embedding_model_config:
             provider = embedding_model_config.provider.value
             deployment = embedding_model_config.deployment
-            name = embedding_model_config.name
+            name = (
+                embedding_model_config.name
+                if embedding_model_config.name is not None
+                else ""
+            )
             embedding_model = get_embedding_model(
                 provider=provider, deployment=deployment, model=name
             )
@@ -954,6 +964,6 @@ class ScrapySpider(Spider):
         )
 
         for url, content in scraped_data.items():
-            await vector_store.add_texts(
+            vector_store.add_texts(
                 [content], metadatas=[{"source": url, "timestamp": datetime.now()}]
             )

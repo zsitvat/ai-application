@@ -1,11 +1,9 @@
 import asyncio
-import os
 
 from langchain_core.tools import tool
 from langchain_core.tools.retriever import create_retriever_tool
 from langchain_core.vectorstores import VectorStoreRetriever
 
-from src.schemas.schema import Model, ModelType
 from src.services.document.document_service import DocumentService
 from src.services.logger.logger_service import LoggerService
 
@@ -37,7 +35,7 @@ def create_vector_retriever_tool(
 
 @tool
 async def redis_vector_search_tool(
-    question: str, index_name: str = "knowledge_base", search_kwargs: dict = None
+    question: str, index_name: str = "knowledge_base", search_kwargs: dict | None = None
 ) -> list:
     """
     Search in the Redis vector store.

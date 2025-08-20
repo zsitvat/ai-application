@@ -50,7 +50,7 @@ class DatasetService:
             )
 
             if test_cases:
-                self._update_test_cases(dataset.id, test_cases)
+                self._update_test_cases(str(dataset.id), test_cases)
 
             result = {
                 "id": str(dataset.id),
@@ -193,14 +193,13 @@ class DatasetService:
             dataset = dataset_list[0]
 
             if name or description:
-                self.client.update_dataset(
-                    dataset_id=dataset.id,
+                dataset.update(
                     name=name or dataset.name,
                     description=description or dataset.description,
                 )
 
             if test_cases is not None:
-                self._update_test_cases(dataset.id, test_cases)
+                self._update_test_cases(str(dataset.id), test_cases)
 
             self.logger.info(
                 f"[DatasetService|update_dataset] finished (dataset_name={dataset_name})"
@@ -359,10 +358,7 @@ class DatasetService:
 
             # Use provided config or defaults
             if config:
-                if hasattr(config, "model_dump"):
-                    config_dict = config.model_dump()
-                else:
-                    config_dict = dict(config)
+                config_dict = dict(config)
 
                 api_config = {**default_config, **config_dict}
             else:
@@ -397,21 +393,6 @@ class DatasetService:
         except Exception as e:
             self.logger.error(f"Error calling graph API: {str(e)}")
             raise
-
-    def _extract_question_from_test_case(
-        self, test_case: dict, config: DatasetRunConfigSchema | dict | None
-    ) -> str:
-        """Extract the question from a test case based on configuration."""
-        if not test_case:
-            return ""
-
-        question_key = "user_input"
-        if config and hasattr(config, "question_key"):
-            question_key = config.question_key
-        elif config and isinstance(config, dict) and "question_key" in config:
-            question_key = config["question_key"]
-
-        return test_case.get(question_key, "")
 
     def _create_result_dict(
         self,
@@ -452,7 +433,7 @@ class DatasetService:
         def llm_function(inputs):
             """LLM function that processes inputs and returns outputs."""
             try:
-                question = self._extract_question_from_test_case(inputs, config)
+                question = inputs.get("user_input", "")
 
                 if not question:
                     self.logger.warning(f"No question found in inputs: {inputs}")
@@ -492,8 +473,10 @@ class DatasetService:
 
             config = config or {}
 
-            if uuid and (not config or "uuid" not in config):
-                if hasattr(config, "model_dump"):
+            if uuid:
+                if isinstance(config, dict):
+                    config["uuid"] = uuid
+                elif hasattr(config, "model_dump"):
                     config_dict = config.model_dump()
                     config_dict["uuid"] = uuid
                     config = config_dict
@@ -518,7 +501,7 @@ class DatasetService:
 
             self.logger.info(
                 f"Dataset run completed successfully: {run_id}. "
-                f"Results ID: {results.id if hasattr(results, 'id') else 'N/A'}"
+                f"Results ID: {results['id'] if 'id' in results else 'N/A'}"
             )
 
             self.logger.debug(f"Dataset run {run_id} detailed results: {results}")

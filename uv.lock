@@ -1578,6 +1578,21 @@ wheels = [
 ]
 
 [[package]]
+name = "langgraph-checkpoint-redis"
+version = "0.1.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "langgraph-checkpoint" },
+    { name = "orjson" },
+    { name = "redis" },
+    { name = "redisvl" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/f4/c5/59797d833d0c270364d864a01094f9f4d07baeaa0e5954a66556820037ba/langgraph_checkpoint_redis-0.1.1.tar.gz", hash = "sha256:2663a3c138c6aaeeafa28de76d78d4e693bf7722fdc99ff291525f6aa1c986f3", size = 81279, upload-time = "2025-08-15T22:33:31.069Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/6d/5c/78305f6c7f32397718316abd69496127902d94021769068e3e27a58d319b/langgraph_checkpoint_redis-0.1.1-py3-none-any.whl", hash = "sha256:ac59e28b949b308dc4c1a0d0c4e11affb3d9b495e46d152d593b89a8e55338b8", size = 86505, upload-time = "2025-08-15T22:33:29.876Z" },
+]
+
+[[package]]
 name = "langgraph-cli"
 version = "0.3.6"
 source = { registry = "https://pypi.org/simple" }
@@ -3159,6 +3174,7 @@ dependencies = [
     { name = "langchain-tavily" },
     { name = "langfuse" },
     { name = "langgraph" },
+    { name = "langgraph-checkpoint-redis" },
     { name = "langgraph-cli", extra = ["inmem"] },
     { name = "langsmith" },
     { name = "openai" },
@@ -3166,6 +3182,7 @@ dependencies = [
     { name = "pandas" },
     { name = "psutil" },
     { name = "pydantic" },
+    { name = "pytest" },
     { name = "python-docx" },
     { name = "python-dotenv" },
     { name = "python-multipart" },
@@ -3224,6 +3241,7 @@ requires-dist = [
     { name = "langchain-tavily" },
     { name = "langfuse" },
     { name = "langgraph" },
+    { name = "langgraph-checkpoint-redis" },
     { name = "langgraph-cli", extras = ["inmem"], specifier = ">=0.3.6" },
     { name = "langsmith" },
     { name = "mypy", marker = "extra == 'dev'" },
@@ -3233,6 +3251,7 @@ requires-dist = [
     { name = "pre-commit", marker = "extra == 'dev'" },
     { name = "psutil" },
     { name = "pydantic" },
+    { name = "pytest", specifier = ">=8.4.1" },
     { name = "pytest", marker = "extra == 'dev'" },
     { name = "pytest-asyncio", marker = "extra == 'dev'" },
     { name = "pytest-cov", marker = "extra == 'dev'" },

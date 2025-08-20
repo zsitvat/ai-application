@@ -1,6 +1,3 @@
-import json
-from pathlib import Path
-
 from fastapi import APIRouter, Depends, HTTPException
 
 from src.schemas.document_schema import (
@@ -11,10 +8,7 @@ from src.schemas.document_schema import (
 from src.services.document.document_service import DocumentService
 from src.services.logger.logger_service import LoggerService
 
-
-def get_document_service():
-    return DocumentService()
-
+logger = LoggerService().setup_logger()
 
 router = APIRouter(tags=["documents"])
 
@@ -35,7 +29,7 @@ async def ingest_documents(
 
         if request.json_data is not None:
             success, message, processed_files, failed_files = (
-                document_service.ingest_documents(
+                await document_service.ingest_documents(
                     files=(
                         request.files
                         if isinstance(request.files, list)
@@ -73,7 +67,7 @@ async def ingest_documents(
         )
 
     except Exception as ex:
-        LoggerService().error(f"Error in document ingestion: {str(ex)}")
+        logger.error(f"Error in document ingestion: {str(ex)}")
         raise HTTPException(
             status_code=500,
             detail=f"Error processing documents: {str(ex)}",
@@ -90,7 +84,7 @@ async def delete_documents(
     "Delete documents from vector database."
 
     try:
-        success, message, deleted_count = await document_service.delete_documents(
+        success, message, deleted_count = document_service.delete_documents(
             index_name=index_name
         )
 
@@ -99,20 +93,17 @@ async def delete_documents(
         )
 
     except Exception as ex:
-        LoggerService().error(f"Error deleting documents: {str(ex)}")
+        logger.error(f"Error deleting documents: {str(ex)}")
         raise HTTPException(
             status_code=500,
             detail=f"Error deleting documents: {str(ex)}",
         )
 
 
-from fastapi import Query
-
-
 @router.post("/api/documents/ingest/positions")
 async def ingest_positions(
-    file_path: str = Query(..., description="Path to positions JSON file"),
-    index_name: str = Query(..., description="Redis index name"),
+    file_path: str,
+    index_name: str,
     document_service: DocumentService = Depends(get_document_service),
 ):
     "Ingest positions from a file, flatten labels, and store in vector DB using index schema."
@@ -131,7 +122,7 @@ async def ingest_positions(
         )
 
     except Exception as ex:
-        LoggerService().error(f"Error in positions ingestion: {str(ex)}")
+        logger.error(f"Error in positions ingestion: {str(ex)}")
         raise HTTPException(
             status_code=500,
             detail=f"Error processing positions: {str(ex)}",

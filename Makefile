@@ -15,7 +15,7 @@ clean:  ## Clean cache and temporary files
 	find . -type d -name "*.egg-info" -exec rm -rf {} + 2>/dev/null || true
 
 test:  ## Run tests with pytest
-	uv run pytest tests/ -v --cov=src --cov-report=html --cov-report=term
+	uv run pytest tests/ -v --cov=src --cov-report=html --cov-report=term 
 
 run:  ## Run the application
 	uv run uvicorn src.app:app --host 0.0.0.0 --port 8000

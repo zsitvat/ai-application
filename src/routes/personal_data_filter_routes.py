@@ -1,14 +1,15 @@
-import logging
-
 from fastapi import APIRouter, Depends, HTTPException
 
 from src.schemas.personal_data_filter_schema import (
     PersonalDataFilterRequestSchema,
     PersonalDataFilterResponseSchema,
 )
+from src.services.logger.logger_service import LoggerService
 from src.services.validators.personal_data.personal_data_filter_service import (
     PersonalDataFilterService,
 )
+
+logger = LoggerService().setup_logger()
 
 router = APIRouter(tags=["personal_data_sfilter"])
 
@@ -29,6 +30,11 @@ async def filter_personal_data(
     """Filter personal and sensitive data from text."""
 
     try:
+        if request.config is None:
+            raise HTTPException(
+                status_code=400,
+                detail="Config must be provided and cannot be None.",
+            )
         filtered_text, original_text = await filter_service.filter_personal_data(
             text=request.text,
             config=request.config,
@@ -39,9 +45,7 @@ async def filter_personal_data(
         )
 
     except Exception as ex:
-        logging.getLogger("logger").error(
-            f"Error in personal data filtering: {str(ex)}"
-        )
+        logger.error(f"Error in personal data filtering: {str(ex)}")
         raise HTTPException(
             status_code=500,
             detail=f"Error filtering personal data: {str(ex)}",

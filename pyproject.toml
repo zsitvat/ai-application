@@ -48,6 +48,7 @@ dependencies = [
     "reportlab",
     "scrapy-user-agents",
     "langgraph-cli[inmem]>=0.3.6",
+    "pytest>=8.4.1",
 ]
 
 [project.optional-dependencies]

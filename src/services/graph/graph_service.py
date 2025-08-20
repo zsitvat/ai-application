@@ -7,12 +7,11 @@ from typing import Any, AsyncGenerator, Literal
 from uuid import uuid4
 
 import aiohttp
-from langchain.prompts import ChatPromptTemplate
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.prompts import MessagesPlaceholder, ChatPromptTemplate
+from langchain_core.runnables.config import RunnableConfig
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.checkpoint.redis import AsyncRedisSaver
-from langgraph.config import RunnableConfig
 from langgraph.graph import END, StateGraph
 from langgraph.graph.message import add_messages
 
@@ -55,7 +54,7 @@ class GraphService:
         self.workflow = None
 
         self.redis_history_db = os.getenv("REDIS_HISTORY_DB")
-        self.redis_url = f"redis://{os.getenv('REDIS_PASSWORD') + '@' if os.getenv('REDIS_PASSWORD') else ''}{os.getenv('REDIS_HOST')}:{os.getenv('REDIS_PORT')}{'/' + self.redis_history_db if self.redis_history_db else ''}"
+        self.redis_url = f"redis://{os.getenv('REDIS_PASSWORD', '') + '@' if os.getenv('REDIS_PASSWORD') else ''}{os.getenv('REDIS_HOST')}:{os.getenv('REDIS_PORT')}{'/' + self.redis_history_db if self.redis_history_db else ''}"
         self.tracer_type = os.getenv("TRACER_TYPE", "langsmith")
         os.environ["REDIS_URL"] = self.redis_url
 
@@ -102,7 +101,7 @@ class GraphService:
 
             result = await self.workflow.ainvoke(
                 initial_state,
-                {"recursion_limit": recursion_limit, "thread_id": user_id},
+                RunnableConfig(recursion_limit=recursion_limit),
             )
 
             final_response = self._generate_final_response(result)
@@ -147,7 +146,7 @@ class GraphService:
 
             result = await self.workflow.ainvoke(
                 initial_state,
-                {"recursion_limit": recursion_limit, "thread_id": user_id},
+                RunnableConfig(recursion_limit=recursion_limit),
             )
 
             final_response = self._generate_final_response(result)
@@ -284,7 +283,7 @@ class GraphService:
 
         try:
             extractor_config: ExtractorConfig = getattr(
-                self.graph_config, "applicant_attributes_extractor", None
+                self.graph_config, "applicant_attributes_extractor"
             )
             if extractor_config is None:
                 return state
@@ -414,7 +413,10 @@ class GraphService:
             prompt = self._inject_tool_info_into_prompt(prompt, agent_config)
 
             prompt_with_messages = ChatPromptTemplate.from_messages(
-                [prompt, MessagesPlaceholder(variable_name="messages")]
+                [
+                    ("system", prompt.messages[0].content),
+                    MessagesPlaceholder(variable_name="messages")
+                ]
             )
 
             allowed_tool_names = self._get_allowed_tool_names(agent_config)
@@ -452,10 +454,10 @@ class GraphService:
             if state.parameters:
                 prompt_context.update(state.parameters)
 
-            prompt_context["application_attributes"] = state.application_attributes
+            state.context["application_attributes"] = state.application_attributes
 
             if "user_information" not in prompt_context:
-                prompt_context["user_information"] = ""
+                prompt_context["user_information"] = []
             if "labels" not in prompt_context:
                 prompt_context["labels"] = []
             if "positions" not in prompt_context:
@@ -495,7 +497,7 @@ class GraphService:
                     f"[GraphService] Original tool args from LLM for '{tool_name}': {tool_args}"
                 )
 
-                if "input_fields" in tool_args and isinstance(
+                if isinstance(tool_args, dict) and "input_fields" in tool_args and isinstance(
                     tool_args["input_fields"], dict
                 ):
                     search_values = tool_args["input_fields"]
@@ -700,7 +702,19 @@ class GraphService:
                     f"[GraphService] Executing tool '{tool_name}' with filtered_args: {filtered_args}"
                 )
 
-                tool_result = await tool_func.ainvoke(filtered_args)
+                if hasattr(tool_func, "ainvoke"):
+                    tool_result = await tool_func.ainvoke(filtered_args)
+                elif asyncio.iscoroutinefunction(tool_func):
+                    tool_result = await tool_func(filtered_args)
+                else:
+                    if callable(tool_func):
+                        tool_result = tool_func(filtered_args)
+                    else:
+                        self.logger.error(f"[GraphService] tool_func for '{tool_name}' is not callable: {tool_func}")
+                        return ToolMessage(
+                            content=f"Error: tool '{tool_name}' is not callable.",
+                            tool_call_id="temp_id",
+                        )
 
                 if isinstance(tool_result, ToolMessage):
                     return tool_result
@@ -1219,8 +1233,13 @@ Select one of: {available_options}"""
 
         return workflow
 
-    async def _create_checkpointer(self):
+    async def _create_checkpointer(self) -> PersonalDataFilterCheckpointer | InMemorySaver | AsyncRedisSaver | DataChatHistoryService | Any | RedisChatHistoryService -> PersonalDataFilterCheckpointer | InMemorySaver | AsyncRedisSaver | DataChatHistoryService | Any | RedisChatHistoryService:
         """Create checkpointer based on configuration (async version)."""
+
+        if self.graph_config is None:
+            raise ValueError(
+                "Graph configuration is not loaded. Cannot create checkpointer."
+            )
 
         checkpointer_type = self.graph_config.checkpointer_type
         base_checkpointer = None
@@ -1304,7 +1323,7 @@ Select one of: {available_options}"""
 
         return user_input
 
-    def _generate_final_response(self, result: AgentState) -> str:
+    def _generate_final_response(self, result) -> str:
         """Generate the final response from agent results."""
 
         final_response = None
@@ -1546,7 +1565,10 @@ Select one of: {available_options}"""
     def _get_user_input_from_state(self, state: AgentState) -> str:
         for msg in reversed(state["messages"]):
             if isinstance(msg, HumanMessage) and hasattr(msg, "content"):
-                return msg.content
+                if isinstance(msg.content, str):
+                    return msg.content
+                else:
+                    return str(msg.content)
         return ""
 
 
@@ -1555,6 +1577,10 @@ graph_service = GraphService(AppSettingsService())
 
 
 async def get_compiled_workflow_for_studio(config: RunnableConfig):
-    app_id = config.get("app_id")
+    app_id_value = config.get("app_id")
+    if app_id_value is None:
+        raise ValueError("app_id must be provided in config")
+    app_id: str | int = app_id_value
+
     parameters = config.get("parameters")
-    return await graph_service.get_compiled_workflow(app_id, parameters)
+    return await graph_service.get_compiled_workflow(int(app_id), parameters)

@@ -6,6 +6,8 @@ from src.services.data_api.app_settings import AppSettingsService
 from src.services.graph.graph_service import GraphService
 from src.services.logger.logger_service import LoggerService
 
+logger = LoggerService().setup_logger()
+
 router = APIRouter(tags=["graph"])
 
 
@@ -39,7 +41,7 @@ async def execute_graph(
         return result
 
     except Exception as ex:
-        LoggerService().error(f"Error in graph execution: {str(ex)}")
+        logger.error(f"Error in graph execution: {str(ex)}")
         raise HTTPException(
             status_code=500,
             detail=f"Error executing multi-agent graph: {str(ex)}",
@@ -76,7 +78,7 @@ async def execute_graph_stream(
         )
 
     except Exception as ex:
-        LoggerService().error(f"Error in graph streaming execution: {str(ex)}")
+        logger.error(f"Error in graph streaming execution: {str(ex)}")
         raise HTTPException(
             status_code=500,
             detail=f"Error executing streaming multi-agent graph: {str(ex)}",

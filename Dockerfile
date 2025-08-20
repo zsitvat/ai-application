@@ -28,6 +28,8 @@ RUN uv sync --no-dev --frozen
 # Copy application code
 COPY . .
 
+RUN pytest tests
+
 EXPOSE 5000
 
 CMD ["uv", "run", "python", "src/app.py"]

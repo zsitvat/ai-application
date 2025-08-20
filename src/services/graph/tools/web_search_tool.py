@@ -1,10 +1,11 @@
 import logging
 import os
+from typing import Any
 
-from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain_community.utilities import BingSearchAPIWrapper, SerpAPIWrapper
 from langchain_core.tools import BaseTool
 from langchain_google_community import GoogleSearchAPIWrapper
+from langchain_tavily import TavilySearch
 from pydantic import BaseModel, Field
 
 from src.schemas.tool_schema import SearchProvider, WebSearchToolInput
@@ -43,7 +44,7 @@ class WebSearchTool(BaseTool):
     )
 
     serpapi_api_key: str | None = Field(default=None, description="SerpAPI API key")
-    serpapi_params: dict[str, any] = Field(
+    serpapi_params: dict[str, Any] = Field(
         default_factory=dict, description="Additional SerpAPI parameters"
     )
 
@@ -105,7 +106,9 @@ class WebSearchTool(BaseTool):
         os.environ["BING_SUBSCRIPTION_KEY"] = subscription_key
         os.environ["BING_SEARCH_URL"] = search_url
 
-        self._search_wrapper = BingSearchAPIWrapper(k=self.k)
+        self._search_wrapper = BingSearchAPIWrapper(
+            bing_subscription_key=subscription_key, bing_search_url=search_url, k=self.k
+        )
 
     def _setup_serpapi_search(self):
         """Setup SerpAPI Search wrapper."""
@@ -143,7 +146,8 @@ class WebSearchTool(BaseTool):
 
         os.environ["TAVILY_API_KEY"] = api_key
 
-        self._search_wrapper = TavilySearchResults(
+        self._search_wrapper = TavilySearch(
+            api_key=api_key,
             max_results=self.k,
             search_depth=self.tavily_search_depth,
             topic=self.tavily_topic,
@@ -152,26 +156,19 @@ class WebSearchTool(BaseTool):
     def _run(self, query: str) -> str:
         """Execute search and return formatted results."""
         try:
-            if self.provider == SearchProvider.TAVILY:
-                results = self._search_wrapper.invoke({"query": query})
-                logger.debug(f"Tavily results for query '{query}': {results}")
-                return self._format_tavily_results(results, query)
-            else:
-                if hasattr(self._search_wrapper, "results"):
-                    results = self._search_wrapper.results(query, self.k)
-                else:
-                    result_text = self._search_wrapper.run(query)
-                    logger.debug(
-                        f"SerpAPI result text for query '{query}': {result_text}"
-                    )
-                    return (
-                        f"Search results from SerpAPI for '{query}':\n\n{result_text}"
-                    )
+            if self._search_wrapper is None:
+                return "Search provider is not configured."
 
-                logger.debug(
-                    f"Results for query '{query}' from {self.provider.title()}: {results}"
-                )
-                return self._format_results(results, query, self.provider.title())
+            result_text = self._search_wrapper.run(query)
+            logger.debug(f"Result text for query '{query}': {result_text}")
+            provider_name = (
+                self.provider.title()
+                if hasattr(self.provider, "title")
+                else str(self.provider)
+            )
+            return (
+                f"Search results from {provider_name} for '{query}':\n\n{result_text}"
+            )
 
         except Exception as e:
             logger.error(f"Search failed for query '{query}': {str(e)}")
@@ -190,7 +187,7 @@ class WebSearchTool(BaseTool):
             snippet = result.get("snippet", result.get("content", "No description"))
 
             formatted_results.append(
-                f"{i}. **{title}**\n" f"   URL: {link}\n" f"   Description: {snippet}\n"
+                f"{i}. **{title}**\n   URL: {link}\n   Description: {snippet}\n"
             )
 
         return "\n".join(formatted_results)
@@ -208,7 +205,7 @@ class WebSearchTool(BaseTool):
             content = result.get("content", "No content")
 
             formatted_results.append(
-                f"{i}. **{title}**\n" f"   URL: {url}\n" f"   Content: {content}\n"
+                f"{i}. **{title}**\n   URL: {url}\n   Content: {content}\n"
             )
 
         return "\n".join(formatted_results)

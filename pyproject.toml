@@ -6,7 +6,7 @@ authors = [
     {name = "tamas.zsitva"}
 ]
 readme = "README.md"
-requires-python = ">=3.11,<4.0"
+requires-python = ">=3.9,<3.12"
 dependencies = [
     "google-search-results",
     "fastapi",

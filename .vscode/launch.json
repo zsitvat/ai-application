@@ -22,6 +22,32 @@
             "justMyCode": true
         },
         {
+            "name": "FastAPI + pytest (parallel)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/run.sh",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "pytest"
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/src"
+            }
+        },
+        {
+            "name": "FastAPI + LangGraph Dev (parallel)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/run.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": [],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/src"
+            }
+        },
+        {
             "name": "Debug LangGraph Dev",
             "type": "debugpy",
             "request": "launch",
@@ -36,24 +62,11 @@
         },
         {
             "name": "Python: pytest (tests folder)",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "module": "pytest",
             "args": [
                 "tests/"
-            ],
-            "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "name": "Python: unittest (tests folder)",
-            "type": "python",
-            "request": "launch",
-            "module": "unittest",
-            "args": [
-                "discover",
-                "-s",
-                "tests"
             ],
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}"

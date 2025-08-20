@@ -30,14 +30,13 @@ def test_web_scraping_route_error(monkeypatch):
     client = TestClient(app)
 
     # Patch the service to raise an exception
-    async def raise_exc(*args, **kwargs):
-        raise Exception("Service error")
+    class FailingService:
+        async def scrape_websites(self, *args, **kwargs):
+            raise RuntimeError("Service error")
 
-    mock_service = MagicMock()
-    mock_service.scrape_websites = AsyncMock(side_effect=raise_exc)
     monkeypatch.setattr(
         "src.routes.web_scraping_routes.get_web_scraping_service",
-        lambda: mock_service,
+        lambda: FailingService(),
     )
     payload = {
         "urls": ["http://example.com"],
@@ -56,4 +55,8 @@ def test_web_scraping_route_error(monkeypatch):
     }
     response = client.post("/api/web-scraping", json=payload)
     assert response.status_code == 500
-    assert "Error scraping websites" in response.json()["detail"]
+    try:
+        error_detail = response.json().get("detail", "")
+    except Exception:
+        error_detail = response.text
+    assert "Error scraping websites" in error_detail

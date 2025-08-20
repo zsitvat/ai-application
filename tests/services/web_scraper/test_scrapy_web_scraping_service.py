@@ -173,10 +173,15 @@ def test_prepare_scraping_config_variants(spider):
 
 
 def test_get_scraped_content_as_string_and_get_content_as_string(spider):
-    spider.scraped_data = {"http://x.com": "X", "http://y.com": "Y"}
+
+    spider.scraped_data = {
+        "http://example-1.com": "Example 1 content",
+        "http://example-2.com": "Example 2 content",
+    }
     s1 = spider.get_scraped_content_as_string()
     s2 = spider.get_content_as_string(spider.scraped_data)
-    assert "google.com" in s1 and "wikipedia.org" in s2
+    assert "example-1.com" in s1 and "example-2.com" in s2
+    assert "Example 1 content" in s1 and "Example 2 content" in s2
 
 
 def test_save_to_file_empty_and_error(monkeypatch):

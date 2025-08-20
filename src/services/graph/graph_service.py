@@ -8,7 +8,7 @@ from uuid import uuid4
 
 import aiohttp
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
-from langchain_core.prompts import MessagesPlaceholder, ChatPromptTemplate
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables.config import RunnableConfig
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.checkpoint.redis import AsyncRedisSaver
@@ -415,7 +415,7 @@ class GraphService:
             prompt_with_messages = ChatPromptTemplate.from_messages(
                 [
                     ("system", prompt.messages[0].content),
-                    MessagesPlaceholder(variable_name="messages")
+                    MessagesPlaceholder(variable_name="messages"),
                 ]
             )
 
@@ -497,8 +497,10 @@ class GraphService:
                     f"[GraphService] Original tool args from LLM for '{tool_name}': {tool_args}"
                 )
 
-                if isinstance(tool_args, dict) and "input_fields" in tool_args and isinstance(
-                    tool_args["input_fields"], dict
+                if (
+                    isinstance(tool_args, dict)
+                    and "input_fields" in tool_args
+                    and isinstance(tool_args["input_fields"], dict)
                 ):
                     search_values = tool_args["input_fields"]
                     tool_args = search_values.copy()
@@ -710,7 +712,9 @@ class GraphService:
                     if callable(tool_func):
                         tool_result = tool_func(filtered_args)
                     else:
-                        self.logger.error(f"[GraphService] tool_func for '{tool_name}' is not callable: {tool_func}")
+                        self.logger.error(
+                            f"[GraphService] tool_func for '{tool_name}' is not callable: {tool_func}"
+                        )
                         return ToolMessage(
                             content=f"Error: tool '{tool_name}' is not callable.",
                             tool_call_id="temp_id",
@@ -1233,7 +1237,16 @@ Select one of: {available_options}"""
 
         return workflow
 
-    async def _create_checkpointer(self) -> PersonalDataFilterCheckpointer | InMemorySaver | AsyncRedisSaver | DataChatHistoryService | Any | RedisChatHistoryService -> PersonalDataFilterCheckpointer | InMemorySaver | AsyncRedisSaver | DataChatHistoryService | Any | RedisChatHistoryService:
+    async def _create_checkpointer(
+        self,
+    ) -> (
+        PersonalDataFilterCheckpointer
+        | InMemorySaver
+        | AsyncRedisSaver
+        | DataChatHistoryService
+        | Any
+        | RedisChatHistoryService
+    ):
         """Create checkpointer based on configuration (async version)."""
 
         if self.graph_config is None:
@@ -1577,10 +1590,7 @@ graph_service = GraphService(AppSettingsService())
 
 
 async def get_compiled_workflow_for_studio(config: RunnableConfig):
-    app_id_value = config.get("app_id")
-    if app_id_value is None:
-        raise ValueError("app_id must be provided in config")
-    app_id: str | int = app_id_value
+    app_id: str = str(config.get("app_id", "0"))
 
     parameters = config.get("parameters")
     return await graph_service.get_compiled_workflow(int(app_id), parameters)

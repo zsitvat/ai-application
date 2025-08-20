@@ -601,7 +601,7 @@ async def test_execute_graph_stream_success_and_error():
     service = GraphService(MagicMock())
     service.workflow = MagicMock()
 
-    def async_prepare_graph_execution(app_id, parameters, user_input):
+    async def async_prepare_graph_execution(app_id, parameters, user_input):
         return "input"
 
     service._prepare_graph_execution = async_prepare_graph_execution
@@ -626,7 +626,7 @@ async def test_execute_graph_stream_success_and_error():
 
     # Error branch
     async def async_prepare_graph_execution_fail(app_id, parameters, user_input):
-        raise RuntimeError("fail")
+        raise ValueError("fail")
 
     service._prepare_graph_execution = async_prepare_graph_execution_fail
 
@@ -981,10 +981,13 @@ async def test_exception_chain_node_fallback(monkeypatch):
 
     service = GraphService(MagicMock())
     state = AgentState(messages=[], context={}, parameters={}, user_id="u")
-    # Simulate error in get_chat_model
+
+    def raise_runtime_error(*a, **kw):
+        raise RuntimeError("fail")
+
     monkeypatch.setattr(
         "src.services.graph.graph_service.get_chat_model",
-        lambda *a, **kw: (_ for _ in ()).throw(RuntimeError("fail")),
+        raise_runtime_error,
     )
     result = await service._exception_chain_node(state)
     assert result.next == "FINISH"

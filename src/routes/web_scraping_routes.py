@@ -1,6 +1,6 @@
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, HTTPException
 
 from src.schemas.web_scraping_schema import (
     WebScrapingRequestSchema,
@@ -16,13 +16,10 @@ def get_web_scraping_service():
 
 
 @router.post("/api/web-scraping", response_model=WebScrapingResponseSchema)
-async def scrape_websites(
-    request: WebScrapingRequestSchema,
-    scraping_service: ScrapySpider = Depends(get_web_scraping_service),
-):
+async def scrape_websites(request: WebScrapingRequestSchema):
     "Extract and process website content automatically."
-
     try:
+        scraping_service = get_web_scraping_service()
         logging.getLogger("logger").debug(
             f"Received web scraping request with parameters: {request.model_dump()}"
         )

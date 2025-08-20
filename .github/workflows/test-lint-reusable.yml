@@ -41,18 +41,18 @@ jobs:
 
       - name: Verify linting tools installation
         run: |
-          poetry run black --version
-          poetry run isort --version
-          poetry run flake8 --version
+          uv pip run black --version
+          uv pip run isort --version
+          uv pip run flake8 --version
 
       - name: Comprehensive lint check
         run: |
-          poetry run black --check src tests
-          poetry run isort --check-only src tests
-          poetry run flake8 src tests
+          uv pip run black --check src tests
+          uv pip run isort --check-only src tests
+          uv pip run flake8 src tests
 
       - name: Type checking
-        run: poetry run mypy src || true
+        run: uv pip run mypy src || true
 
       - name: Run comprehensive tests
         run: |

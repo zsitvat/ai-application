@@ -3,6 +3,7 @@ from fastapi.responses import StreamingResponse
 
 from src.schemas.graph_schema import RestOperationPostSchema
 from src.services.data_api.app_settings import AppSettingsService
+from src.services.graph.graph import Graph
 from src.services.graph.graph_service import GraphService
 from src.services.logger.logger_service import LoggerService
 
@@ -15,10 +16,21 @@ def get_app_settings_service():
     return AppSettingsService()
 
 
-def get_graph_service(
+def get_graph_dependency(
     app_settings_service: AppSettingsService = Depends(get_app_settings_service),
 ):
-    return GraphService(app_settings_service)
+    return Graph(
+        graph_config=None,
+        logger=LoggerService().get_logger(__name__),
+        app_settings_service=app_settings_service,
+    )
+
+
+def get_graph_service(
+    app_settings_service: AppSettingsService = Depends(get_app_settings_service),
+    graph: Graph = Depends(get_graph_dependency),
+):
+    return GraphService(app_settings_service, graph)
 
 
 @router.post("/api/graph", response_model=str)

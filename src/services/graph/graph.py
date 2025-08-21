@@ -789,11 +789,6 @@ Select one of: {available_options}"""
                     if (agent.enabled and isinstance(agent, Agent))
                 ]
 
-                if not enabled_agents:
-                    raise ValueError(
-                        "No enabled agents available and supervisor finish is disabled"
-                    )
-
                 available_options = enabled_agents[:]
                 if self.graph_config.allow_supervisor_finish:
                     available_options.append("FINISH")
@@ -1078,6 +1073,7 @@ Select one of: {available_options}"""
 
     def _find_topic_validation_config(self):
         """Return topic validator config if enabled, else None."""
+
         config = getattr(self.graph_config, "topic_validator", None)
         if config and getattr(config, "enabled", False):
             return config
@@ -1104,6 +1100,7 @@ Select one of: {available_options}"""
 
     def _find_personal_data_filter_config(self):
         """Return personal data filter config if enabled, else None."""
+
         config = getattr(self.graph_config, "personal_data_filter", None)
         if config and getattr(config, "enabled", False):
             return config
@@ -1249,6 +1246,8 @@ Select one of: {available_options}"""
             return "supervisor"
 
     def _get_user_input_from_state(self, state: AgentState) -> str:
+        """Extract user input from the agent state."""
+
         for msg in reversed(state["messages"]):
             if isinstance(msg, HumanMessage) and hasattr(msg, "content"):
                 if isinstance(msg.content, str):
@@ -1258,6 +1257,8 @@ Select one of: {available_options}"""
         return ""
 
     def _bind_tools_to_chain(self, agent_config):
+        """Bind tools to the agent chain based on the agent configuration."""
+
         allowed_tool_names = self._get_allowed_tool_names(agent_config)
         tools_to_bind = []
         for name in allowed_tool_names:
@@ -1272,6 +1273,8 @@ Select one of: {available_options}"""
         return tools_to_bind
 
     def _prepare_tool_args(self, tool_name, tool_args, agent_config):
+        """Prepare tool arguments for the given tool."""
+
         if (
             isinstance(tool_args, dict)
             and "input_fields" in tool_args
@@ -1279,10 +1282,12 @@ Select one of: {available_options}"""
         ):
             search_values = tool_args["input_fields"]
             tool_args = search_values.copy()
+
             if tool_name in agent_config.tools:
                 config_input_fields = agent_config.tools[tool_name].get(
                     "input_fields", []
                 )
+
                 if config_input_fields:
                     mapped_args = {}
                     for field_name in config_input_fields:
@@ -1297,6 +1302,7 @@ Select one of: {available_options}"""
             self.logger.debug(
                 f"[GraphService] Tool args after merge for '{tool_name}': {tool_args}"
             )
+
         return tool_args
 
     async def _run_tool_and_update_state(
@@ -1309,6 +1315,7 @@ Select one of: {available_options}"""
         tool_call_id,
         prompt_context,
     ):
+        """Run the tool function and update the state with the result."""
         tool_result_message = await self._execute_tool_function(
             tool_func,
             tool_name,
@@ -1344,6 +1351,7 @@ Select one of: {available_options}"""
         return False
 
     def _build_prompt_context(self, state, agent_config):
+        """Build the prompt context for the given state and agent configuration."""
 
         prompt_context = {
             "messages": state.messages,
@@ -1375,6 +1383,7 @@ Select one of: {available_options}"""
         return prompt_context
 
     def _update_state_context(self, state, prompt_context):
+        """Update the state context with prompt context attributes."""
         state.context["application_attributes"] = prompt_context[
             "application_attributes"
         ]

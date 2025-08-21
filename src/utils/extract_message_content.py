@@ -1,4 +1,4 @@
-def extract_message_content(msg):
+def extract_message_content(msg: object) -> str:
     """Safely extract string content from a message object or dict, flattening lists if needed."""
     if isinstance(msg, dict) and "content" in msg:
         content = msg["content"]

@@ -7,6 +7,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlparse
+from typing import Any
 
 import aiofiles
 from docx import Document
@@ -18,7 +19,6 @@ from scrapy.http import Request
 from scrapy.linkextractors import LinkExtractor
 from scrapy.spiders import Spider
 
-from src.schemas.schema import Model
 from src.schemas.web_scraping_schema import OutputType
 from src.services.web_scraper.scraper_config import (
     CONTENT_SELECTORS,
@@ -28,7 +28,7 @@ from src.services.web_scraper.scraper_config import (
 from src.utils.select_model import get_embedding_model
 
 
-def install_reactor():
+def install_reactor() -> None:
     """Install asyncio reactor if not already installed."""
     if "twisted.internet.reactor" not in sys.modules:
         import twisted.internet.asyncioreactor
@@ -48,14 +48,14 @@ class ScrapySpider(Spider):
 
     def __init__(
         self,
-        start_urls=None,
-        max_depth=1,
-        allowed_domains=None,
-        content_selectors=None,
-        excluded_selectors=None,
-        *args,
-        **kwargs,
-    ):
+        start_urls: list[str] | None = None,
+        max_depth: int = 1,
+        allowed_domains: list[str] | None = None,
+        content_selectors: list[str] | None = None,
+        excluded_selectors: list[str] | None = None,
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
         super(ScrapySpider, self).__init__(*args, **kwargs)
 
         self.start_urls = start_urls or []
@@ -73,7 +73,7 @@ class ScrapySpider(Spider):
             deny_extensions=IGNORED_EXTENSIONS,
         )
 
-    def parse(self, response):
+    def parse(self, response: Any) -> None:
         """
         Main parsing method that extracts content and follows links.
         """
@@ -100,7 +100,7 @@ class ScrapySpider(Spider):
                     dont_filter=False,
                 )
 
-    def _extract_content(self, response):
+    def _extract_content(self, response: Any) -> None:
         """
         Extract text content from the response and store it.
         First get content from CONTENT_SELECTORS, then remove EXCLUDED_SELECTORS.
@@ -126,7 +126,7 @@ class ScrapySpider(Spider):
             )
             self.failed_urls.add(response.url)
 
-    def _get_content_with_exclusions(self, response):
+    def _get_content_with_exclusions(self, response: Any) -> list[str]:
         """Helper method to extract content while excluding specified selectors."""
         content_parts = []
 
@@ -134,7 +134,9 @@ class ScrapySpider(Spider):
 
         return content_parts
 
-    def _extract_from_content_selectors(self, response, content_parts):
+    def _extract_from_content_selectors(
+        self, response: Any, content_parts: list[str]
+    ) -> None:
         """Extract content from the main content selectors."""
         for selector in self.content_selectors:
             if not response.css(selector):
@@ -147,7 +149,7 @@ class ScrapySpider(Spider):
             if filtered_text:
                 content_parts.extend(filtered_text)
 
-    def _filter_excluded_text(self, response, text_list):
+    def _filter_excluded_text(self, response: Any, text_list: list[str]) -> list[str]:
         """Filter out text that appears in excluded selectors."""
         if not text_list:
             return []
@@ -166,7 +168,7 @@ class ScrapySpider(Spider):
             if text.strip() and text.strip() not in excluded_text
         ]
 
-    def handle_error(self, failure):
+    def handle_error(self, failure: Any) -> None:
         """
         Handle request failures.
         """
@@ -209,13 +211,13 @@ class ScrapySpider(Spider):
             all_content += f"URL: {url}\n\n{content}\n\n{'-'*80}\n\n"
         return all_content
 
-    def _save_as_text(self, output_path, timestamp, all_content):
+    def _save_as_text(self, output_path: str, timestamp: str, all_content: str) -> str:
         filename = f"{output_path}/scraped_content_{timestamp}.txt"
         with open(filename, "w", encoding="utf-8") as f:
             f.write(all_content)
         return filename
 
-    def _save_as_html(self, output_path, timestamp):
+    def _save_as_html(self, output_path: str, timestamp: str) -> str:
         filename = f"{output_path}/scraped_content_{timestamp}.html"
         html_content = f"""<!DOCTYPE html>
 <html>
@@ -239,7 +241,7 @@ class ScrapySpider(Spider):
             f.write(html_content)
         return filename
 
-    def _save_as_docx(self, output_path, timestamp):
+    def _save_as_docx(self, output_path: str, timestamp: str) -> str:
         """Save scraped content as DOCX file."""
         filename = f"{output_path}/scraped_content_{timestamp}.docx"
 
@@ -271,7 +273,7 @@ class ScrapySpider(Spider):
         )
         return filename
 
-    def _try_register_local_font(self, font_name, font_path):
+    def _try_register_local_font(self, font_name: str, font_path: Any) -> str | None:
         """Try to register a local TTF font."""
         try:
             pdfmetrics.registerFont(TTFont(font_name, str(font_path)))
@@ -283,7 +285,7 @@ class ScrapySpider(Spider):
             )
             return None
 
-    def _try_register_cid_font(self, cid_font_name):
+    def _try_register_cid_font(self, cid_font_name: str) -> str | None:
         """Try to register a CID font."""
         from reportlab.pdfbase.cidfonts import UnicodeCIDFont
 
@@ -296,7 +298,7 @@ class ScrapySpider(Spider):
         except Exception:
             return None
 
-    def _find_preferred_local_font(self, font_dir):
+    def _find_preferred_local_font(self, font_dir: Any) -> str | None:
         """Find and register preferred fonts for Hungarian text."""
         preferred_fonts = ["DejaVuSans", "FreeSans", "NotoSans-Regular"]
 
@@ -308,7 +310,7 @@ class ScrapySpider(Spider):
                     return result
         return None
 
-    def _register_unicode_font(self):
+    def _register_unicode_font(self) -> str:
         """Register a Unicode-capable font for PDF generation."""
 
         font_dir = Path(__file__).parent / "fonts"
@@ -351,7 +353,7 @@ class ScrapySpider(Spider):
         )
         return "Helvetica"
 
-    def _create_pdf_styles(self, font_name):
+    def _create_pdf_styles(self, font_name: str) -> tuple[Any, Any, Any]:
         """Create PDF styles for the document."""
         from reportlab.lib.enums import TA_CENTER
         from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
@@ -390,7 +392,7 @@ class ScrapySpider(Spider):
 
         return title_style, url_style, content_style
 
-    def _format_line_for_pdf(self, line, content_style):
+    def _format_line_for_pdf(self, line: str, content_style: Any) -> Any:
         """Format and escape a single line for PDF inclusion."""
         if not line.strip():
             return Spacer(1, 7)
@@ -430,7 +432,13 @@ class ScrapySpider(Spider):
                 )
                 return Paragraph("[Text conversion error]", content_style)
 
-    def _add_content_to_pdf(self, story, scraped_data, url_style, content_style):
+    def _add_content_to_pdf(
+        self,
+        story: list[Any],
+        scraped_data: dict[str, str],
+        url_style: Any,
+        content_style: Any,
+    ) -> list[Any]:
         """Add scraped content to the PDF story."""
         for url, content_text in scraped_data.items():
 
@@ -444,7 +452,7 @@ class ScrapySpider(Spider):
 
         return story
 
-    def _save_as_pdf(self, output_path, timestamp):
+    def _save_as_pdf(self, output_path: str, timestamp: str) -> str:
         """Save scraped content as PDF file."""
         from reportlab.lib.pagesizes import letter
         from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
@@ -497,7 +505,7 @@ class ScrapySpider(Spider):
         )
         return filename
 
-    def _save_as_json(self, output_path, timestamp):
+    def _save_as_json(self, output_path: str, timestamp: str) -> str:
         """Save scraped content as JSON file."""
         filename = f"{output_path}/scraped_content_{timestamp}.json"
 
@@ -517,7 +525,11 @@ class ScrapySpider(Spider):
         """Get all scraped content as a single string."""
         return self._get_all_content()
 
-    def _prepare_scraping_config(self, content_selectors=None, excluded_selectors=None):
+    def _prepare_scraping_config(
+        self,
+        content_selectors: list[str] | None = None,
+        excluded_selectors: list[str] | None = None,
+    ) -> dict[str, Any] | None:
         """
         Prepare a scraping configuration dictionary based on provided parameters.
 
@@ -542,9 +554,9 @@ class ScrapySpider(Spider):
         self,
         start_url: str,
         max_depth: int = 2,
-        allowed_domains: list | None = None,
-        scraping_config: dict | None = None,
-    ) -> dict:
+        allowed_domains: list[str] | None = None,
+        scraping_config: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         """
         Scrape a website starting from the given URL using a subprocess for event loop safety.
 
@@ -573,7 +585,7 @@ class ScrapySpider(Spider):
 
     def save_to_file(
         self,
-        scraped_data: dict,
+        scraped_data: dict[str, Any],
         output_type: str = "text",
         output_path: str | None = None,
     ) -> str:
@@ -599,7 +611,7 @@ class ScrapySpider(Spider):
 
         return temp_spider._save_scraped_content_to_file(output_type, output_path)
 
-    def get_content_as_string(self, scraped_data: dict) -> str:
+    def get_content_as_string(self, scraped_data: dict[str, Any]) -> str:
         """
         Get all scraped content as a single string.
 
@@ -627,7 +639,7 @@ class ScrapySpider(Spider):
         allowed_domains: list[str] | None = None,
         content_selectors: list[str] | None = None,
         excluded_selectors: list[str] | None = None,
-        embedding_model_config: Model | None = None,
+        embedding_model_config: Any = None,
     ) -> tuple[bool, str, list[str], list[str], str | list]:
         """
         Scrape multiple websites and return results in the format expected by the API.
@@ -683,8 +695,8 @@ class ScrapySpider(Spider):
         urls: list[str],
         max_depth: int,
         allowed_domains: list[str],
-        scraping_config: dict | None = None,
-    ) -> dict:
+        scraping_config: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         """Process multiple URLs and collect results."""
         all_scraped_data = {}
         all_failed_urls = []
@@ -731,11 +743,11 @@ class ScrapySpider(Spider):
 
     async def _generate_output(
         self,
-        scraped_data: dict,
+        scraped_data: dict[str, Any],
         output_type: str,
         output_path: str | None,
         vector_db_index: str,
-        embedding_model_config: Model | None = None,
+        embedding_model_config: Any = None,
     ) -> str | list:
         """Generate output content based on the specified type."""
         if output_type.lower() == OutputType.STRING.value:
@@ -769,7 +781,7 @@ class ScrapySpider(Spider):
         else:
             return self.get_content_as_string(scraped_data)
 
-    def _generate_response_message(self, results: dict) -> str:
+    def _generate_response_message(self, results: dict[str, Any]) -> str:
         """Generate a response message based on scraping results."""
         total_scraped = len(results["scraped_urls"])
         total_failed = len(results["failed_urls"])
@@ -782,7 +794,7 @@ class ScrapySpider(Spider):
         else:
             return f"Failed to scrape any content. {total_failed} URL(s) failed"
 
-    def _extract_json_from_output(self, output: str):
+    def _extract_json_from_output(self, output: str) -> Any:
         """
         Extract the first valid JSON object or array from a string that may contain extra log lines.
         """
@@ -819,9 +831,9 @@ class ScrapySpider(Spider):
         self,
         start_url: str,
         max_depth: int = 1,
-        allowed_domains: list | None = None,
-        scraping_config: dict | None = None,
-    ) -> dict:
+        allowed_domains: list[str] | None = None,
+        scraping_config: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         """
         Run the Scrapy spider in a subprocess for robust event loop isolation.
         """
@@ -917,9 +929,9 @@ class ScrapySpider(Spider):
 
     async def save_to_vector_db(
         self,
-        scraped_data: dict,
+        scraped_data: dict[str, Any],
         vector_db_index: str,
-        embedding_model_config: Model | None = None,
+        embedding_model_config: Any = None,
     ) -> None:
         """
         Save scraped content to a Redis vector database.

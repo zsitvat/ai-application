@@ -1,4 +1,5 @@
 import os
+from typing import Any
 
 from langchain_core.tools import tool
 from pydantic import Field, create_model
@@ -11,7 +12,7 @@ from src.utils.quote_if_space import quote_if_space
 logger = LoggerService().get_logger(__name__)
 
 
-def _filter_document_fields(doc):
+def _filter_document_fields(doc: Any) -> dict[str, Any]:
     """Filter out unwanted fields from a document."""
     unwanted_fields = {
         "_index_name",
@@ -29,7 +30,7 @@ def _filter_document_fields(doc):
     return filtered_doc
 
 
-def make_position_input_model(input_fields):
+def make_position_input_model(input_fields: list[str]) -> Any:
     fields = {}
 
     fields["index_name"] = (
@@ -46,11 +47,11 @@ def make_position_input_model(input_fields):
     return create_model("PositionInput", **fields)
 
 
-def get_position_tool(input_fields):
+def get_position_tool(input_fields: list[str]) -> Any:
     position_input_model = make_position_input_model(input_fields)
 
     @tool(args_schema=position_input_model)
-    def position_search_tool(**kwargs):
+    def position_search_tool(**kwargs: Any) -> list[str]:
         """Search positions in a RedisSearch index using the provided input_fields as filters and return matching documents.
 
         Parameters:

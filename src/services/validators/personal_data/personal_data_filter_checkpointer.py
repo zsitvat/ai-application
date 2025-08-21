@@ -1,3 +1,4 @@
+from typing import Any, Callable, Dict
 import copy
 
 from src.services.validators.personal_data.personal_data_filter_service import (
@@ -10,17 +11,17 @@ class PersonalDataFilterCheckpointer:
 
     def __init__(
         self,
-        base_checkpointer,
+        base_checkpointer: Callable,
         personal_data_service: PersonalDataFilterService,
-        personal_data_config,
-        logger,
-    ):
+        personal_data_config: object,
+        logger: object,
+    ) -> None:
         self.base_checkpointer = base_checkpointer
         self.personal_data_service = personal_data_service
         self.personal_data_config = personal_data_config
         self.logger = logger
 
-    async def aput(self, *args, **kwargs):
+    async def aput(self, *args: object, **kwargs: object) -> object:
         """Save checkpoint with personal data filtering. Accepts any args to match wrapped checkpointer."""
 
         if len(args) >= 2:
@@ -36,7 +37,7 @@ class PersonalDataFilterCheckpointer:
             args[1] = checkpoint_copy
         return await self.base_checkpointer.aput(*args, **kwargs)
 
-    def put(self, config, checkpoint, metadata):
+    def put(self, config: dict, checkpoint: dict, metadata: dict) -> object:
         """Save checkpoint with personal data filtering (sync version)."""
         import asyncio
 
@@ -46,10 +47,10 @@ class PersonalDataFilterCheckpointer:
         except RuntimeError:
             return asyncio.run(self.aput(config, checkpoint, metadata))
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> object:
         return getattr(self.base_checkpointer, name)
 
-    async def _filter_state_data(self, state_data: dict) -> dict:
+    async def _filter_state_data(self, state_data: Dict[str, Any]) -> Dict[str, Any]:
         """Filter personal data from state before saving to database."""
         if not self.personal_data_config:
             return state_data

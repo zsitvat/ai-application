@@ -15,7 +15,8 @@ venv/*
 myenv/*
 *.lock
 uv.lock
-
+agent-chat-ui/
+agent-chat-ui*
 app.log*
 
 # Byte-compiled / optimized / DLL files

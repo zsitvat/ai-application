@@ -183,6 +183,7 @@ def test_handle_exception_chain_fallback(graph_instance):
             super().__init__()
             self["messages"] = []
             self["next"] = None
+
     state = DummyState()
     result = graph_instance._handle_exception_chain_fallback(state)
     assert "messages" in result

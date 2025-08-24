@@ -25,17 +25,22 @@ from src.services.validators.topic_validator.topic_validator_service import (
 from src.utils.extract_message_content import extract_message_content
 from src.utils.get_prompt import get_prompt_by_type
 from src.utils.select_model import get_chat_model
+from src.services.graph.graph_checkpointer import create_checkpointer
 
 
 class Graph:
     """Handles the construction and execution of the agent workflow graph."""
 
     def __init__(
-        self, graph_config: GraphConfig | None, logger: Any, app_settings_service: Any
+        self,
+        logger: Any,
+        app_settings_service: Any,
+        graph_config: GraphConfig | None = None,
     ):
         self.graph_config = graph_config
         self.logger = logger
         self.app_settings_service = app_settings_service
+        self.workflow = None
 
     async def get_compiled_workflow(
         self, app_id: int, parameters: dict[str, Any] | None = None
@@ -56,15 +61,14 @@ class Graph:
             self.logger.info(
                 f"[GraphService|get_compiled_workflow] finished (app_id={app_id})"
             )
+
             return self.workflow
+
         except Exception as ex:
             self.logger.error(
                 f"[GraphService|get_compiled_workflow] error (app_id={app_id}): {str(ex)}"
             )
-            self.logger.info(
-                f"[GraphService|get_compiled_workflow] finished (app_id={app_id})"
-            )
-            raise
+            raise ex
 
     async def _load_graph_configuration(
         self, app_id: int, parameters: dict[str, Any] | None = None
@@ -140,7 +144,7 @@ class Graph:
             self.logger.error(
                 f"[GraphService] Error loading graph configuration for app_id: {app_id}, error: {str(ex)}"
             )
-            raise
+            raise ex
 
     async def prepare_graph_execution(
         self, graph_config: dict | GraphConfig | None, user_input: str
@@ -232,6 +236,19 @@ class Graph:
                 f"[GraphService|_applicant_attributes_extractor_node] error: {str(ex)}"
             )
             return state
+
+    async def _create_checkpointer(self):
+
+        redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+        find_personal_data_filter_config = getattr(
+            self, "_find_personal_data_filter_config", lambda: None
+        )
+        return await create_checkpointer(
+            graph_config=self.graph_config,
+            logger=self.logger,
+            redis_url=redis_url,
+            find_personal_data_filter_config=find_personal_data_filter_config,
+        )
 
     def _check_required_fields_complete(
         self, application_attributes: dict[str, Any]

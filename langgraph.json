@@ -3,8 +3,8 @@
         "."
     ],
     "graphs": {
-        "recruiter_ai_graph": {
-            "path": "src.services.graph.graph_service:get_compiled_workflow_for_studio",
+        "agent": {
+            "path": "src.services.graph.graph_studio:get_compiled_workflow_for_studio",
             "config_schema": {
                 "type": "object",
                 "properties": {

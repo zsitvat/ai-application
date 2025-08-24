@@ -43,15 +43,18 @@ async def test_graph_service_execute_graph_stream_error():
     mock_graph = MagicMock()
     mock_graph.prepare_graph_execution = AsyncMock(side_effect=Exception("fail"))
     mock_graph._handle_execution_error = AsyncMock(return_value="error_response")
+
     class AsyncIter:
         def __aiter__(self):
             self._iter = iter(["error "])
             return self
+
         async def __anext__(self):
             try:
                 return next(self._iter)
             except StopIteration:
                 raise StopAsyncIteration
+
     mock_graph._tokenize = MagicMock(return_value=AsyncIter())
     mock_graph.graph_config = MagicMock(recursion_limit=1)
     app_settings_service = MagicMock()

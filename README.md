@@ -1,149 +1,153 @@
+vagy pip-pel:
 # Recruiter AI App
 
-Ez az alkalmazás egy több ügynökből álló mesterséges intelligencia rendszer, amely dokumentumokat, webes adatokat és egyéb forrásokat képes feldolgozni, keresni és szűrni. A rendszer támogatja a vektoralapú adatbázist, személyes adatok maszkolását, webes keresést, valamint graf-alapú workflow-t.
+This application is a multi-agent artificial intelligence system capable of processing, searching, and filtering documents, web data, and other sources. The system supports vector database, personal data masking, web search, and graph-based workflows.
 
-## Indítás lépései
+## Getting Started
 
-1. **uv telepítése (ha még nincs):**
+1. **Install uv (if not already installed):**
    ```bash
-   # macOS és Linux
+   # macOS and Linux
    curl -LsSf https://astral.sh/uv/install.sh | sh
-   
+
    # Windows
    powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
-   
-   # pip-pel
+
+   # With pip
    pip install uv
    ```
 
-2. **Függőségek telepítése:**
+2. **Install dependencies:**
    ```bash
    uv sync
    ```
-   
-   Vagy csak a produkciós függőségek telepítése:
+
+   Or to install only production dependencies:
    ```bash
    uv sync --no-dev
    ```
 
-3. **Redis Stack indítása Dockerrel:**
+3. **Start Redis Stack with Docker:**
    ```bash
    docker run -d --name redis-stack-server -p 6380:6379 -p 8001:8001 redis/redis-stack:latest
    ```
-   - Redis szerver elérhető: `localhost:6380`
+   - Redis server available at: `localhost:6380`
    - RedisInsight UI: [http://localhost:8001](http://localhost:8001)
 
-4. **Környezeti változók beállítása:**
-   Másold a `sample.env` tartalmát `.env` néven, és töltsd ki a szükséges kulcsokat.
+4. **Set environment variables:**
+   Copy the contents of `sample.env` to `.env` and fill in the required keys.
 
-5. **Alkalmazás indítása:**
+5. **Start the application:**
    ```bash
    uv run python src/app.py
    ```
-   vagy
+   or
    ```bash
    ./run.sh
    ```
 
-## Fő API végpontok röviden
 
-- `/api/graph` – Mesterséges intelligencia válasz generálása több ügynökkel (dokumentum, web, szűrés)
-- `/api/vector_db/create` – Dokumentumokból vektoralapú adatbázis létrehozása
-- `/api/document/...` – Dokumentumok kezelése
-- `/api/personal_data_filter/...` – Személyes adatok maszkolása
-- `/api/topic_validation/...` – Témaválidáció
-- `/api/web_scraping/...` – Webes adatgyűjtés
-- `/api/health-check` – Egészségügyi ellenőrzés
+## Main API Endpoints (Summary)
 
-További részletek és példák a `/docs` végponton (FastAPI automatikus dokumentáció) érhetők el.
+- `/api/document/...` – Document management
+- `/api/personal_data_filter/...` – Personal data masking
+- `/api/topic_validation/...` – Topic validation
+- `/api/web_scraping/...` – Web data collection
+- `/api/graph` – Multi-agent AI response generation (document, web, filtering)
+- `/api/vector_db/create` – Create vector database from documents
+- `/api/health-check` – Health check
+
+For more details and examples, see the `/docs` endpoint (FastAPI automatic documentation).
 
 ---
 
-Indítás előtt győződj meg róla, hogy minden szükséges környezeti változót beállítottál, és a függőségek telepítve vannak (`uv sync`).
+Before starting, make sure all required environment variables are set and dependencies are installed (`uv sync`).
 
 
-## LangGraph Studio használata (lokális fejlesztéshez)
+## Using LangGraph Studio (for local development)
 
-A LangGraph Studio segítségével vizuálisan tesztelheted és fejlesztheted a LangGraph-alapú alkalmazásodat.
+**What is LangGraph Studio?**
 
-### 1. Telepítsd a LangGraph CLI-t (ha még nincs):
+LangGraph Studio is a developer tool for visually testing, developing, and debugging LangGraph-based workflows. It helps you easily understand data flow between agents, try out graph configurations, and quickly get feedback on system behavior. It's especially useful for developing or debugging complex multi-agent processes.
+
+### 1. Install LangGraph CLI (if not already installed):
 
 ```bash
 uv add --dev "langgraph-cli[inmem]"
 ```
 
-vagy pip-pel:
+or with pip:
 
 ```bash
 pip install -U "langgraph-cli[inmem]"
 ```
 
-### 2. Indítsd el a LangGraph fejlesztői szervert:
+### 2. Start the LangGraph development server:
 
 ```bash
 uv run langgraph dev
 ```
 
-Ha Safari böngészőt használsz, vagy problémád van a localhost eléréssel, indítsd a szervert a következőképp:
+If you use Safari browser or have issues accessing localhost, start the server as follows:
 
 ```bash
 uv run langgraph dev --tunnel
 ```
 
-### 3. Nyisd meg a LangGraph Studio-t böngészőben:
+### 3. Open LangGraph Studio in your browser:
 
-Látogasd meg ezt a címet:
+Visit:
 
 https://smith.langchain.com/studio/?baseUrl=http://127.0.0.1:2024
 
-Ha más porton vagy hoston fut a szerver, módosítsd a `baseUrl` paramétert ennek megfelelően.
+If the server runs on a different port or host, adjust the `baseUrl` parameter accordingly.
 
-További információ: [LangGraph Studio Quickstart](https://langchain-ai.github.io/langgraph/cloud/how-tos/studio/quick_start/#local-development-server)
+More info: [LangGraph Studio Quickstart](https://langchain-ai.github.io/langgraph/cloud/how-tos/studio/quick_start/#local-development-server)
 
-#### (Opcionális) Debugger csatlakoztatása
+#### (Optional) Attach Debugger
 
-Ha lépésenként szeretnéd debuggolni az alkalmazást:
+If you want to debug the application step-by-step:
 
 ```bash
 uv add --dev debugpy
 uv run langgraph dev --debug-port 5678
 ```
 
-Ezután VS Code-ban vagy más IDE-ben csatlakozhatsz a 5678-as portra.
+Then connect to port 5678 in VS Code or another IDE.
 
-## uv vs Poetry összehasonlítás
+## uv vs Poetry Comparison
 
-A projekt áttért Poetry-ról uv-ra a következő előnyök miatt:
+The project switched from Poetry to uv for the following advantages:
 
-- **Gyorsabb telepítés**: uv Rust-ban íródott, jelentősen gyorsabb dependency resolution és telepítés
-- **Egyszerűbb használat**: kevesebb parancs, egyszerűbb workflow
-- **Modern Python tooling**: korszerű Python projekt menedzsment
-- **Jobb teljesítmény**: virtuális környezetek kezelése és package caching
-- **Kompatibilitás**: teljes PEP 517/518 támogatás
+- **Faster installation**: uv is written in Rust, much faster dependency resolution and installation
+- **Simpler usage**: fewer commands, simpler workflow
+- **Modern Python tooling**: up-to-date Python project management
+- **Better performance**: virtual environment handling and package caching
+- **Compatibility**: full PEP 517/518 support
 
-> **Migrációs útmutató**: Ha Poetry-t használtál korábban, olvasd el a `MIGRATION_TO_UV.md` fájlt a részletes migrációs lépésekért.
+> **Migration guide**: If you previously used Poetry, see the `MIGRATION_TO_UV.md` file for detailed migration steps.
 
-### Gyakori uv parancsok:
+### Common uv commands:
 
 ```bash
-# Projekt inicializálása
+# Project initialization (creates new pyproject.toml)
 uv init
 
-# Függőségek telepítése
+# Install dependencies (downloads and installs all required packages)
 uv sync
 
-# Dependency hozzáadása
+# Add dependency (adds a new package to project dependencies)
 uv add package-name
 
-# Dev dependency hozzáadása
+# Add dev dependency (adds a development package)
 uv add --dev package-name
 
-# Parancs futtatása virtuális környezetben
+# Run command in virtual environment (e.g. tests, scripts)
 uv run python script.py
 
-# Python script futtatása
+# Run Python script (start main application)
 uv run python src/app.py
 
-# Shell aktiválása a virtuális környezetben
+# Activate shell in virtual environment (interactive shell with all uv-installed packages available)
 uv shell
 ```

@@ -209,3 +209,6 @@ class WebSearchTool(BaseTool):
             )
 
         return "\n".join(formatted_results)
+
+
+WebSearchTool.args_schema = WebSearchToolInput

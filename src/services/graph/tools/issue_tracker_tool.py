@@ -10,12 +10,13 @@ logger = LoggerService().get_logger(__name__)
 
 
 class IssueInput(BaseModel):
-    issue: str = Field(..., description="Issue description")
+    issue: str = Field(..., min_length=1, description="Issue description")
     priority: str = Field(
-        ..., description="Priority level (low, medium, high, critical)"
+        ..., min_length=1, description="Priority level (low, medium, high, critical)"
     )
     category: str = Field(
         ...,
+        min_length=1,
         description="Issue category (technical, account, billing, feature_request, bug_report)",
     )
 

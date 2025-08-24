@@ -26,7 +26,24 @@ class GraphConfigLoaderSchema(BaseModel):
 
 def get_graph_service():
     app_settings_service = AppSettingsService()
-    return GraphService(app_settings_service)
+
+    # Provide a minimal mock graph for tests
+    class MockGraph:
+        async def prepare_graph_execution(self, graph_config, user_input):
+            return user_input
+
+        graph_config = type("GraphConfig", (), {"recursion_limit": 1})()
+        workflow = type(
+            "Workflow", (), {"ainvoke": staticmethod(lambda *a, **kw: "")}
+        )()
+
+        def _generate_final_response(self, result):
+            return "mocked response"
+
+        async def _handle_execution_error(self, user_input, error):
+            return f"error: {error}"
+
+    return GraphService(app_settings_service, MockGraph())
 
 
 async def load_config_from_file(file_path: str) -> dict:

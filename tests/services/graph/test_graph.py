@@ -1,7 +1,8 @@
-import pytest
 import asyncio
-from unittest.mock import MagicMock
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, MagicMock
+
+import pytest
+
 from src.services.graph.graph import Graph
 from src.services.graph.tools.tools_config import AVAILABLE_TOOLS
 

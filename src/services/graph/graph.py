@@ -18,6 +18,7 @@ from src.schemas.graph_schema import (
     GraphConfig,
     Model,
 )
+from src.services.graph.graph_checkpointer import create_checkpointer
 from src.services.graph.tools.tools_config import AVAILABLE_TOOLS
 from src.services.validators.topic_validator.topic_validator_service import (
     TopicValidatorService,
@@ -25,7 +26,6 @@ from src.services.validators.topic_validator.topic_validator_service import (
 from src.utils.extract_message_content import extract_message_content
 from src.utils.get_prompt import get_prompt_by_type
 from src.utils.select_model import get_chat_model
-from src.services.graph.graph_checkpointer import create_checkpointer
 
 
 class Graph:
@@ -36,11 +36,13 @@ class Graph:
         logger: Any,
         app_settings_service: Any,
         graph_config: GraphConfig | None = None,
+        tracer_type: str = None,
     ):
         self.graph_config = graph_config
         self.logger = logger
         self.app_settings_service = app_settings_service
         self.workflow = None
+        self.tracer_type = tracer_type
 
     async def get_compiled_workflow(
         self, app_id: int, parameters: dict[str, Any] | None = None

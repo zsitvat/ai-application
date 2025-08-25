@@ -1,6 +1,7 @@
-import pytest
-from src.services.graph.tools.issue_tracker_tool import issue_tracker_tool
 import pydantic_core
+import pytest
+
+from src.services.graph.tools.issue_tracker_tool import issue_tracker_tool
 
 
 @pytest.mark.asyncio

@@ -1,5 +1,5 @@
-from src.services.graph.tools.web_search_tool import WebSearchTool
 from src.schemas.tool_schema import SearchProvider, WebSearchToolInput
+from src.services.graph.tools.web_search_tool import WebSearchTool
 
 
 def test_web_search_tool_init():

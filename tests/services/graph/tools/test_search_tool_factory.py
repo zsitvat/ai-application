@@ -1,8 +1,8 @@
 from src.services.graph.tools import search_tool_factory
-from src.services.graph.tools.web_search_tool import WebSearchTool
 from src.services.graph.tools.document_link_analyzer_tool import (
     DocumentLinkAnalyzerTool,
 )
+from src.services.graph.tools.web_search_tool import WebSearchTool
 
 
 def test_create_google_search_tool():

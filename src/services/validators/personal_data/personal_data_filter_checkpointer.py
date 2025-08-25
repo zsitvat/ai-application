@@ -1,5 +1,5 @@
-from typing import Any, Callable, Dict
 import copy
+from typing import Any, Callable, Dict
 
 from src.services.validators.personal_data.personal_data_filter_service import (
     PersonalDataFilterService,

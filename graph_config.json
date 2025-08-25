@@ -63,7 +63,7 @@
                     "temperature": 0.25
                 },
                 "prompt_id": "recruiter",
-                "description": "Assists users with job searching, finding positions, and providing career guidance based on location, field, and job type preferences, apply to the positions or getting user application informations"
+                "description": "Assists users with job searching, finding positions, and providing career guidance based on location, field, and job type preferences, apply to the positions and asking prefilter questions or getting user application informations (name,email,phone etc.)"
             },
             "tool_choice": "auto",
             "tools": {
@@ -177,7 +177,7 @@
                 "deployment": "chatboss_sweden-central_chat_gpt-4o-mini"
             },
             "prompt_id": "supervisor-prompt",
-            "description": "Manages and routes user requests to the appropriate specialized agent based on the content and context of the conversation. If the user is asked for personal data (such as email or phone number) for job application or position-related purposes, always select the recruiter_agent. Select issue_reporter_agent if the user explicitly wants to report an issue, complaint, feedback, or if the user describes a problem with the application process, technical difficulties, or cannot apply for a position. Never select issue_reporter_agent just because the user does not want to provide email or phone number for job application."
+            "description": "Manages and routes user requests to the appropriate specialized agent based on the content and context of the conversation. If the user is asked for personal data (such as email or phone number) for job application or position-related purposes, always select the recruiter_agent. Select issue_reporter_agent ONLY if the user explicitly wants to report an issue, complaint, feedback, or describes a real problem with the application process, technical difficulties, or cannot apply for a position due to a technical or system error. Do NOT select issue_reporter_agent if the user simply does not want to provide email or phone number, or does not wish to apply for a position. Refusal to provide data or lack of application intent is NOT a problem."
         }
     },
     "applicant_attributes_extractor": {

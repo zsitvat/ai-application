@@ -770,14 +770,19 @@ class Graph:
             else "No last agent selected."
         )
 
+        supervisor_description_text = (
+            self.graph_config.supervisor.chain.description or ""
+        )
+
         return f"""You are a supervisor managing a team of AI agents. Your job is to decide which agent should handle the user's request{'' if not self.graph_config.allow_supervisor_finish else ' or if the task is complete.'}.
 
 Available agents and their capabilities:
 {chr(10).join(agent_descriptions)}
 
-{last_agent_str}
+{supervisor_description_text}
+{last_agent_str}s
 
-{system_prompt_ending}
+{system_prompt_ending}s
 
 Select one of: {available_options}"""
 

@@ -37,6 +37,7 @@ class ApplicationAttributes(TypedDict):
     language_skills: str
     experience: str
     other_information: str
+    cv: str
 
 
 class AgentState(BaseModel):

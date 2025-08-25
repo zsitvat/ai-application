@@ -87,5 +87,4 @@ async def get_labels_tool(
 
     await redis.close()
 
-    logger.debug(f"[get_labels_tool] Result: {formatted_string}")
     return formatted_string

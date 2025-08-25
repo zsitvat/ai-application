@@ -241,7 +241,7 @@ class Graph:
 
     async def _create_checkpointer(self):
 
-        redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+        redis_url = os.getenv("REDIS_URL")
         find_personal_data_filter_config = getattr(
             self, "_find_personal_data_filter_config", lambda: None
         )
@@ -264,6 +264,7 @@ class Graph:
             "application_reason",
             "experience",
             "email",
+            "cv",
         ]
 
         for field in required_fields:

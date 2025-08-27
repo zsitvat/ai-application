@@ -141,6 +141,7 @@ class PersonalDataFilterConfig(BaseModel):
 class ExtractorConfig(BaseModel):
     model: Model
     prompt_id: str
+    required_attributes: list[str] = []
 
 
 class GraphConfig(BaseModel):

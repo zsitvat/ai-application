@@ -256,6 +256,7 @@ class Graph:
         self, application_attributes: dict[str, Any]
     ) -> bool:
         """Check if all required application attributes are present and not empty."""
+
         required_fields = [
             "applicant_name",
             "phone_number",
@@ -266,6 +267,12 @@ class Graph:
             "email",
             "cv",
         ]
+
+        required_fields = getattr(
+            self.graph_config.applicant_attributes_extractor,
+            "required_attributes",
+            required_fields,
+        )
 
         for field in required_fields:
             value = application_attributes.get(field, "").strip()

@@ -124,7 +124,8 @@
             "concern",
             "greetings",
             "smalltalk",
-            "other"
+            "other",
+            "school"
         ],
         "invalid_topics": [
             "politics",
@@ -186,7 +187,16 @@
             "name": "gpt-4o-mini",
             "deployment": "chatboss_sweden-central_chat_gpt-4o-mini"
         },
-        "prompt_id": "applicant-extractor-prompt"
+        "prompt_id": "applicant-extractor-prompt",
+        "required_attributes": [
+            "applicant_name",
+            "phone_number",
+            "position_name",
+            "position_id",
+            "application_reason",
+            "experience",
+            "email"
+        ]
     },
     "exception_chain": {
         "enabled": true,

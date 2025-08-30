@@ -225,9 +225,8 @@ class Graph:
                     )
 
                     state.messages.append(
-                        ToolMessage(
+                        AIMessage(
                             content="Application attributes saved.",
-                            tool_call_id="application_attributes_saved",
                         )
                     )
 

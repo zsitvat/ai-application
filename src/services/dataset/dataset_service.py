@@ -347,7 +347,7 @@ class DatasetService:
         try:
             # Default configuration
             default_config = {
-                "url": "http://localhost:8000/api/v1/graph/execute",
+                "url": "http://localhost:5000/api/graph",
                 "timeout": 300,
                 "method": "POST",
                 "headers": {"Content-Type": "application/json"},
@@ -371,7 +371,6 @@ class DatasetService:
                 "parameters": api_config.get("parameters", {}),
             }
 
-            # Add UUID to parameters if provided
             if "uuid" in api_config:
                 payload["parameters"]["uuid"] = api_config["uuid"]
 

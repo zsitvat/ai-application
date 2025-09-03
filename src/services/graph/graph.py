@@ -226,7 +226,7 @@ class Graph:
 
                     state.messages.append(
                         AIMessage(
-                            content="Application attributes saved.",
+                            content="A jelentkező adatok mentése sikeresen megtörtént.",
                         )
                     )
 

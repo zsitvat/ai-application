@@ -11,7 +11,7 @@ from src.services.validators.personal_data.personal_data_filter_service import (
 
 logger = LoggerService().setup_logger()
 
-router = APIRouter(tags=["personal_data_sfilter"])
+router = APIRouter(tags=["personal_data_filter"])
 
 
 def get_personal_data_filter_service():

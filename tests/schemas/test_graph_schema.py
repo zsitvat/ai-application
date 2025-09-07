@@ -26,7 +26,7 @@ def test_agent_state_dict_access():
     assert state["next"] == ""
     # __setitem__
     state["next"] = "test_next"
-    assert state.next == "test_next"
+    assert state.next_agent == "test_next"
     # get
     assert state.get("next") == "test_next"
     assert state.get("nonexistent", "default") == "default"
@@ -143,7 +143,7 @@ def test_agent_state_defaults():
 
     state = AgentState()
     assert isinstance(state.messages, list)
-    assert state.next == ""
+    assert state.next_agent == ""
     assert isinstance(state.context, dict)
     assert isinstance(state.parameters, dict)
     assert isinstance(state.application_attributes, dict)

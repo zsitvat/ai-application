@@ -44,7 +44,7 @@ class AgentState(BaseModel):
     """State shared between agents in the graph."""
 
     messages: Annotated[list[AnyMessage], add_messages] = Field(default_factory=list)
-    next: str = ""
+    next_agent: str = ""
     last_agent: str | list | None = None
     context: dict[str, Any] = Field(default_factory=dict)
     parameters: dict[str, Any] = Field(default_factory=dict)

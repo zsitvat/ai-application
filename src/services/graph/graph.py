@@ -898,7 +898,7 @@ Select one of: {available_options}"""
                     else:
                         next_agent = enabled_agents[0]
 
-                state.next = next_agent
+                state.next_agent = next_agent
 
                 agent_name = None
                 if response.additional_kwargs.get("function_call"):
@@ -1011,73 +1011,85 @@ Select one of: {available_options}"""
 
         workflow = StateGraph(AgentState)
 
-        topic_validator_config = getattr(self.graph_config, "topic_validator", None)
-        if topic_validator_config and getattr(topic_validator_config, "enabled", False):
+        if self._is_topic_validator_enabled():
             workflow.add_node("topic_validator", self._topic_validator_node)
 
         workflow.add_node("supervisor", self._create_supervisor_node())
+        workflow.add_node(
+            "applicant_attributes_extractor", self._applicant_attributes_extractor_node
+        )
+        workflow.add_node("exception_chain", self._exception_chain_node)
 
-        if self.graph_config.exception_chain:
-            workflow.add_node("exception_chain", self._exception_chain_node)
-
-        enabled_agents = {
-            name: agent
-            for name, agent in self.graph_config.agents.items()
-            if agent.enabled and isinstance(agent, Agent)
-        }
-
-        if not enabled_agents and not self.graph_config.allow_supervisor_finish:
-            raise ValueError(
-                "No enabled agents available and supervisor finish is disabled"
-            )
-
+        enabled_agents = self._get_enabled_agents()
         for agent_name, agent_config in enabled_agents.items():
             agent_node = partial(
                 self._agent_node, agent_name=agent_name, agent_config=agent_config
             )
             workflow.add_node(agent_name, agent_node)
 
-        workflow.add_node(
-            "applicant_attributes_extractor",
-            self._applicant_attributes_extractor_node,
-        )
         for agent_name in enabled_agents.keys():
             workflow.add_edge(agent_name, "applicant_attributes_extractor")
         workflow.add_edge("applicant_attributes_extractor", END)
 
-        if self.graph_config.exception_chain:
-            workflow.add_edge("exception_chain", END)
+        self._configure_conditional_edges(workflow, enabled_agents)
 
+        entry_point = (
+            "topic_validator" if self._is_topic_validator_enabled() else "supervisor"
+        )
+        workflow.set_entry_point(entry_point)
+
+        return workflow
+
+    def _get_enabled_agents(self) -> dict:
+        """
+        Returns the enabled agents as a dict of name: agent object pairs,
+        where agent.enabled is True and the object is of type Agent.
+        """
+        if not self.graph_config or not hasattr(self.graph_config, "agents"):
+            return {}
+        return {
+            name: agent
+            for name, agent in self.graph_config.agents.items()
+            if getattr(agent, "enabled", False) and isinstance(agent, Agent)
+        }
+
+    def _is_topic_validator_enabled(self) -> bool:
+        """
+        Checks if the topic_validator is enabled in the graph_config.
+        """
+        topic_validator = getattr(self.graph_config, "topic_validator", None)
+        return bool(topic_validator and getattr(topic_validator, "enabled", False))
+
+    def _configure_conditional_edges(
+        self, workflow: StateGraph, enabled_agents: dict
+    ) -> None:
+        """
+        Configure conditional edges for the workflow graph, including supervisor and topic_validator nodes.
+        """
+        # Supervisor conditional mapping
         conditional_mapping = {
             agent_name: agent_name for agent_name in enabled_agents.keys()
         }
-
-        if self.graph_config.allow_supervisor_finish:
-            conditional_mapping["FINISH"] = END
-
+        if getattr(self.graph_config, "allow_supervisor_finish", False):
+            conditional_mapping["FINISH"] = "applicant_attributes_extractor"
         workflow.add_conditional_edges(
             "supervisor",
             self._should_continue_from_supervisor,
             conditional_mapping,
         )
 
-        topic_conditional_mapping = {
-            "supervisor": "supervisor",
-            "exception_chain": "exception_chain",
-            "FINISH": END,
-        }
-
-        if topic_validator_config and getattr(topic_validator_config, "enabled", False):
+        # Topic validator conditional mapping (if topic validator is enabled)
+        if self._is_topic_validator_enabled():
+            topic_conditional_mapping = {
+                "supervisor": "supervisor",
+                "exception_chain": "exception_chain",
+                "FINISH": END,
+            }
             workflow.add_conditional_edges(
                 "topic_validator",
                 self._should_continue_from_topic_validator,
                 topic_conditional_mapping,
             )
-            workflow.set_entry_point("topic_validator")
-        else:
-            workflow.set_entry_point("supervisor")
-
-        return workflow
 
     def _generate_final_response(self, result: dict) -> str:
         """Generate the final response from agent results."""

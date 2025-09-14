@@ -915,7 +915,7 @@ Select one of: {available_options}"""
                 state.last_agent = agent_name
 
                 self.logger.debug(
-                    f"[GraphService] Supervisor node decided next action: {state['next']}. State: {state}"
+                    f"[GraphService] Supervisor node decided next action: {state['next_agent']}. State: {state}"
                 )
                 return state
 
@@ -1170,7 +1170,7 @@ Select one of: {available_options}"""
         """Handle when topic validation fails."""
 
         if self.graph_config.exception_chain:
-            state["next"] = "exception_chain"
+            state["next_agent"] = "exception_chain"
             self.logger.debug(
                 f"[GraphService] Question rejected by topic validator, routing to exception chain. Reason: {reason}, State: {state}"
             )
@@ -1179,7 +1179,7 @@ Select one of: {available_options}"""
                 content="I can only help with work-related topics. Please ask questions about careers, job search, professional development, or workplace matters."
             )
             state["messages"] = add_messages(state["messages"], [error_message])
-            state["next"] = "FINISH"
+            state["next_agent"] = "FINISH"
             self.logger.debug(
                 f"[GraphService] Question rejected by topic validator, no exception chain available. Reason: {reason}, State: {state}"
             )
@@ -1242,7 +1242,7 @@ Select one of: {available_options}"""
                 f"[GraphService] Topic validation passed, proceeding to supervisor. State: {state}"
             )
 
-            state["next"] = "supervisor"
+            state["next_agent"] = "supervisor"
             return state
 
         except Exception as ex:
@@ -1250,7 +1250,7 @@ Select one of: {available_options}"""
                 f"[GraphService] Error in topic validator: {str(ex)}. State: {state}"
             )
             if self.graph_config.exception_chain:
-                state["next"] = "exception_chain"
+                state["next_agent"] = "exception_chain"
                 return state
             return state
 
@@ -1290,7 +1290,7 @@ Select one of: {available_options}"""
             filtered_messages = self._filter_problematic_messages(state["messages"])
             response = await chain.ainvoke({"messages": filtered_messages})
             state["messages"] = add_messages(state["messages"], [response])
-            state["next"] = "FINISH"
+            state["next_agent"] = "FINISH"
             self.logger.debug(
                 f"[GraphService] Exception chain node handled the error. State: {state}"
             )
@@ -1307,7 +1307,7 @@ Select one of: {available_options}"""
             content="I apologize, but I'm unable to process your request at this time. Please try again later."
         )
         state["messages"] = add_messages(state["messages"], [error_message])
-        state["next"] = "FINISH"
+        state["next_agent"] = "FINISH"
         return state
 
     def _should_continue_from_supervisor(
@@ -1315,16 +1315,16 @@ Select one of: {available_options}"""
     ) -> Literal["FINISH"] | str:
         """Determine next step after supervisor node."""
 
-        if state["next"] == "FINISH":
+        if state["next_agent"] == "FINISH":
             return "FINISH"
-        return state["next"]
+        return state["next_agent"]
 
     def _should_continue_from_topic_validator(
         self, state: AgentState
     ) -> Literal["supervisor", "exception_chain", "FINISH"]:
         """Determine next step after topic validator node."""
 
-        next_step = state.get("next")
+        next_step = state.get("next_agent")
         if next_step == "exception_chain":
             return "exception_chain"
         elif next_step == "FINISH":

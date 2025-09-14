@@ -26,7 +26,7 @@ A `GraphService` osztály a LangGraph keretrendszert használva biztosítja a mu
 ```python
 class AgentState(TypedDict):
     messages: Annotated[list, add_messages]
-    next: str
+    next_agent: str
     context: dict
     # További állapot mezők...
 ```

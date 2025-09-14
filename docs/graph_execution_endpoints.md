@@ -66,7 +66,7 @@ data: {
         "content": "User input or agent response"
       }
     ],
-    "next": "next_agent_name",
+    "next_agent": "next_agent_name",
     "user_input": "Original user input"
   }
 }

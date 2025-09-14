@@ -23,12 +23,12 @@ def test_create_empty_application_attributes():
 def test_agent_state_dict_access():
     state = AgentState()
     # __getitem__
-    assert state["next"] == ""
+    assert state["next_agent"] == ""
     # __setitem__
-    state["next"] = "test_next"
+    state["next_agent"] = "test_next"
     assert state.next_agent == "test_next"
     # get
-    assert state.get("next") == "test_next"
+    assert state.get("next_agent") == "test_next"
     assert state.get("nonexistent", "default") == "default"
 
 

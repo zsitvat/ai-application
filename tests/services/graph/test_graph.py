@@ -183,9 +183,9 @@ def test_handle_exception_chain_fallback(graph_instance):
         def __init__(self):
             super().__init__()
             self["messages"] = []
-            self["next"] = None
+            self["next_agent"] = None
 
     state = DummyState()
     result = graph_instance._handle_exception_chain_fallback(state)
     assert "messages" in result
-    assert "next" in result
+    assert "next_agent" in result

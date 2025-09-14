@@ -51,7 +51,7 @@ data: {
         "content": "What are the current trends in machine learning?"
       }
     ],
-    "next": "researcher",
+    "next_agent": "researcher",
     "user_input": "What are the current trends in machine learning?"
   }
 }

@@ -6,7 +6,7 @@
                 "model": {
                     "provider": "azure",
                     "name": "gpt-4o-mini",
-                    "deployment": "chatboss_sweden-central_chat_gpt-4o-mini"
+                    "deployment": "gpt-4.1-nano-test"
                 },
                 "prompt_id": "retriever-agent-prompt",
                 "description": "Searches and retrieves relevant information about the company from the knowledge base to answer user questions"
@@ -29,7 +29,7 @@
                 "model": {
                     "provider": "azure",
                     "name": "gpt-4o-mini",
-                    "deployment": "chatboss_sweden-central_chat_gpt-4o-mini"
+                    "deployment": "gpt-4.1-nano-test"
                 },
                 "prompt_id": "issue-reporter-agent-prompt",
                 "description": "Handles user complaints, feedback, and issue reporting with appropriate categorization and priority assignment. Use this agent if the user explicitly wants to report an issue, complaint, feedback, or if the user describes a problem with the application process, technical difficulties, or cannot apply for a position. Do NOT use this agent if the user is only asked for email or phone number for job application and does not want to provide it."
@@ -59,7 +59,7 @@
                 "model": {
                     "provider": "azure",
                     "name": "gpt-4o-mini",
-                    "deployment": "chatboss_sweden-central_chat_gpt-4o-mini",
+                    "deployment": "gpt-4.1-nano-test",
                     "temperature": 0.25
                 },
                 "prompt_id": "recruiter",
@@ -68,7 +68,7 @@
             "tool_choice": "auto",
             "tools": {
                 "get_position_tool": {
-                    "description": "Position search tool that finds jobs by county, city, field, and job type using fuzzy metadata filtering in Redis database.",
+                    "description": "Position search tool that finds jobs by county, city, field, and job type using fuzzy metadata filtering in Redis database. Use only 1 word for each attribute. If the user provides multiple values for an attribute, choose the most relevant one. If the user gives more than one attributes, search more than one times.",
                     "input_fields": [
                         "labels_county",
                         "labels_city",
@@ -90,7 +90,7 @@
         "model": {
             "provider": "azure",
             "name": "gpt-4o-mini",
-            "deployment": "chatboss_sweden-central_chat_gpt-4o-mini"
+            "deployment": "gpt-4.1-nano-test"
         },
         "allowed_topics": [
             "job_search",
@@ -125,13 +125,14 @@
             "greetings",
             "smalltalk",
             "other",
-            "school"
+            "school",
+            "programming languages"
         ],
         "invalid_topics": [
             "politics",
             "religion",
             "inappropriate",
-            "programming",
+            "programming questions",
             "coding",
             "math",
             "history",
@@ -155,7 +156,7 @@
             "model": {
                 "provider": "azure",
                 "name": "gpt-4o-mini",
-                "deployment": "chatboss_sweden-central_chat_gpt-4o-mini"
+                "deployment": "gpt-4.1-nano-test"
             },
             "prompt_id": "personal-data-filter-prompt"
         },
@@ -175,7 +176,7 @@
             "model": {
                 "provider": "azure",
                 "name": "gpt-4o-mini",
-                "deployment": "chatboss_sweden-central_chat_gpt-4o-mini"
+                "deployment": "gpt-4.1-nano-test"
             },
             "prompt_id": "supervisor-prompt",
             "description": "Manages and routes user requests to the appropriate specialized agent based on the content and context of the conversation. If the user is asked for personal data (such as email or phone number) for job application or position-related purposes, always select the recruiter_agent. Select issue_reporter_agent ONLY if the user explicitly wants to report an issue, complaint, feedback, or describes a real problem with the application process, technical difficulties, or cannot apply for a position due to a technical or system error. Do NOT select issue_reporter_agent if the user simply does not want to provide email or phone number, or does not wish to apply for a position. Refusal to provide data or lack of application intent is NOT a problem."
@@ -185,7 +186,7 @@
         "model": {
             "provider": "azure",
             "name": "gpt-4o-mini",
-            "deployment": "chatboss_sweden-central_chat_gpt-4o-mini"
+            "deployment": "gpt-4.1-nano-test"
         },
         "prompt_id": "applicant-extractor-prompt",
         "required_attributes": [
@@ -204,7 +205,7 @@
             "model": {
                 "provider": "azure",
                 "name": "gpt-4o-mini",
-                "deployment": "chatboss_sweden-central_chat_gpt-4o-mini"
+                "deployment": "gpt-4.1-nano-test"
             },
             "prompt_id": "exception-chain-prompt",
             "description": "Handles errors, invalid requests, and off-topic conversations with appropriate responses and guidance"

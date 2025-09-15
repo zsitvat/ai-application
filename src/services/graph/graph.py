@@ -226,7 +226,7 @@ class Graph:
 
                     state.messages.append(
                         AIMessage(
-                            content="A jelentkező adatok mentése sikeresen megtörtént.",
+                            content="A jelentkező adat(ok) mentése sikeresen megtörtént.",
                         )
                     )
 

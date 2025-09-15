@@ -6,7 +6,7 @@
                 "model": {
                     "provider": "azure",
                     "name": "gpt-4o-mini",
-                    "deployment": "gpt-4.1-nano-test"
+                    "deployment": "attr-gpt4.1mini-aicore"
                 },
                 "prompt_id": "retriever-agent-prompt",
                 "description": "Searches and retrieves relevant information about the company from the knowledge base to answer user questions"
@@ -29,7 +29,7 @@
                 "model": {
                     "provider": "azure",
                     "name": "gpt-4o-mini",
-                    "deployment": "gpt-4.1-nano-test"
+                    "deployment": "attr-gpt4.1mini-aicore"
                 },
                 "prompt_id": "issue-reporter-agent-prompt",
                 "description": "Handles user complaints, feedback, and issue reporting with appropriate categorization and priority assignment. Use this agent if the user explicitly wants to report an issue, complaint, feedback, or if the user describes a problem with the application process, technical difficulties, or cannot apply for a position. Do NOT use this agent if the user is only asked for email or phone number for job application and does not want to provide it."
@@ -59,7 +59,7 @@
                 "model": {
                     "provider": "azure",
                     "name": "gpt-4o-mini",
-                    "deployment": "gpt-4.1-nano-test",
+                    "deployment": "attr-gpt4.1mini-aicore",
                     "temperature": 0.25
                 },
                 "prompt_id": "recruiter",
@@ -90,7 +90,7 @@
         "model": {
             "provider": "azure",
             "name": "gpt-4o-mini",
-            "deployment": "gpt-4.1-nano-test"
+            "deployment": "attr-gpt4.1nano-aicore"
         },
         "allowed_topics": [
             "job_search",
@@ -126,13 +126,20 @@
             "smalltalk",
             "other",
             "school",
-            "programming languages"
+            "programming languages",
+            "personal data",
+            "email",
+            "phone number",
+            "name",
+            "education",
+            "experience",
+            "skills",
+            "position applied for",
+            "application status"
         ],
         "invalid_topics": [
             "politics",
-            "religion",
             "inappropriate",
-            "programming questions",
             "coding",
             "math",
             "history",
@@ -144,8 +151,10 @@
             "books",
             "art",
             "literature",
-            "health",
-            "medical",
+            "food",
+            "drinks",
+            "fashion",
+            "beauty",
             "finance",
             "investment"
         ]
@@ -156,7 +165,7 @@
             "model": {
                 "provider": "azure",
                 "name": "gpt-4o-mini",
-                "deployment": "gpt-4.1-nano-test"
+                "deployment": "attr-gpt4.1mini-aicore"
             },
             "prompt_id": "personal-data-filter-prompt"
         },
@@ -176,7 +185,7 @@
             "model": {
                 "provider": "azure",
                 "name": "gpt-4o-mini",
-                "deployment": "gpt-4.1-nano-test"
+                "deployment": "attr-gpt4.1mini-aicore"
             },
             "prompt_id": "supervisor-prompt",
             "description": "Manages and routes user requests to the appropriate specialized agent based on the content and context of the conversation. If the user is asked for personal data (such as email or phone number) for job application or position-related purposes, always select the recruiter_agent. Select issue_reporter_agent ONLY if the user explicitly wants to report an issue, complaint, feedback, or describes a real problem with the application process, technical difficulties, or cannot apply for a position due to a technical or system error. Do NOT select issue_reporter_agent if the user simply does not want to provide email or phone number, or does not wish to apply for a position. Refusal to provide data or lack of application intent is NOT a problem."
@@ -186,7 +195,7 @@
         "model": {
             "provider": "azure",
             "name": "gpt-4o-mini",
-            "deployment": "gpt-4.1-nano-test"
+            "deployment": "attr-gpt4.1mini-aicore"
         },
         "prompt_id": "applicant-extractor-prompt",
         "required_attributes": [
@@ -205,7 +214,7 @@
             "model": {
                 "provider": "azure",
                 "name": "gpt-4o-mini",
-                "deployment": "gpt-4.1-nano-test"
+                "deployment": "attr-gpt4.1mini-aicore"
             },
             "prompt_id": "exception-chain-prompt",
             "description": "Handles errors, invalid requests, and off-topic conversations with appropriate responses and guidance"

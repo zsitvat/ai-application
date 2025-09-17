@@ -6,7 +6,7 @@
                 "model": {
                     "provider": "azure",
                     "name": "gpt-4o-mini",
-                    "deployment": "attr-gpt4.1mini-aicore"
+                    "deployment": "attr-gpt4.1nano-aicore"
                 },
                 "prompt_id": "retriever-agent-prompt",
                 "description": "Searches and retrieves relevant information about the company from the knowledge base to answer user questions"
@@ -29,7 +29,7 @@
                 "model": {
                     "provider": "azure",
                     "name": "gpt-4o-mini",
-                    "deployment": "attr-gpt4.1mini-aicore"
+                    "deployment": "attr-gpt4.1nano-aicore"
                 },
                 "prompt_id": "issue-reporter-agent-prompt",
                 "description": "Handles user complaints, feedback, and issue reporting with appropriate categorization and priority assignment. Use this agent if the user explicitly wants to report an issue, complaint, feedback, or if the user describes a problem with the application process, technical difficulties, or cannot apply for a position. Do NOT use this agent if the user is only asked for email or phone number for job application and does not want to provide it."
@@ -195,7 +195,7 @@
         "model": {
             "provider": "azure",
             "name": "gpt-4o-mini",
-            "deployment": "attr-gpt4.1mini-aicore"
+            "deployment": "attr-gpt4.1nano-aicore"
         },
         "prompt_id": "applicant-extractor-prompt",
         "required_attributes": [

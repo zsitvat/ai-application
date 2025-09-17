@@ -37,6 +37,7 @@ This application is a multi-agent artificial intelligence system capable of proc
 4. **Set environment variables:**
    Copy the contents of `sample.env` to `.env` and fill in the required keys.
 
+
 5. **Start the application:**
    ```bash
    uv run python src/app.py
@@ -44,6 +45,11 @@ This application is a multi-agent artificial intelligence system capable of proc
    or
    ```bash
    ./run.sh
+   ```
+
+   Or you can start the FastAPI app directly with uvicorn (from the `src` directory):
+   ```bash
+   uvicorn app:app --reload --host 0.0.0.0 --port 5000
    ```
 
 

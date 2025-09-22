@@ -160,7 +160,9 @@ class WebSearchTool(BaseTool):
                 return "Search provider is not configured."
 
             result_text = self._search_wrapper.run(query)
-            logger.debug(f"[WebSearchTool] Result text for query '{query}': {result_text}")
+            logger.debug(
+                f"[WebSearchTool] Result text for query '{query}': {result_text}"
+            )
             provider_name = (
                 self.provider.title()
                 if hasattr(self.provider, "title")

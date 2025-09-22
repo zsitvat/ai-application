@@ -85,5 +85,7 @@ class PersonalDataFilterCheckpointer:
             return filtered_state
 
         except Exception as ex:
-            self.logger.error(f"[PersonalDataFilter] Error filtering personal data: {str(ex)}")
+            self.logger.error(
+                f"[PersonalDataFilter] Error filtering personal data: {str(ex)}"
+            )
             return state_data

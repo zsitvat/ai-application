@@ -1,6 +1,6 @@
 import pytest
 
-from src.utils.get_prompt import get_prompt_by_type, _is_integer
+from src.utils.get_prompt import _is_integer, get_prompt_by_type
 
 
 @pytest.mark.asyncio

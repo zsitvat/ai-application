@@ -53,7 +53,9 @@ async def issue_tracker_tool(
             response = await client.post(endpoint_url, json=payload)
 
             if response.status_code == 200:
-                logger.info(f"[IssueTrackerTool] Issue successfully submitted to {endpoint_url}")
+                logger.info(
+                    f"[IssueTrackerTool] Issue successfully submitted to {endpoint_url}"
+                )
                 return f"Issue saved and submitted: {issue}, priority: {priority}, category: {category}"
 
             else:
@@ -63,5 +65,7 @@ async def issue_tracker_tool(
                 return f"Issue logged, but failed to submit: {issue}, priority: {priority}, category: {category}"
 
     except Exception as ex:
-        logger.error(f"[IssueTrackerTool] Error submitting issue to {endpoint_url}: {str(ex)}")
+        logger.error(
+            f"[IssueTrackerTool] Error submitting issue to {endpoint_url}: {str(ex)}"
+        )
         return f"Issue logged, but error submitting: {issue}, priority: {priority}, category: {category}"

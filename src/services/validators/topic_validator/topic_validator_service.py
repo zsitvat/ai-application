@@ -55,7 +55,9 @@ class TopicValidatorService:
         Raises:
             InvalidTopicException: If raise_on_invalid=True and topic is invalid
         """
-        self.logger.info(f"[TopicValidatorService] Validating topic for question: {question[:50]}...")
+        self.logger.info(
+            f"[TopicValidatorService] Validating topic for question: {question[:50]}..."
+        )
 
         if invalid_topics is None:
             invalid_topics = [
@@ -90,14 +92,18 @@ class TopicValidatorService:
             self.logger.debug("Added 'other' to invalid_set")
 
         candidate_topics = list(allowed_set.union(invalid_set))
-        self.logger.debug(f"[TopicValidatorService] candidate_topics: {candidate_topics}")
+        self.logger.debug(
+            f"[TopicValidatorService] candidate_topics: {candidate_topics}"
+        )
 
         try:
             topic = await self._classify_with_llm(
                 question, candidate_topics, provider, name, deployment
             )
 
-            self.logger.debug(f"[TopicValidatorService] LLM classified topic as: {topic}")
+            self.logger.debug(
+                f"[TopicValidatorService] LLM classified topic as: {topic}"
+            )
 
             normalized_topic = topic.strip().lower()
             normalized_allowed_topics = [t.strip().lower() for t in allowed_topics]

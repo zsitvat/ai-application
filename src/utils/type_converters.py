@@ -12,9 +12,9 @@ def str2bool(v: str) -> bool:
     """
     if not isinstance(v, str):
         raise ValueError(f"Expected string input, got {type(v)}")
-    
+
     v_lower = v.lower().strip()
-    
+
     if v_lower in ("true", "1", "yes", "on"):
         return True
     elif v_lower in ("false", "0", "no", "off", ""):

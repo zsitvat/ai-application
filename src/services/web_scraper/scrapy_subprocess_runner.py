@@ -86,7 +86,7 @@ def main():
             sys.stderr.write(
                 f"Successfully wrote {len(scraped_data)} items to {output_file_path}\n"
             )
-            print(str(output_file_path))
+            sys.stdout.write(str(output_file_path) + "\n")
         except Exception as write_error:
             sys.stderr.write(
                 f"Error writing to file {output_file_path}: {write_error}\n"

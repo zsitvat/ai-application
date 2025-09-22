@@ -12,7 +12,7 @@ def mock_personal_data_filter_service(monkeypatch):
     mock_service = MagicMock()
 
     async def always_return(*args, **kwargs):
-        return ("filtered text", "original text")
+        return "filtered text"
 
     mock_service.filter_personal_data = AsyncMock(side_effect=always_return)
     monkeypatch.setattr(
@@ -30,18 +30,16 @@ def test_personal_data_filter_route_exists(mock_personal_data_filter_service):
     client = TestClient(app)
     payload = {
         "text": "Sensitive info here.",
-        "config": {
-            "sensitive_words": ["info"],
-            "regex_patterns": ["\\binfo\\b"],
-            "model": {
-                "provider": "openai",
-                "deployment": "test",
-                "name": "gpt-4o-mini",
-                "type": "chat",
-            },
-            "prompt": "Mask sensitive info",
+        "model": {
+            "provider": "azure",
+            "deployment": "test",
+            "name": "gpt-4o-mini",
+            "type": "chat",
         },
-        "enabled": True,
+        "sensitive_words": ["info"],
+        "regex_patterns": ["\\binfo\\b"],
+        "prompt": "personal-data-filter-prompt",
+        "mask_char": "*",
     }
     response = client.post("/api/personal-data-filter", json=payload)
     assert response.status_code in (200, 422, 400)

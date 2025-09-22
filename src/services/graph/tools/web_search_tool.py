@@ -160,7 +160,7 @@ class WebSearchTool(BaseTool):
                 return "Search provider is not configured."
 
             result_text = self._search_wrapper.run(query)
-            logger.debug(f"Result text for query '{query}': {result_text}")
+            logger.debug(f"[WebSearchTool] Result text for query '{query}': {result_text}")
             provider_name = (
                 self.provider.title()
                 if hasattr(self.provider, "title")
@@ -171,7 +171,7 @@ class WebSearchTool(BaseTool):
             )
 
         except Exception as e:
-            logger.error(f"Search failed for query '{query}': {str(e)}")
+            logger.error(f"[WebSearchTool] Search failed for query '{query}': {str(e)}")
             return f"Search failed: {str(e)}"
 
     def _format_results(self, results: list, query: str, provider: str) -> str:

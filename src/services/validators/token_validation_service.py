@@ -72,7 +72,7 @@ class TokenValidationService:
             )
 
         except Exception as e:
-            self.logger.error(f"Error in token validation: {str(e)}")
+            self.logger.error(f"[TokenValidationService] Error in token validation: {str(e)}")
             raise e
 
     async def _truncate_text(
@@ -194,7 +194,7 @@ class TokenValidationService:
             )
 
         except Exception as e:
-            self.logger.error(f"Error checking token count: {str(e)}")
+            self.logger.error(f"[TokenValidationService] Error checking token count: {str(e)}")
             raise e
 
     async def estimate_tokens_for_text_length(
@@ -233,5 +233,5 @@ class TokenValidationService:
             )
 
         except Exception as e:
-            self.logger.error(f"Error estimating text length: {str(e)}")
+            self.logger.error(f"[TokenValidationService] Error estimating text length: {str(e)}")
             raise e

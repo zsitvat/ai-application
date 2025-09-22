@@ -28,9 +28,9 @@ class SemaphoreMiddleware(BaseHTTPMiddleware):
                 )
 
             async with self.semaphore:
-                self.logger.debug(f"Acquired semaphore for {path}")
+                self.logger.debug(f"[SemaphoreMiddleware] Acquired semaphore for {path}")
                 response = await call_next(request)
-                self.logger.debug(f"Released semaphore for {path}")
+                self.logger.debug(f"[SemaphoreMiddleware] Released semaphore for {path}")
                 return response
         else:
             return await call_next(request)

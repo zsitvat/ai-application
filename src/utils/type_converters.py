@@ -1,21 +1,23 @@
-def str2bool(v) -> bool:
-    """Convert string to boolean
+def str2bool(v: str) -> bool:
+    """Convert string to boolean.
 
     Args:
-        v (str): String value to convert
+        v: String value to convert to boolean
+
     Returns:
         bool: Converted boolean value
+
     Raises:
         ValueError: If the string cannot be converted to a boolean
     """
-
-    if v in ("True", "true", "TRUE", True, "1", 1):
+    if not isinstance(v, str):
+        raise ValueError(f"Expected string input, got {type(v)}")
+    
+    v_lower = v.lower().strip()
+    
+    if v_lower in ("true", "1", "yes", "on"):
         return True
-    elif v in ("False", "false", "FALSE", False, None, "0", 0):
+    elif v_lower in ("false", "0", "no", "off", ""):
         return False
     else:
-        raise ValueError(
-            "Boolean value expected on converting with str2bool(). Value {}".format(
-                str(v)
-            )
-        )
+        raise ValueError(f"Cannot convert string '{v}' to boolean")

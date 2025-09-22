@@ -28,7 +28,6 @@ class DatasetService:
     def create_dataset(
         self, name: str, description: str | None, test_cases: list[dict]
     ) -> dict:
-        self.logger.info(f"[DatasetService|create_dataset] started (name={name})")
         """Create a new dataset in LangSmith.
 
         Args:
@@ -42,6 +41,7 @@ class DatasetService:
         Raises:
             DatasetCreationError: If dataset creation fails
         """
+        self.logger.info(f"[DatasetService|create_dataset] started (name={name})")
         try:
             self.logger.info(f"Creating dataset: {name}")
 
@@ -52,20 +52,7 @@ class DatasetService:
             if test_cases:
                 self._update_test_cases(str(dataset.id), test_cases)
 
-            result = {
-                "id": str(dataset.id),
-                "name": dataset.name,
-                "description": dataset.description,
-                "test_cases_count": len(test_cases) if test_cases else 0,
-                "created_at": (
-                    dataset.created_at.isoformat()
-                    if dataset.created_at
-                    else datetime.now().isoformat()
-                ),
-                "url": dataset.url,
-                "tags": dataset.tags,
-                "metadata": dataset.extra,
-            }
+            result = self._build_dataset_result(dataset, test_cases)
 
             self.logger.info(
                 f"Dataset created successfully: {name} with {len(test_cases) if test_cases else 0} test cases"
@@ -77,6 +64,23 @@ class DatasetService:
             self.logger.error(f"Error creating dataset {name}: {str(e)}")
             self.logger.info(f"[DatasetService|create_dataset] finished (name={name})")
             raise DatasetCreationError(f"Failed to create dataset: {str(e)}")
+
+    def _build_dataset_result(self, dataset, test_cases: list[dict]) -> dict:
+        """Build dataset result dictionary."""
+        return {
+            "id": str(dataset.id),
+            "name": dataset.name,
+            "description": dataset.description,
+            "test_cases_count": len(test_cases) if test_cases else 0,
+            "created_at": (
+                dataset.created_at.isoformat()
+                if dataset.created_at
+                else datetime.now().isoformat()
+            ),
+            "url": dataset.url,
+            "tags": dataset.tags,
+            "metadata": dataset.extra,
+        }
 
     def get_dataset(self, dataset_name: str) -> dict:
         self.logger.info(
@@ -93,6 +97,9 @@ class DatasetService:
         Raises:
             DatasetNotFoundError: If dataset is not found
         """
+        self.logger.info(
+            f"[DatasetService|get_dataset] started (dataset_name={dataset_name})"
+        )
         try:
             self.logger.info(f"Retrieving dataset: {dataset_name}")
 

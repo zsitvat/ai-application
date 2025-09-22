@@ -1,5 +1,6 @@
 import logging
 import os
+from typing import Optional
 
 import uvicorn
 from dotenv.main import find_dotenv, load_dotenv
@@ -7,6 +8,7 @@ from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
 from langfuse import Langfuse
 
+from src.config.constants import DEFAULT_LOG_LEVEL, DEFAULT_PORT, DEFAULT_RATE_LIMIT
 from src.routes.dataset_routes import router as dataset_router
 from src.routes.document_routes import router as document_router
 from src.routes.graph_config_loader_routes import router as graph_config_loader_router
@@ -19,45 +21,32 @@ from src.services.logger.logger_service import LoggerService
 from src.services.logger.logs_json_formatter import JSONFormatter
 from src.services.rate_limit.semaphore import SemaphoreMiddleware
 
-if os.getenv("TRACER_TYPE") == "langfuse":
-    langfuse = Langfuse(
-        secret_key=os.getenv("LANGFUSE_SECRET_KEY"),
-        public_key=os.getenv("LANGFUSE_PUBLIC_KEY"),
-        project_id=os.getenv("LANGFUSE_PROJECT"),
-        host=os.getenv("LANGFUSE_ENDPOINT"),
-    )
+
+def _initialize_langfuse() -> Optional[Langfuse]:
+    """Initialize Langfuse if TRACER_TYPE is set to langfuse."""
+    if os.getenv("TRACER_TYPE") == "langfuse":
+        return Langfuse(
+            secret_key=os.getenv("LANGFUSE_SECRET_KEY"),
+            public_key=os.getenv("LANGFUSE_PUBLIC_KEY"),
+            project_id=os.getenv("LANGFUSE_PROJECT"),
+            host=os.getenv("LANGFUSE_ENDPOINT"),
+        )
+    return None
 
 
-def create_app():
-    os.environ.clear()
-    load_dotenv(find_dotenv())
-
-    app = FastAPI(
-        title="Recruiter AI API",
-        description="Multi-agent AI system app with document processing and web scraping capabilities",
-    )
-
-    app.include_router(graph_router)
-    app.include_router(graph_config_loader_router)
-    app.include_router(personal_data_filter_router)
-    app.include_router(topic_validation_router)
-    app.include_router(web_scraping_router)
-    app.include_router(document_router)
-    app.include_router(dataset_router)
-    app.include_router(system_router)
-
-    @app.get("/")
-    async def redirect_to_docs():
-        return RedirectResponse(url="/docs")
-
-    LoggerService().setup_logger(os.getenv("LOG_LEVEL", "INFO"))
+def _setup_logging() -> None:
+    """Setup application logging with JSON formatter."""
+    LoggerService().setup_logger(os.getenv("LOG_LEVEL", DEFAULT_LOG_LEVEL))
 
     for logger_name in ["uvicorn", "uvicorn.error", "uvicorn.access"]:
         logger = logging.getLogger(logger_name)
         for handler in logger.handlers:
             handler.setFormatter(JSONFormatter())
 
-    default_limit = int(os.getenv("RATELIMIT", "20"))
+
+def _setup_middleware(app: FastAPI) -> None:
+    """Setup middleware for the FastAPI application."""
+    default_limit = int(os.getenv("RATELIMIT", str(DEFAULT_RATE_LIMIT)))
     paths_to_limit = [
         "/api/graph",
         "/api/graph/stream",
@@ -69,6 +58,43 @@ def create_app():
         paths_to_limit=paths_to_limit,
     )
 
+
+# Initialize Langfuse if needed
+langfuse = _initialize_langfuse()
+
+
+def create_app() -> FastAPI:
+    """Create and configure the FastAPI application."""
+    load_dotenv(find_dotenv())
+
+    app = FastAPI(
+        title="Recruiter AI API",
+        description="Multi-agent AI system app with document processing and web scraping capabilities",
+    )
+
+    # Include routers
+    routers = [
+        graph_router,
+        graph_config_loader_router,
+        personal_data_filter_router,
+        topic_validation_router,
+        web_scraping_router,
+        document_router,
+        dataset_router,
+        system_router,
+    ]
+
+    for router in routers:
+        app.include_router(router)
+
+    @app.get("/")
+    async def redirect_to_docs():
+        """Redirect root path to API documentation."""
+        return RedirectResponse(url="/docs")
+
+    _setup_logging()
+    _setup_middleware(app)
+
     return app
 
 
@@ -77,5 +103,8 @@ app = create_app()
 
 if __name__ == "__main__":
     uvicorn.run(
-        "app:app", reload=False, port=int(os.getenv("PORT", 5000)), host="0.0.0.0"
+        "app:app",
+        reload=False,
+        port=int(os.getenv("PORT", str(DEFAULT_PORT))),
+        host="0.0.0.0",
     )

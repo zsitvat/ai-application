@@ -19,6 +19,8 @@ agent-chat-ui/
 agent-chat-ui*
 agent-chat-ui
 app.log*
+.langgraph_api*
+logs/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

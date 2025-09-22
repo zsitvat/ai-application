@@ -27,37 +27,23 @@ async def ingest_documents(
         if not request.vector_db_index:
             raise HTTPException(status_code=400, detail="vector_db_index is required")
 
+        files = request.files if isinstance(request.files, list) else [request.files]
+
+        ingest_params = {
+            "files": files,
+            "vector_db_index": request.vector_db_index,
+            "chunk_size": request.chunk_size,
+            "chunk_overlap": request.chunk_overlap,
+            "model": request.embedding_model,
+            "index_schema": request.index_schema,
+        }
+
         if request.json_data is not None:
-            success, message, processed_files, failed_files = (
-                await document_service.ingest_documents(
-                    files=(
-                        request.files
-                        if isinstance(request.files, list)
-                        else [request.files]
-                    ),
-                    vector_db_index=request.vector_db_index,
-                    chunk_size=request.chunk_size,
-                    chunk_overlap=request.chunk_overlap,
-                    model=request.embedding_model,
-                    index_schema=request.index_schema,
-                    json_data=request.json_data,
-                )
-            )
-        else:
-            success, message, processed_files, failed_files = (
-                await document_service.ingest_documents(
-                    files=(
-                        request.files
-                        if isinstance(request.files, list)
-                        else [request.files]
-                    ),
-                    vector_db_index=request.vector_db_index,
-                    chunk_size=request.chunk_size,
-                    chunk_overlap=request.chunk_overlap,
-                    model=request.embedding_model,
-                    index_schema=request.index_schema,
-                )
-            )
+            ingest_params["json_data"] = request.json_data
+
+        success, message, processed_files, failed_files = (
+            await document_service.ingest_documents(**ingest_params)
+        )
 
         return DocumentIngestResponseSchema(
             success=success,
@@ -67,7 +53,7 @@ async def ingest_documents(
         )
 
     except Exception as ex:
-        logger.error(f"Error in document ingestion: {str(ex)}")
+        logger.error(f"[DocumentRoutes] Error in document ingestion: {str(ex)}")
         raise HTTPException(
             status_code=500,
             detail=f"Error processing documents: {str(ex)}",
@@ -93,7 +79,7 @@ async def delete_documents(
         )
 
     except Exception as ex:
-        logger.error(f"Error deleting documents: {str(ex)}")
+        logger.error(f"[DocumentRoutes] Error deleting documents: {str(ex)}")
         raise HTTPException(
             status_code=500,
             detail=f"Error deleting documents: {str(ex)}",
@@ -122,7 +108,7 @@ async def ingest_positions(
         )
 
     except Exception as ex:
-        logger.error(f"Error in positions ingestion: {str(ex)}")
+        logger.error(f"[DocumentRoutes] Error in positions ingestion: {str(ex)}")
         raise HTTPException(
             status_code=500,
             detail=f"Error processing positions: {str(ex)}",

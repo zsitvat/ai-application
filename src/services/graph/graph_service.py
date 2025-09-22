@@ -5,9 +5,8 @@ from uuid import uuid4
 from langchain_core.messages import HumanMessage
 from langchain_core.runnables.config import RunnableConfig
 
-from src.schemas.graph_schema import (
-    AgentState,
-)
+from src.config.constants import DEFAULT_RECURSION_LIMIT
+from src.schemas.graph_schema import AgentState
 from src.services.data_api.app_settings import AppSettingsService
 from src.services.logger.logger_service import LoggerService
 
@@ -25,6 +24,35 @@ class GraphService:
         self.tracer_type = os.getenv("TRACER_TYPE", "langsmith")
         os.environ["REDIS_URL"] = self.redis_url
 
+    def _prepare_initial_state(
+        self,
+        user_input: str,
+        app_id: int,
+        user_id: str | None = None,
+        context: dict | None = None,
+        parameters: dict | None = None,
+    ) -> AgentState:
+        """Prepare the initial state for graph execution."""
+        initial_parameters = dict(parameters) if parameters else {}
+        initial_parameters["app_id"] = app_id
+
+        return AgentState(
+            messages=[HumanMessage(content=user_input)],
+            context=context or {},
+            parameters=initial_parameters,
+            user_id=user_id or uuid4(),
+        )
+
+    async def _execute_workflow(self, initial_state: AgentState) -> dict:
+        """Execute the workflow with the given initial state."""
+        recursion_limit = getattr(
+            self.graph.graph_config, "recursion_limit", DEFAULT_RECURSION_LIMIT
+        )
+        return await self.graph.workflow.ainvoke(
+            initial_state,
+            RunnableConfig(recursion_limit=recursion_limit),
+        )
+
     async def execute_graph(
         self,
         user_input: str,
@@ -33,33 +61,23 @@ class GraphService:
         context: dict | None = None,
         parameters: dict | None = None,
     ) -> str:
-        """
-        Execute the multi-agent graph solution with supervisor pattern.
-        """
+        """Execute the multi-agent graph solution with supervisor pattern."""
         self.logger.info(
             f"[GraphService|execute_graph] started (app_id={app_id}, user_id={user_id})"
         )
         try:
-            graph_config = None
-            if parameters and "graph_config" in parameters:
-                graph_config = parameters["graph_config"]
-            user_input = await self.graph.prepare_graph_execution(
+            # Prepare graph configuration
+            graph_config = parameters.get("graph_config") if parameters else None
+            prepared_input = await self.graph.prepare_graph_execution(
                 graph_config, user_input
             )
 
-            initial_parameters = dict(parameters) if parameters else {}
-            initial_parameters["app_id"] = app_id
-            initial_state = AgentState(
-                messages=[HumanMessage(content=user_input)],
-                context=context or {},
-                parameters=initial_parameters,
-                user_id=user_id or uuid4(),
+            # Execute workflow
+            initial_state = self._prepare_initial_state(
+                prepared_input, app_id, user_id, context, parameters
             )
-            recursion_limit = getattr(self.graph.graph_config, "recursion_limit", 1)
-            result = await self.graph.workflow.ainvoke(
-                initial_state,
-                RunnableConfig(recursion_limit=recursion_limit),
-            )
+            result = await self._execute_workflow(initial_state)
+
             final_response = self.graph._generate_final_response(result)
             self.logger.info(
                 f"[GraphService|execute_graph] finished (app_id={app_id}, user_id={user_id})"
@@ -79,29 +97,23 @@ class GraphService:
         context: dict | None = None,
         parameters: dict | None = None,
     ) -> AsyncGenerator[str, None]:
-        """
-        Execute the multi-agent graph solution and stream only the final response token by token.
-        """
+        """Execute the multi-agent graph solution and stream only the final response token by token."""
         self.logger.info(
             f"[GraphService|execute_graph_stream] started (app_id={app_id}, user_id={user_id})"
         )
         try:
-            graph_config = None
-            if parameters and "graph_config" in parameters:
-                graph_config = parameters["graph_config"]
-            user_input = await self.graph.prepare_graph_execution(
+            # Prepare graph configuration
+            graph_config = parameters.get("graph_config") if parameters else None
+            prepared_input = await self.graph.prepare_graph_execution(
                 graph_config, user_input
             )
-            initial_state = AgentState(
-                messages=[HumanMessage(content=user_input)],
-                context=context or {},
-                parameters=parameters or {},
+
+            # Execute workflow
+            initial_state = self._prepare_initial_state(
+                prepared_input, app_id, user_id, context, parameters
             )
-            recursion_limit = getattr(self.graph.graph_config, "recursion_limit", 1)
-            result = await self.graph.workflow.ainvoke(
-                initial_state,
-                RunnableConfig(recursion_limit=recursion_limit),
-            )
+            result = await self._execute_workflow(initial_state)
+
             final_response = self.graph._generate_final_response(result)
             async for token in self.graph._tokenize(final_response):
                 yield token

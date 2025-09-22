@@ -58,7 +58,7 @@ class LoggerService:
                 logger.addHandler(file_handler)
 
             except Exception as e:
-                logger.error(f"Failed to setup file logging: {str(e)}")
+                logger.error(f"[LoggerService] Failed to setup file logging: {str(e)}")
 
         logger.propagate = False
 
@@ -95,7 +95,7 @@ class LoggerService:
             for handler in logger.handlers:
                 handler.setLevel(new_level)
 
-            logger.info(f"Log level updated to {log_level}")
+            logger.info(f"[LoggerService] Log level updated to {log_level}")
 
     def list_log_files(self):
         """List all log files in the log directory.

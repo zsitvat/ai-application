@@ -1,6 +1,6 @@
 import pytest
 
-from src.utils.get_prompt import get_prompt_by_type, is_integer
+from src.utils.get_prompt import get_prompt_by_type, _is_integer
 
 
 @pytest.mark.asyncio
@@ -41,13 +41,11 @@ async def test_get_prompt_by_type_other_tracer_exception():
             await get_prompt_by_type("default", tracer_type="other", cache_ttl=60)
 
 
-@pytest.mark.asyncio
-async def test_is_integer_true():
-    assert await is_integer("123") is True
-    assert await is_integer(123) is True
+def test_is_integer_true():
+    assert _is_integer("123") is True
+    assert _is_integer(123) is True
 
 
-@pytest.mark.asyncio
-async def test_is_integer_false():
-    assert await is_integer("abc") is False
-    assert await is_integer(None) is False
+def test_is_integer_false():
+    assert _is_integer("abc") is False
+    assert _is_integer(None) is False

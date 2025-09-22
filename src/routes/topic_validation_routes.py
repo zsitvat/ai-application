@@ -1,4 +1,5 @@
 import logging
+import os
 
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -9,6 +10,7 @@ from src.schemas.topic_validation_schema import (
 from src.services.validators.topic_validator.topic_validator_service import (
     TopicValidatorService,
 )
+from src.schemas.schema import Model, ModelProviderType, ModelType
 
 router = APIRouter(tags=["topic_validation"])
 
@@ -29,9 +31,10 @@ async def validate_topic(
         config = getattr(request, "model", None)
 
         if not config:
-            raise HTTPException(
-                status_code=400,
-                detail="Model configuration is required for topic validation",
+            config = Model(
+                provider=ModelProviderType.AZURE,
+                deployment=os.getenv("AZURE_DEPLOYMENT_NAME"),
+                type=ModelType.CHAT,
             )
 
         is_valid, topic, reason = await validator_service.validate_topic(

@@ -33,7 +33,9 @@ def test_merge_tool_args_with_config(graph_instance):
         "new_config": "enabled",
         "retriever": "redis_search",
     }
-    merged = graph_instance._merge_tool_args_with_config(tool_args, config_defaults)
+    merged = graph_instance.tool_handler.merge_tool_args_with_config(
+        tool_args, config_defaults
+    )
     assert merged["search_type"] == "keyword"
     assert merged["new_config"] == "enabled"
     assert merged["positions"] == "data_scientist"
@@ -69,7 +71,7 @@ def test_extract_tool_call(graph_instance):
         ]
         additional_kwargs = {}
 
-    name, args, call_id = graph_instance._extract_tool_call(DummyResponse())
+    name, args, call_id = graph_instance.tool_handler.extract_tool_call(DummyResponse())
     assert name == "get_labels_tool"
     assert call_id == "label_call_1"
     assert args["label"] == "label1"
@@ -91,38 +93,40 @@ def test_graph_get_compiled_workflow(graph_instance):
 def test_inject_tool_info_into_prompt(graph_instance):
     prompt = {}
     agent_config = MagicMock()
-    result = graph_instance._inject_tool_info_into_prompt(prompt, agent_config)
+    result = graph_instance.tool_handler.inject_tool_info_into_prompt(
+        prompt, agent_config
+    )
     assert result is not None
 
 
 def test_get_allowed_tool_names(graph_instance):
     agent_config = MagicMock()
-    result = graph_instance._get_allowed_tool_names(agent_config)
+    result = graph_instance.tool_handler.get_allowed_tool_names(agent_config)
     assert isinstance(result, list)
 
 
 def test_find_tool_func(graph_instance):
     tool_name = "get_labels_tool"
     tools_to_bind = [MagicMock(name="get_labels_tool")]
-    result = graph_instance._find_tool_func(tool_name, tools_to_bind)
+    result = graph_instance.tool_handler.find_tool_func(tool_name, tools_to_bind)
     assert result is not None
 
 
 def test_update_context_with_tool_results(graph_instance):
     context = {"tool_results": {}}
     tool_results = [{"tool_name": "get_labels_tool", "result": 1}]
-    result = graph_instance._update_context_with_tool_results(context, tool_results)
+    result = graph_instance.tool_handler.update_context_with_tool_results(
+        context, tool_results
+    )
     assert result is None or isinstance(result, dict)
 
 
 def test_update_prompt_context(graph_instance):
     prompt = {}
-    context = {"key": "value"}
     value = "some_value"
     tool_name = "get_labels_tool"
-    agent_config = MagicMock()
-    result = graph_instance._update_prompt_context(
-        prompt, context, value, tool_name, agent_config
+    result = graph_instance.tool_handler._update_prompt_context(
+        prompt, tool_name, "variable_name", value, None
     )
     # Accept None or dict as valid output
     assert result is None or isinstance(result, dict)
@@ -130,16 +134,20 @@ def test_update_prompt_context(graph_instance):
 
 def test_extract_position_info_from_list(graph_instance):
     positions = ["Data Scientist", "ML Engineer"]
-    agent_config = MagicMock()
-    result = graph_instance._extract_position_info_from_list(positions, agent_config)
+    application_attributes = {}
+    result = graph_instance.tool_handler._extract_position_info_from_list(
+        application_attributes, positions
+    )
     # Accept None or list as valid output
     assert result is None or isinstance(result, list)
 
 
 def test_extract_location_info_from_labels(graph_instance):
-    labels = ["Budapest", "Remote"]
-    agent_config = MagicMock()
-    result = graph_instance._extract_location_info_from_labels(labels, agent_config)
+    labels = {"counties": ["Budapest", "Remote"]}
+    application_attributes = {}
+    result = graph_instance.tool_handler._extract_location_info_from_labels(
+        application_attributes, labels
+    )
     # Accept None or list as valid output
     assert result is None or isinstance(result, list)
 
@@ -165,15 +173,17 @@ def test_get_user_input_from_state(graph_instance):
 
 def test_bind_tools_to_chain(graph_instance):
     agent_config = MagicMock()
-    result = graph_instance._bind_tools_to_chain(agent_config)
+    result = graph_instance.tool_handler.bind_tools_to_chain(agent_config)
     assert isinstance(result, list)
 
 
 def test_prepare_tool_args(graph_instance):
     tool_args = {"arg1": 1}
-    config = {"default": 2}
     agent_config = MagicMock()
-    result = graph_instance._prepare_tool_args(tool_args, config, agent_config)
+    agent_config.tools = {"test_tool": {"default": 2}}
+    result = graph_instance.tool_handler.prepare_tool_args(
+        "test_tool", tool_args, agent_config
+    )
     assert isinstance(result, dict)
 
 

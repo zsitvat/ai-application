@@ -71,5 +71,5 @@ async def redis_vector_search_tool(
         return [doc.page_content for doc in results]
 
     except Exception as e:
-        logger.error(f"Error during Redis vector search: {e}")
+        logger.error(f"[RetrieverTool] Error during Redis vector search: {e}")
         return ["Error occurred during search."]

@@ -1,5 +1,3 @@
-import logging
-
 from fastapi import APIRouter, Depends, HTTPException
 
 from src.schemas.dataset_schema import (
@@ -12,6 +10,9 @@ from src.schemas.dataset_schema import (
     DatasetUpdateError,
 )
 from src.services.dataset.dataset_service import DatasetService
+from src.services.logger.logger_service import LoggerService
+
+logger = LoggerService().setup_logger()
 
 router = APIRouter(tags=["dataset"])
 
@@ -36,15 +37,13 @@ def create_dataset(
         return DatasetResponseSchema(**dataset)
 
     except DatasetCreationError as ex:
-        logging.getLogger("logger").error(f"Error creating dataset: {str(ex)}")
+        logger.error(f"[DatasetRoutes] Error creating dataset: {str(ex)}")
         raise HTTPException(
             status_code=400,
             detail=f"Error creating dataset: {str(ex)}",
         )
     except Exception as ex:
-        logging.getLogger("logger").error(
-            f"Unexpected error creating dataset: {str(ex)}"
-        )
+        logger.error(f"[DatasetRoutes] Unexpected error creating dataset: {str(ex)}")
         raise HTTPException(
             status_code=500,
             detail=f"Unexpected error creating dataset: {str(ex)}",
@@ -63,15 +62,13 @@ def get_dataset(
         return DatasetResponseSchema(**dataset)
 
     except DatasetNotFoundError as ex:
-        logging.getLogger("logger").error(f"Dataset not found: {str(ex)}")
+        logger.error(f"[DatasetRoutes] Dataset not found: {str(ex)}")
         raise HTTPException(
             status_code=404,
             detail=f"Dataset not found: {str(ex)}",
         )
     except Exception as ex:
-        logging.getLogger("logger").error(
-            f"Unexpected error getting dataset: {str(ex)}"
-        )
+        logger.error(f"[DatasetRoutes] Unexpected error getting dataset: {str(ex)}")
         raise HTTPException(
             status_code=500,
             detail=f"Unexpected error getting dataset: {str(ex)}",
@@ -94,21 +91,19 @@ def update_dataset(
         return DatasetResponseSchema(**dataset)
 
     except DatasetNotFoundError as ex:
-        logging.getLogger("logger").error(f"Dataset not found: {str(ex)}")
+        logger.error(f"[DatasetRoutes] Dataset not found: {str(ex)}")
         raise HTTPException(
             status_code=404,
             detail=f"Dataset not found: {str(ex)}",
         )
     except DatasetUpdateError as ex:
-        logging.getLogger("logger").error(f"Error updating dataset: {str(ex)}")
+        logger.error(f"[DatasetRoutes] Error updating dataset: {str(ex)}")
         raise HTTPException(
             status_code=400,
             detail=f"Error updating dataset: {str(ex)}",
         )
     except Exception as ex:
-        logging.getLogger("logger").error(
-            f"Unexpected error updating dataset: {str(ex)}"
-        )
+        logger.error(f"[DatasetRoutes] Unexpected error updating dataset: {str(ex)}")
         raise HTTPException(
             status_code=500,
             detail=f"Unexpected error updating dataset: {str(ex)}",
@@ -130,21 +125,19 @@ async def run_dataset(
         return results
 
     except DatasetNotFoundError as ex:
-        logging.getLogger("logger").error(f"Dataset not found: {str(ex)}")
+        logger.error(f"[DatasetRoutes] Dataset not found: {str(ex)}")
         raise HTTPException(
             status_code=404,
             detail=f"Dataset not found: {str(ex)}",
         )
     except DatasetRunError as ex:
-        logging.getLogger("logger").error(f"Error running dataset: {str(ex)}")
+        logger.error(f"[DatasetRoutes] Error running dataset: {str(ex)}")
         raise HTTPException(
             status_code=400,
             detail=f"Error running dataset: {str(ex)}",
         )
     except Exception as ex:
-        logging.getLogger("logger").error(
-            f"Unexpected error running dataset: {str(ex)}"
-        )
+        logger.error(f"[DatasetRoutes] Unexpected error running dataset: {str(ex)}")
         raise HTTPException(
             status_code=500,
             detail=f"Unexpected error running dataset: {str(ex)}",
@@ -162,15 +155,13 @@ def delete_dataset(
         return result
 
     except DatasetNotFoundError as ex:
-        logging.getLogger("logger").error(f"Dataset not found: {str(ex)}")
+        logger.error(f"[DatasetRoutes] Dataset not found: {str(ex)}")
         raise HTTPException(
             status_code=404,
             detail=f"Dataset not found: {str(ex)}",
         )
     except Exception as ex:
-        logging.getLogger("logger").error(
-            f"Unexpected error deleting dataset: {str(ex)}"
-        )
+        logger.error(f"[DatasetRoutes] Unexpected error deleting dataset: {str(ex)}")
         raise HTTPException(
             status_code=500,
             detail=f"Unexpected error deleting dataset: {str(ex)}",

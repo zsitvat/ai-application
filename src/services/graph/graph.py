@@ -1,11 +1,12 @@
 import asyncio
 import json
 import os
-from functools import partial
 from typing import Any, Literal
 
 import aiohttp
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
+from functools import partial
+
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langgraph.graph import END, StateGraph
 from langgraph.graph.message import add_messages
@@ -20,11 +21,11 @@ from src.schemas.graph_schema import (
 )
 from src.services.graph.graph_checkpointer import create_checkpointer
 from src.services.graph.tool_handler import ToolHandler
-from src.services.validators.personal_data.personal_data_filter_service import (
-    PersonalDataFilterService,
-)
 from src.services.validators.topic_validator.topic_validator_service import (
     TopicValidatorService,
+)
+from src.services.validators.personal_data.personal_data_filter_service import (
+    PersonalDataFilterService,
 )
 from src.utils.extract_message_content import extract_message_content
 from src.utils.get_prompt import get_prompt_by_type

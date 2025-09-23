@@ -3,7 +3,6 @@ import os
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from src.schemas.schema import Model, ModelProviderType, ModelType
 from src.schemas.topic_validation_schema import (
     TopicValidationRequestSchema,
     TopicValidationResponseSchema,
@@ -11,6 +10,7 @@ from src.schemas.topic_validation_schema import (
 from src.services.validators.topic_validator.topic_validator_service import (
     TopicValidatorService,
 )
+from src.schemas.schema import Model, ModelProviderType, ModelType
 
 router = APIRouter(tags=["topic_validation"])
 

@@ -1,5 +1,5 @@
 import copy
-from typing import Any, Callable, Dict
+from typing import Any, Callable
 
 from src.services.validators.personal_data.personal_data_filter_service import (
     PersonalDataFilterService,
@@ -50,7 +50,7 @@ class PersonalDataFilterCheckpointer:
     def __getattr__(self, name: str) -> object:
         return getattr(self.base_checkpointer, name)
 
-    async def _filter_state_data(self, state_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def _filter_state_data(self, state_data: dict[str, Any]) -> dict[str, Any]:
         """Filter personal data from state before saving to database."""
         if not self.personal_data_config:
             return state_data

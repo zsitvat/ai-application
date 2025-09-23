@@ -121,18 +121,6 @@ uv run langgraph dev --debug-port 5678
 
 Then connect to port 5678 in VS Code or another IDE.
 
-## uv vs Poetry Comparison
-
-The project switched from Poetry to uv for the following advantages:
-
-- **Faster installation**: uv is written in Rust, much faster dependency resolution and installation
-- **Simpler usage**: fewer commands, simpler workflow
-- **Modern Python tooling**: up-to-date Python project management
-- **Better performance**: virtual environment handling and package caching
-- **Compatibility**: full PEP 517/518 support
-
-> **Migration guide**: If you previously used Poetry, see the `MIGRATION_TO_UV.md` file for detailed migration steps.
-
 ### Common uv commands:
 
 ```bash
@@ -157,3 +145,46 @@ uv run python src/app.py
 # Activate shell in virtual environment (interactive shell with all uv-installed packages available)
 uv shell
 ```
+
+## Testing UI with LangChain Agent Chat UI
+
+For testing and interacting with the multi-agent system, you can use the **LangChain Agent Chat UI** - a modern, responsive chat interface designed specifically for LangGraph applications.
+
+### Features:
+- Real-time chat interface for testing agents
+- Support for streaming responses
+- File upload capabilities
+- Message history and conversation management
+- Built-in support for LangGraph workflows
+
+### Quick Setup:
+
+1. **Clone the Agent Chat UI repository:**
+   ```bash
+   git clone https://github.com/langchain-ai/agent-chat-ui.git
+   cd agent-chat-ui
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   npm install
+   # or
+   pnpm install
+   ```
+
+3. **Configure the backend URL:**
+   Update the configuration to point to your Recruiter AI App running on `http://localhost:5000`
+
+4. **Start the UI:**
+   ```bash
+   npm run dev
+   # or
+   pnpm dev
+   ```
+
+5. **Access the UI:**
+   Open [http://localhost:3000](http://localhost:3000) in your browser
+
+This provides a user-friendly interface for testing your multi-agent workflows, trying different inputs, and observing how the personal data filter, topic validation, and other components work together.
+
+**Repository:** https://github.com/langchain-ai/agent-chat-ui

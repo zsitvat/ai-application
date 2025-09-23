@@ -1,25 +1,26 @@
 # Graph Service
 
-## Áttekintés
+## Overview
 
-A Graph Service felelős a többügynökös (multi-agent) gráf végrehajtásáért supervisor mintázat használatával. Ez a service kezeli az összetett üzleti logikát, ahol különböző AI ügynökök együttműködnek a feladatok megoldásában.
+The Graph Service is responsible for multi-agent graph execution using the supervisor pattern. This service handles complex business logic where different AI agents collaborate to solve tasks.
 
-## Főbb komponensek
+## Main Components
 
 ### GraphService
 
-A `GraphService` osztály a LangGraph keretrendszert használva biztosítja a multi-agent rendszer funkcionalitását.
+The `GraphService` class provides multi-agent system functionality using the LangGraph framework.
 
-#### Főbb funkciók
+#### Main Features
 
-- **Multi-agent orchestration**: Több AI ügynök koordinálása
-- **Supervisor pattern**: Központi irányítás és döntéshozatal
-- **State management**: Állapot követése és mentése
-- **Streaming támogatás**: Valós idejű válaszok
-- **Checkpoint rendszer**: Folyamat mentés és helyreállítás
-- **Tool integration**: Külső eszközök beépítése
+- **Multi-agent orchestration**: Coordination of multiple AI agents
+- **Supervisor pattern**: Central control and decision making
+- **State management**: State tracking and persistence
+- **Streaming support**: Real-time responses
+- **Checkpoint system**: Process saving and restoration
+- **Tool integration**: External tool integration
+- **Personal data filtering**: Automatic personal data filtering
 
-## Architektúra
+## Architecture
 
 ### Agent State
 
@@ -28,19 +29,20 @@ class AgentState(TypedDict):
     messages: Annotated[list, add_messages]
     next_agent: str
     context: dict
-    # További állapot mezők...
+    # Additional state fields...
 ```
 
-### Workflow struktúra
+### Workflow Structure
 
-1. **START** → **Supervisor** → **Agents** → **END**
-2. **Exception handling**: Hibakezelő chain
-3. **Tool calling**: Külső eszközök hívása
-4. **State persistence**: Állapot mentés checkpointokba
+1. **START** → **Supervisor** → **Agents** → **Personal Data Filter** → **END**
+2. **Exception handling**: Error handling chain
+3. **Tool calling**: External tool invocation
+4. **State persistence**: State saving to checkpoints
+5. **Data filtering**: Automatic personal data filtering
 
-## Használat
+## Usage
 
-### Inicializálás
+### Initialization
 
 ```python
 from src.services.graph.graph_service import GraphService
@@ -50,26 +52,26 @@ app_settings_service = AppSettingsService()
 graph_service = GraphService(app_settings_service)
 ```
 
-### Főbb metódusok
+### Main Methods
 
 #### `execute_graph(user_input, app_id, user_id, context, parameters)`
 
-Gráf végrehajtása megadott paraméterekkel.
+Graph execution with specified parameters.
 
-**Paraméterek:**
-- `user_input` (str): Felhasználói bemenet
-- `app_id` (int): Alkalmazás azonosító
-- `user_id` (str|None): Felhasználó azonosító
-- `context` (dict): Kontextus információk
-- `parameters` (dict): Futtatási paraméterek
+**Parameters:**
+- `user_input` (str): User input
+- `app_id` (int): Application identifier
+- `user_id` (str|None): User identifier
+- `context` (dict): Context information
+- `parameters` (dict): Runtime parameters
 
-**Visszatérési érték:**
-- AI válasz szöveg
+**Return Value:**
+- AI response text
 
-**Példa:**
+**Example:**
 ```python
 response = await graph_service.execute_graph(
-    user_input="Mi a helyzet a projekttel?",
+    user_input="What's the status of the project?",
     app_id=1,
     user_id="user123",
     context={"project_id": "proj_456"},
@@ -79,22 +81,22 @@ response = await graph_service.execute_graph(
 
 #### `execute_graph_stream(user_input, app_id, user_id, context, parameters)`
 
-Streaming gráf végrehajtás valós idejű válaszokhoz.
+Streaming graph execution for real-time responses.
 
-**Paraméterek:** Ugyanazok mint az `execute_graph`-nál
+**Parameters:** Same as `execute_graph`
 
-**Visszatérési érték:** 
-- `AsyncGenerator[str, None]`: Streaming válasz
+**Return Value:** 
+- `AsyncGenerator[str, None]`: Streaming response
 
-**Példa:**
+**Example:**
 ```python
 async for chunk in graph_service.execute_graph_stream(...):
     print(chunk, end="", flush=True)
 ```
 
-## Konfiguráció
+## Configuration
 
-### Graph Config struktúra
+### Graph Config Structure
 
 ```python
 class GraphConfig(BaseModel):
@@ -105,7 +107,7 @@ class GraphConfig(BaseModel):
     max_input_length: int = -1
 ```
 
-### Agent konfiguráció
+### Agent Configuration
 
 ```python
 class Agent(BaseModel):
@@ -117,22 +119,22 @@ class Agent(BaseModel):
     temperature: float = 0.7
 ```
 
-## Checkpoint rendszer
+## Checkpoint System
 
-### Támogatott típusok
+### Supported Types
 
-- **Memory**: `InMemorySaver` - memóriában tárolás
-- **Redis**: `RedisSaver` - Redis adatbázisban tárolás
+- **Memory**: `InMemorySaver` - in-memory storage
+- **Redis**: `RedisSaver` - Redis database storage
 
-### Thread kezelés
+### Thread Management
 
 ```python
 config = {"configurable": {"thread_id": f"{user_id}_{app_id}"}}
 ```
 
-## Tool integráció
+## Tool Integration
 
-### Tool loading
+### Tool Loading
 
 ```python
 def _load_tool_class(self, tool_config: dict):
@@ -144,53 +146,99 @@ def _load_tool_class(self, tool_config: dict):
     return tool_class(**tool_config.get("kwargs", {}))
 ```
 
-### Támogatott tool típusok
+### Supported Tool Types
 
-- **Keresési eszközök**: Vector DB keresés
-- **Adatbázis eszközök**: SQL lekérdezések  
-- **API eszközök**: Külső API hívások
-- **Egyedi eszközök**: Projekt-specifikus tools
+- **Search tools**: Vector DB search
+- **Database tools**: SQL queries  
+- **API tools**: External API calls
+- **Custom tools**: Project-specific tools
 
-## Supervisor logika
+## Supervisor Logic
 
-### Döntéshozatal
+### Decision Making
 
-A supervisor a következő logika alapján dönt:
+The supervisor decides based on the following logic:
 
-1. **User input elemzés**: Szándék felismerés
-2. **Agent kiválasztás**: Megfelelő szakértő agent
-3. **Tool használat**: Szükséges eszközök aktiválása
-4. **Válasz aggregálás**: Többes válaszok összegzése
+1. **User input analysis**: Intent recognition
+2. **Agent selection**: Appropriate expert agent
+3. **Tool usage**: Activating necessary tools
+4. **Response aggregation**: Combining multiple responses
 
-### Routing logika
+### Routing Logic
 
 ```python
 if "FINAL_ANSWER" in last_message.content:
-    return "end"
+    return "personal_data_filter"  # Filter before final response
 elif needs_tool_call:
     return selected_agent
 else:
     return "supervisor"
 ```
 
-## Hibakezelés
+## Personal Data Filter Integration
+
+### Filter Node Implementation
+
+Personal data filtering happens automatically at the end of the workflow, after the applicant_attributes_extractor:
+
+```python
+def _personal_data_filter_node(self, state: AgentState) -> AgentState:
+    """
+    Filter personal data from the final response
+    """
+    last_message = state["messages"][-1]
+    
+    # Use PersonalDataFilterService
+    filtered_content = self.personal_data_filter.apply_regex_replacements(
+        text=last_message.content,
+        replacement_patterns=self.personal_data_filter.DEFAULT_PATTERNS
+    )
+    
+    # Update state with filtered content
+    filtered_message = HumanMessage(content=filtered_content)
+    state["messages"][-1] = filtered_message
+    
+    return state
+```
+
+### Workflow Integration
+
+The filter node is integrated at the following position:
+
+1. **Applicant Attributes Extractor** → extracts applicant data
+2. **Personal Data Filter Node** → filters personal data
+3. **END** → completes the workflow
+
+### Configuration Options
+
+```python
+# Filtering modes configurable in graph config
+"personal_data_filter": {
+    "enabled": True,
+    "use_regex_only": False,      # True = regex only, False = regex + AI
+    "replacement_strategy": "mask", # mask, remove, anonymize
+    "mask_character": "*"
+}
+```
+
+## Error Handling
 
 ### Exception Chain
 
-Dedikált hibakezelő ügynök speciális hibák kezelésére:
+Dedicated error handling agent for special error cases:
 
 ```python
 if "exception_chain" in self.graph_config:
     workflow.add_node("exception_handler", self._exception_node)
 ```
 
-### Hibajelentés
+### Error Reporting
 
-- **Részletes naplózás**: Minden lépés dokumentálása
-- **Stack trace**: Fejlesztői információk
-- **User-friendly üzenetek**: Felhasználóbarát hibák
+- **Detailed logging**: Documentation of every step
+- **Stack trace**: Developer information
+- **User-friendly messages**: User-friendly errors
 
-## Streaming implementáció
+## Streaming Implementation
 
 ### Async Generator
 
@@ -202,66 +250,66 @@ async def execute_graph_stream(self, ...):
             yield content
 ```
 
-### Real-time válaszok
+### Real-time Responses
 
-- **Chunk-based**: Részletes válasz darabok
-- **Progress tracking**: Előrehaladás követése
-- **Error handling**: Hibák streaming közben
+- **Chunk-based**: Detailed response chunks
+- **Progress tracking**: Progress monitoring
+- **Error handling**: Error handling during streaming
 
-## Teljesítmény optimalizáció
+## Performance Optimization
 
-### Párhuzamos végrehajtás
+### Parallel Execution
 
 ```python
-# Agent párhuzamos futtatás
+# Agent parallel execution
 results = await asyncio.gather(*agent_tasks)
 ```
 
 ### Caching
 
-- **State caching**: Állapot gyorsítótárazás
-- **Model caching**: Modell válaszok cache-elése
-- **Tool result caching**: Eszköz válaszok tárolása
+- **State caching**: State caching
+- **Model caching**: Model response caching
+- **Tool result caching**: Tool response storage
 
-### Memory management
+### Memory Management
 
-- **State cleanup**: Felesleges állapot törlése
-- **Checkpoint rotation**: Régi checkpointok törlése
-- **Message pruning**: Üzenet történet optimalizálás
+- **State cleanup**: Clearing unnecessary state
+- **Checkpoint rotation**: Deleting old checkpoints
+- **Message pruning**: Message history optimization
 
-## Biztonsági szempontok
+## Security Considerations
 
-### Input validáció
+### Input Validation
 
-- **Prompt injection védelem**: Káros promptok szűrése
-- **Input hossz korlátozás**: `max_input_length` ellenőrzés
-- **Content filtering**: Nem megfelelő tartalom szűrése
+- **Prompt injection protection**: Filtering malicious prompts
+- **Input length limitation**: `max_input_length` validation
+- **Content filtering**: Filtering inappropriate content
 
-### Agent izolálás
+### Agent Isolation
 
-- **Resource limiting**: Erőforrás korlátozások
-- **Timeout handling**: Túlfutás elleni védelem
-- **Error containment**: Hibák izolálása
+- **Resource limiting**: Resource limitations
+- **Timeout handling**: Protection against overruns
+- **Error containment**: Error isolation
 
-## Naplózás és monitorozás
+## Logging and Monitoring
 
-### Részletes naplózás
+### Detailed Logging
 
-- **Agent activity**: Minden agent művelet
-- **State changes**: Állapot változások
-- **Performance metrics**: Teljesítmény mutatók
-- **Error tracking**: Hibák nyomon követése
+- **Agent activity**: All agent operations
+- **State changes**: State changes
+- **Performance metrics**: Performance indicators
+- **Error tracking**: Error tracking
 
-### Debug információk
+### Debug Information
 
-- **Graph topology**: Gráf struktúra
-- **Message flow**: Üzenet áramlás
-- **Decision points**: Döntési pontok
+- **Graph topology**: Graph structure
+- **Message flow**: Message flow
+- **Decision points**: Decision points
 
-## Függőségek
+## Dependencies
 
 - `langgraph`: Graph orchestration
-- `langchain_core`: Core LLM funkciók
+- `langchain_core`: Core LLM functions
 - `redis`: State persistence
-- `asyncio`: Aszinkron végrehajtás
-- `importlib`: Dinamikus tool loading
+- `asyncio`: Asynchronous execution
+- `importlib`: Dynamic tool loading

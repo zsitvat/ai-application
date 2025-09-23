@@ -1,255 +1,308 @@
 # Validator Services
 
-## Áttekintés
+## Overview
 
-A Validator Services csomag felelős a különböző típusú validációs műveletekért az alkalmazásban. Ez magában foglalja a token validációt, személyes adatok szűrését és téma validációt.
+The Validator Services package is responsible for various validation operations in the application. This includes token validation, personal data filtering, and topic validation.
 
-## Főbb komponensek
+## Main Components
 
 ### TokenValidationService
 
-Token-alapú szöveg validáció és csonkítás.
+Token-based text validation and truncation.
 
 ### PersonalDataFilterService  
 
-Személyes adatok felismerése és szűrése.
+Personal data detection and filtering.
 
 ### TopicValidatorService
 
-Téma relevanciájának validálása.
+Topic relevance validation.
 
 ## Token Validation Service
 
-### Áttekintés
+### Overview
 
-A `TokenValidationService` felelős a szövegek token számlálásáért és csonkításáért, biztosítva hogy az AI modellek input limitjein belül maradjunk.
+The `TokenValidationService` is responsible for text token counting and truncation, ensuring we stay within AI model input limits.
 
-### Főbb funkciók
+### Main Features
 
-- **Token számlálás**: Különböző encoding-ok támogatása
-- **Intelligens csonkítás**: Mondat és szó határok tiszteletben tartása
-- **Batch feldolgozás**: Több szöveg egyszerre kezelése
-- **Becslés**: Token szám becslés long text esetén
+- **Token counting**: Support for different encodings
+- **Intelligent truncation**: Respecting sentence and word boundaries
+- **Batch processing**: Handling multiple texts at once
+- **Estimation**: Token count estimation for long texts
 
-### Használat
+### Usage
 
 ```python
 from src.services.validators.token_validation_service import TokenValidationService
 
 validator = TokenValidationService()
 
-# Szöveg csonkítás
+# Text truncation
 result = await validator.validate_and_truncate_text(
-    text="Hosszú szöveg...",
+    text="Long text...",
     max_tokens=1000,
     encoding_name="cl100k_base",
     truncate_from_end=True,
     preserve_sentences=True
 )
 
-print(f"Eredeti: {result.original_tokens} token")
-print(f"Csonkított: {result.final_tokens} token")
-print(f"Csonkítva: {result.was_truncated}")
+print(f"Original: {result.original_tokens} tokens")
+print(f"Truncated: {result.final_tokens} tokens")
+print(f"Was truncated: {result.was_truncated}")
 ```
 
-### TruncationResult séma
+### TruncationResult Schema
 
 ```python
 class TruncationResult(BaseModel):
-    original_text: str          # Eredeti szöveg
-    truncated_text: str         # Csonkított szöveg
-    original_tokens: int        # Eredeti token szám
-    final_tokens: int          # Végső token szám
-    was_truncated: bool        # Történt-e csonkítás
+    original_text: str          # Original text
+    truncated_text: str         # Truncated text
+    original_tokens: int        # Original token count
+    final_tokens: int          # Final token count
+    was_truncated: bool        # Whether truncation occurred
 ```
 
-### Csonkítási stratégiák
+### Truncation Strategies
 
-#### Végéről csonkítás
+#### Truncate from End
 
 ```python
 await validator.validate_and_truncate_text(
     text="...",
     max_tokens=500,
-    truncate_from_end=True  # Szöveg végéről vág
+    truncate_from_end=True  # Cuts from the end of text
 )
 ```
 
-#### Elejéről csonkítás
+#### Truncate from Beginning
 
 ```python
 await validator.validate_and_truncate_text(
     text="...",
     max_tokens=500,
-    truncate_from_end=False  # Szöveg elejéről vág
+    truncate_from_end=False  # Cuts from the beginning of text
 )
 ```
 
-#### Mondat megőrzés
+#### Preserve Sentences
 
 ```python
 await validator.validate_and_truncate_text(
     text="...",
     max_tokens=500,
-    preserve_sentences=True  # Teljes mondatok megőrzése
+    preserve_sentences=True  # Preserves complete sentences
 )
 ```
 
 ## Personal Data Filter Service
 
-### Áttekintés
+### Overview
 
-A `PersonalDataFilterService` felismeri és szűri a személyes adatokat a szövegekből, GDPR megfelelőség biztosítása érdekében.
+The `PersonalDataFilterService` detects and filters personal data from texts to ensure GDPR compliance. The service applies a dual approach: regex-based fast filtering and AI-based contextual detection.
 
-### Felismert adattípusok
+### Dual Filtering Architecture
 
-- **Nevek**: Személynevek felismerése
-- **Email címek**: Email cím pattern-ek
-- **Telefonszámok**: Különböző telefonszám formátumok
-- **Címek**: Postai címek
-- **Személyi szám**: Állampolgársági azonosítók
-- **Bankszámlák**: Számlatulajdonos adatok
+#### 1. Regex-based Filtering
+- **Fast processing**: Deterministic pattern matching
+- **High performance**: No AI model overhead
+- **Precise patterns**: Email, phone, ID number formats
 
-### Használat
+#### 2. AI-powered Filtering  
+- **Contextual understanding**: Considers text context
+- **Complex cases**: Cases not handled by regex
+- **Language variations**: Different expression patterns
+
+### Detected Data Types
+
+- **Names**: Person name detection (regex + AI)
+- **Email addresses**: Email pattern matching (regex primary)
+- **Phone numbers**: Hungarian and international formats (regex)
+- **Addresses**: Postal addresses (AI primary)
+- **Personal IDs**: TAJ number, personal identifiers (regex)
+- **Bank accounts**: Account numbers and IBAN (regex)
+
+### Usage
+
+#### Regex-based Filtering
 
 ```python
 from src.services.validators.personal_data.personal_data_filter_service import PersonalDataFilterService
 
 filter_service = PersonalDataFilterService()
 
-# Személyes adatok szűrése
+# Regex-based fast filtering
+filtered_text = filter_service.apply_regex_replacements(
+    text="John Smith email address: janos@example.com, phone number: +36-1-234-5678",
+    replacement_patterns={
+        r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b': '[EMAIL]',
+        r'\+36[-\s]?\d{1,2}[-\s]?\d{3}[-\s]?\d{4}': '[PHONE]'
+    },
+    mask_character='*'
+)
+
+print(filtered_text)
+# Output: "John Smith email address: [EMAIL], phone number: [PHONE]"
+```
+
+#### AI-based Complete Filtering
+
+```python
+# Complete personal data filtering (regex + AI)
 filtered_result = await filter_service.filter_personal_data(
-    text="Kovács János email címe: janos@example.com, telefonszáma: +36-1-234-5678",
+    text="John Smith email address: janos@example.com, phone number: +36-1-234-5678",
     replacement_strategy="mask"  # "mask", "remove", "anonymize"
 )
 
 print(filtered_result.filtered_text)
-# Kimenet: "XXXXX XXXXX email címe: XXXXX@XXXXX.com, telefonszáma: +XX-X-XXX-XXXX"
+# Output: "XXXXX XXXXX email address: XXXXX@XXXXX.com, phone number: +XX-X-XXX-XXXX"
 ```
 
-### PersonalDataFilterResult séma
+### PersonalDataFilterResult Schema
 
 ```python
 class PersonalDataFilterResult(BaseModel):
-    original_text: str              # Eredeti szöveg
-    filtered_text: str              # Szűrt szöveg
-    detected_entities: List[dict]   # Felismert entitások
-    confidence_score: float         # Felismerés megbízhatósága
+    original_text: str              # Original text
+    filtered_text: str              # Filtered text
+    detected_entities: List[dict]   # Detected entities
+    confidence_score: float         # Detection confidence
+    used_regex_filtering: bool      # Whether regex filtering was applied
+    used_ai_filtering: bool         # Whether AI filtering was applied
 ```
 
-### Szűrési stratégiák
+### Filtering Modes
 
-#### Maszkolás
-
+#### Regex Only
 ```python
-# Eredeti: "Kovács János"
-# Maszkolva: "XXXXX XXXXX"
+# Fast, deterministic filtering
+text = filter_service.apply_regex_replacements(
+    text="Email: test@example.com",
+    replacement_patterns=filter_service.DEFAULT_PATTERNS
+)
 ```
 
-#### Eltávolítás
-
+#### Dual (regex + AI)
 ```python
-# Eredeti: "Hívj fel ezen a számon: +36-1-234-5678"
-# Eltávolítva: "Hívj fel ezen a számon: "
+# Comprehensive filtering with both methods
+result = await filter_service.filter_personal_data(
+    text="John Smith works at the company",
+    use_regex_first=True  # Regex pre-filtering, then AI
+)
 ```
 
-#### Anonimizálás
+### Filtering Strategies
+
+#### Masking
 
 ```python
-# Eredeti: "Kovács János"
-# Anonimizálva: "[SZEMÉLY_1]"
+# Original: "John Smith"
+# Masked: "XXXXX XXXXX"
+```
+
+#### Removal
+
+```python
+# Original: "Call me at this number: +36-1-234-5678"
+# Removed: "Call me at this number: "
+```
+
+#### Anonymization
+
+```python
+# Original: "John Smith"
+# Anonymized: "[PERSON_1]"
 ```
 
 ## Topic Validator Service
 
-### Áttekintés
+### Overview
 
-A `TopicValidatorService` validálja hogy a felhasználói input releváns-e az alkalmazás témaköréhez (toborzás, HR).
+The `TopicValidatorService` validates whether user input is relevant to the application's domain (recruitment, HR).
 
-### Főbb funkciók
+### Main Features
 
-- **Téma felismerés**: HR/toborzás témák azonosítása
-- **Relevancia scoring**: Relevanciá pontszám számítás
-- **Kulcsszó elemzés**: Téma-specifikus kulcsszavak
-- **Intent clasificáció**: Szándék kategorizálás
+- **Topic recognition**: HR/recruitment topic identification
+- **Relevance scoring**: Relevance score calculation
+- **Keyword analysis**: Topic-specific keyword analysis
+- **Intent classification**: Intent categorization
 
-### Használat
+### Usage
 
 ```python
 from src.services.validators.topic_validator.topic_validator_service import TopicValidatorService
 
 topic_validator = TopicValidatorService()
 
-# Téma validáció
+# Topic validation
 validation_result = await topic_validator.validate_topic(
-    text="Keresek egy tapasztalt Python fejlesztőt a csapatunkba",
+    text="Looking for an experienced Python developer for our team",
     threshold=0.7
 )
 
-print(f"Releváns: {validation_result.is_relevant}")
-print(f"Pontszám: {validation_result.relevance_score}")
-print(f"Kategória: {validation_result.topic_category}")
+print(f"Relevant: {validation_result.is_relevant}")
+print(f"Score: {validation_result.relevance_score}")
+print(f"Category: {validation_result.topic_category}")
 ```
 
-### TopicValidationResult séma
+### TopicValidationResult Schema
 
 ```python
 class TopicValidationResult(BaseModel):
-    is_relevant: bool              # Releváns-e a téma
-    relevance_score: float         # 0-1 közötti pontszám
-    topic_category: str            # Téma kategória
-    detected_keywords: List[str]   # Felismert kulcsszavak
-    confidence: float              # Felismerés megbízhatósága
+    is_relevant: bool              # Whether the topic is relevant
+    relevance_score: float         # Score between 0-1
+    topic_category: str            # Topic category
+    detected_keywords: List[str]   # Detected keywords
+    confidence: float              # Detection confidence
 ```
 
-### Támogatott témakörök
+### Supported Topics
 
-#### Toborzás témák
+#### Recruitment Topics
 
-- Álláshirdetések
-- Jelentkezési folyamatok
-- Képzettségek és tapasztalatok
-- Fizetési feltételek
+- Job postings
+- Application processes
+- Skills and experience
+- Salary conditions
 
-#### HR témák
+#### HR Topics
 
-- Munkavállalói értékelések
-- Csapatépítés
-- Képzések és fejlesztés
-- Munkakörnyezet
+- Employee evaluations
+- Team building
+- Training and development
+- Work environment
 
-#### Kizárt témák
+#### Excluded Topics
 
-- Személyes pénzügyek
-- Egészségügyi információk
-- Politikai nézetek
-- Vallási meggyőződések
+- Personal finance
+- Health information
+- Political views
+- Religious beliefs
 
-## Checkpoint integráció
+## Checkpoint Integration
 
 ### PersonalDataFilterCheckpointer
 
-Speciális checkpointer a személyes adatok szűrésének nyomon követésére.
+Special checkpointer for tracking personal data filtering.
 
 ```python
 from src.services.validators.personal_data.personal_data_filter_checkpointer import PersonalDataFilterCheckpointer
 
 checkpointer = PersonalDataFilterCheckpointer()
 
-# Checkpoint mentés szűrés után
+# Save checkpoint after filtering
 await checkpointer.save_checkpoint(
     thread_id="user_123",
     filter_result=filtered_result,
     metadata={"timestamp": datetime.now()}
 )
 
-# Checkpoint betöltés
+# Load checkpoint
 checkpoint = await checkpointer.load_checkpoint("user_123")
 ```
 
-## Konfigurációs lehetőségek
+## Configuration Options
 
-### Környezeti változók
+### Environment Variables
 
 ```bash
 # Token validation
@@ -265,17 +318,17 @@ TOPIC_RELEVANCE_THRESHOLD=0.7
 SUPPORTED_LANGUAGES=hu,en
 ```
 
-### Modell konfigurációk
+### Model Configurations
 
 ```python
-# Személyes adatok felismerés
+# Personal data detection
 PII_MODEL_CONFIG = {
-    "model_name": "hu_core_news_lg",  # Magyar nyelvi modell
+    "model_name": "hu_core_news_lg",  # Hungarian language model
     "confidence_threshold": 0.8,
     "entity_types": ["PERSON", "EMAIL", "PHONE", "ADDRESS"]
 }
 
-# Téma klasszifikáció
+# Topic classification
 TOPIC_MODEL_CONFIG = {
     "model_name": "distilbert-base-multilingual-cased",
     "classification_threshold": 0.7,
@@ -283,16 +336,16 @@ TOPIC_MODEL_CONFIG = {
 }
 ```
 
-## Hibakezelés
+## Error Handling
 
-### Validációs hibák
+### Validation Errors
 
 ```python
 try:
     result = await validator.validate_and_truncate_text(text, max_tokens)
 except ValidationError as e:
     logger.error(f"Validation failed: {e}")
-    # Fallback: eredeti szöveg visszaadása
+    # Fallback: return original text
     return TruncationResult(
         original_text=text,
         truncated_text=text,
@@ -301,7 +354,7 @@ except ValidationError as e:
     )
 ```
 
-### Model betöltési hibák
+### Model Loading Errors
 
 ```python
 try:
@@ -311,20 +364,20 @@ except OSError:
     model = load_spacy_model("en_core_web_sm")
 ```
 
-## Teljesítmény optimalizáció
+## Performance Optimization
 
-### Batch feldolgozás
+### Batch Processing
 
 ```python
-# Több szöveg egyszerre validálása
-texts = ["szöveg1", "szöveg2", "szöveg3"]
+# Validate multiple texts at once
+texts = ["text1", "text2", "text3"]
 results = await validator.validate_texts_batch(
     texts=texts,
     max_tokens=1000
 )
 ```
 
-### Model caching
+### Model Caching
 
 ```python
 class ModelCache:
@@ -337,7 +390,7 @@ class ModelCache:
         return self._models[model_name]
 ```
 
-### Async processing
+### Async Processing
 
 ```python
 async def process_multiple_validations(requests):
@@ -348,24 +401,24 @@ async def process_multiple_validations(requests):
     return await asyncio.gather(*tasks)
 ```
 
-## Biztonsági szempontok
+## Security Considerations
 
-### Adatvédelem
+### Data Protection
 
-- **Memória tisztítás**: Érzékeny adatok törlése feldolgozás után
-- **Audit log**: Személyes adatok kezelésének naplózása
-- **Encryption**: Érzékeny adatok titkosítása
+- **Memory cleanup**: Clearing sensitive data after processing
+- **Audit log**: Logging personal data handling
+- **Encryption**: Encrypting sensitive data
 
 ### Compliance
 
-- **GDPR**: EU adatvédelmi rendelet megfelelőség
-- **Privacy by design**: Adatvédelem beépített alapelv
-- **Data minimization**: Minimális adatgyűjtés elve
+- **GDPR**: EU data protection regulation compliance
+- **Privacy by design**: Built-in data protection principle
+- **Data minimization**: Minimal data collection principle
 
-## Függőségek
+## Dependencies
 
-- `tiktoken`: Token számolás és encoding
+- `tiktoken`: Token counting and encoding
 - `spacy`: Natural Language Processing
-- `transformers`: Transformer modellek
-- `asyncio`: Aszinkron műveletek
-- `pydantic`: Adatvalidáció és séma definíciók
+- `transformers`: Transformer models
+- `asyncio`: Asynchronous operations
+- `pydantic`: Data validation and schema definitions

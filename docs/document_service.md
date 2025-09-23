@@ -36,7 +36,7 @@ REDIS_USER=your_username
 REDIS_PASSWORD=your_password
 ```
 
-### Inicializálás
+### Initialization
 
 ```python
 from src.services.document.document_service import DocumentService
@@ -44,24 +44,24 @@ from src.services.document.document_service import DocumentService
 document_service = DocumentService()
 ```
 
-### Főbb metódusok
+### Main Methods
 
 #### `ingest_documents(model, files, vector_db_index, chunk_size, chunk_overlap, index_schema)`
 
-Dokumentumok beolvasása és vektoradatbázisba mentése.
+Document ingestion and storage in vector database.
 
-**Paraméterek:**
-- `model` (Model|None): Embedding modell konfiguráció
-- `files` (list[str]): Feldolgozandó fájlok listája
-- `vector_db_index` (str): Vector DB index neve
-- `chunk_size` (int): Szövegdarabok mérete
-- `chunk_overlap` (int): Átfedés mértéke chunkok között
-- `index_schema` (list[dict]): Opcionális index séma
+**Parameters:**
+- `model` (Model|None): Embedding model configuration
+- `files` (list[str]): List of files to process
+- `vector_db_index` (str): Vector DB index name
+- `chunk_size` (int): Size of text chunks
+- `chunk_overlap` (int): Overlap between chunks
+- `index_schema` (list[dict]): Optional index schema
 
-**Visszatérési érték:**
+**Return Value:**
 - Tuple: `(success, message, processed_files, failed_files)`
 
-**Példa:**
+**Example:**
 ```python
 from schemas.model_schema import Model
 
@@ -81,26 +81,26 @@ success, message, processed, failed = await document_service.ingest_documents(
 
 #### `get_vector_db_indices()`
 
-Elérhető vector DB indexek listázása.
+List available vector DB indices.
 
-**Visszatérési érték:**
-- Lista az index nevekkel
+**Return Value:**
+- List of index names
 
 #### `delete_vector_db_index(index_name)`
 
-Vector DB index törlése.
+Delete vector DB index.
 
-**Paraméterek:**
-- `index_name` (str): Törlendő index neve
+**Parameters:**
+- `index_name` (str): Name of index to delete
 
-**Visszatérési érték:**
+**Return Value:**
 - Tuple: `(success, message)`
 
-## Szöveg darabolás
+## Text Chunking
 
 ### RecursiveCharacterTextSplitter
 
-A service a LangChain `RecursiveCharacterTextSplitter`-t használja:
+The service uses LangChain's `RecursiveCharacterTextSplitter`:
 
 ```python
 text_splitter = RecursiveCharacterTextSplitter(
@@ -111,15 +111,15 @@ text_splitter = RecursiveCharacterTextSplitter(
 )
 ```
 
-### Darabolási stratégia
+### Chunking Strategy
 
-- **Chunk size**: Maximális karakterszám per chunk
-- **Overlap**: Átfedés biztosítása a kontextus megőrzéséhez
-- **Rekurzív**: Intelligens felosztás természetes határok mentén
+- **Chunk size**: Maximum characters per chunk
+- **Overlap**: Overlap to preserve context
+- **Recursive**: Intelligent splitting along natural boundaries
 
-## Redis Vector Store integráció
+## Redis Vector Store Integration
 
-### Konfiguráció
+### Configuration
 
 ```python
 redis_config = RedisConfig(
@@ -135,9 +135,9 @@ vector_store = RedisVectorStore(
 )
 ```
 
-### Index séma
+### Index Schema
 
-#### Alapértelmezett séma
+#### Default Schema
 
 ```python
 DEFAULT_INDEX_SCHEMA = [
@@ -152,42 +152,42 @@ DEFAULT_INDEX_SCHEMA = [
 ]
 ```
 
-#### Egyedi séma
+#### Custom Schema
 
-Lehetőség van egyedi index séma megadására a specifikus igények szerint.
+It is possible to specify a custom index schema according to specific needs.
 
-## Fájl kezelés
+## File Handling
 
-### Ideiglenes fájlok
+### Temporary Files
 
-A service automatikusan kezeli az ideiglenes fájlokat:
+The service automatically handles temporary files:
 
 ```python
 with tempfile.NamedTemporaryFile(delete=False, suffix=file_extension) as temp_file:
-    # Fájl feldolgozás
+    # File processing
     pass
 os.unlink(temp_file_path)  # Cleanup
 ```
 
-### URL-ből letöltés
+### Download from URL
 
-Támogatja a fájlok URL-ből való letöltését:
+Supports downloading files from URLs:
 
 ```python
 if file_path.startswith(('http://', 'https://')):
-    # HTTP letöltés és helyi mentés
+    # HTTP download and local save
 ```
 
-## Hibakezelés
+## Error Handling
 
-### Fájl szintű hibakezelés
+### File-level Error Handling
 
-- Nem támogatott formátumok kiszűrése
-- Sérült fájlok kezelése
-- Hálózati hibák (URL letöltésnél)
-- Memória problémák nagyobb fájloknál
+- Filtering unsupported formats
+- Handling corrupted files
+- Network errors (during URL downloads)
+- Memory issues with large files
 
-### Eredményjelentés
+### Result Reporting
 
 ```python
 return (
@@ -198,49 +198,49 @@ return (
 )
 ```
 
-## Naplózás
+## Logging
 
-- **Info szint**: Feldolgozási előrehaladás
-- **Debug szint**: Chunk méret és feldolgozási részletek
-- **Error szint**: Hibák részletes információkkal
-- **Warning szint**: Figyelmeztető üzenetek
+- **Info level**: Processing progress
+- **Debug level**: Chunk size and processing details
+- **Error level**: Errors with detailed information
+- **Warning level**: Warning messages
 
-## Teljesítmény optimalizáció
+## Performance Optimization
 
-### Batch feldolgozás
+### Batch Processing
 
-Több fájl egyszerre történő feldolgozása hatékonyság növelése érdekében.
+Processing multiple files simultaneously to increase efficiency.
 
-### Memória kezelés
+### Memory Management
 
-- Streaming olvasás nagyobb fájlokhoz
-- Ideiglenes fájlok automatikus törlése
-- Chunk-alapú feldolgozás
+- Streaming reading for large files
+- Automatic deletion of temporary files
+- Chunk-based processing
 
-### Redis optimalizáció
+### Redis Optimization
 
-- Batch insert műveletek
-- Index optimalizált lekérdezések
-- Kapcsolat újrafelhasználás
+- Batch insert operations
+- Optimized index queries
+- Connection reuse
 
-## Biztonsági szempontok
+## Security Considerations
 
-### Fájl validáció
+### File Validation
 
-- Fájl méret ellenőrzés
-- Fájltípus validáció
-- Biztonságos ideiglenes fájl kezelés
+- File size checking
+- File type validation
+- Secure temporary file handling
 
-### URL biztonság
+### URL Security
 
-- URL validáció
-- Timeout beállítások
-- Biztonságos letöltés
+- URL validation
+- Timeout settings
+- Secure downloads
 
-## Függőségek
+## Dependencies
 
-- `langchain`: Document loaderek és text splitter
+- `langchain`: Document loaders and text splitter
 - `langchain_redis`: Redis Vector Store
-- `redis`: Redis kapcsolat
-- `requests`: HTTP fájl letöltés
-- `tempfile`: Ideiglenes fájl kezelés
+- `redis`: Redis connection
+- `requests`: HTTP file download
+- `tempfile`: Temporary file handling

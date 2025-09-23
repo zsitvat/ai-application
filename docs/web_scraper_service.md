@@ -1,30 +1,30 @@
 # Web Scraper Service
 
-## Áttekintés
+## Overview
 
-A Web Scraper Service felelős a weboldalak adatainak automatikus kinyeréséért és feldolgozásáért. Scrapy keretrendszert használ a hatékony és skálázható web scraping funkcionalitáshoz, támogatva a többféle kimeneti formátumot és vektoradatbázis integrációt.
+The Web Scraper Service is responsible for automatic extraction and processing of website data. It uses the Scrapy framework for efficient and scalable web scraping functionality, supporting multiple output formats and vector database integration.
 
-## Főbb komponensek
+## Main Components
 
 ### ScrapyWebScrapingService
 
-A fő service osztály, amely koordinálja a web scraping folyamatot és kezeli a különböző kimeneti formátumokat.
+The main service class that coordinates the web scraping process and handles different output formats.
 
 ### ScrapySpider
 
-Scrapy spider implementáció, amely tiszteletben tartja a domain korlátozásokat és mélységi limiteket.
+Scrapy spider implementation that respects domain restrictions and depth limits.
 
-#### Főbb funkciók
+#### Key Features
 
-- **Többformátumú kimenet**: JSON, PDF, DOCX, Vector DB
-- **Domain korlátozások**: Biztonságos scraping szabályokkal
-- **Mélységi kontroll**: Konfigurálható crawling mélység
-- **Tartalom szűrés**: Releváns tartalom kiemelése
-- **Aszinkron feldolgozás**: Hatékony párhuzamos végrehajtás
+- **Multi-format output**: JSON, PDF, DOCX, Vector DB
+- **Domain restrictions**: Secure scraping rules
+- **Depth control**: Configurable crawling depth
+- **Content filtering**: Relevant content extraction
+- **Asynchronous processing**: Efficient parallel execution
 
-## Használat
+## Usage
 
-### Inicializálás
+### Initialization
 
 ```python
 from src.services.web_scraper.scrapy_web_scraping_service import ScrapyWebScrapingService
@@ -32,7 +32,7 @@ from src.services.web_scraper.scrapy_web_scraping_service import ScrapyWebScrapi
 scraper_service = ScrapyWebScrapingService()
 ```
 
-### Alapvető scraping
+### Basic Scraping
 
 ```python
 from src.schemas.web_scraping_schema import OutputType, WebScrapingRequestSchema
@@ -49,22 +49,22 @@ request = WebScrapingRequestSchema(
 result = await scraper_service.scrape_websites(request)
 ```
 
-## Kimeneti formátumok
+## Output Formats
 
-### JSON kimenet
+### JSON Output
 
 ```python
 request = WebScrapingRequestSchema(
     urls=["https://example.com"],
     output_type=OutputType.JSON,
-    # további paraméterek...
+    # additional parameters...
 )
 
-# Eredmény: JSON struktúra a scraped adatokkal
+# Result: JSON structure with scraped data
 result = await scraper_service.scrape_websites(request)
 ```
 
-### PDF kimenet
+### PDF Output
 
 ```python
 request = WebScrapingRequestSchema(
@@ -73,11 +73,11 @@ request = WebScrapingRequestSchema(
     pdf_filename="scraped_content.pdf"
 )
 
-# Eredmény: PDF fájl base64 kódolással
+# Result: PDF file with base64 encoding
 result = await scraper_service.scrape_websites(request)
 ```
 
-### DOCX kimenet
+### DOCX Output
 
 ```python
 request = WebScrapingRequestSchema(
@@ -86,11 +86,11 @@ request = WebScrapingRequestSchema(
     docx_filename="scraped_content.docx"
 )
 
-# Eredmény: DOCX fájl base64 kódolással
+# Result: DOCX file with base64 encoding
 result = await scraper_service.scrape_websites(request)
 ```
 
-### Vector Database integráció
+### Vector Database Integration
 
 ```python
 model = Model(
@@ -110,34 +110,34 @@ request = WebScrapingRequestSchema(
 result = await scraper_service.scrape_websites(request)
 ```
 
-## Konfigurációs paraméterek
+## Configuration Parameters
 
 ### WebScrapingRequestSchema
 
 ```python
 class WebScrapingRequestSchema(BaseModel):
-    urls: List[str]                    # Scraping célpontok
-    output_type: OutputType            # Kimenet típusa
-    max_depth: int = 1                 # Maximális crawling mélység
-    max_pages: int = 10                # Maximum oldalak száma
-    respect_robots_txt: bool = True    # robots.txt szabályok követése
-    delay: float = 1.0                 # Kérések közötti delay
+    urls: List[str]                    # Scraping targets
+    output_type: OutputType            # Output type
+    max_depth: int = 1                 # Maximum crawling depth
+    max_pages: int = 10                # Maximum number of pages
+    respect_robots_txt: bool = True    # Follow robots.txt rules
+    delay: float = 1.0                 # Delay between requests
     user_agent: str = "..."            # Custom User-Agent
     
-    # Vector DB specifikus
+    # Vector DB specific
     vector_db_index: Optional[str]
     embedding_model: Optional[Model]
     chunk_size: int = 1000
     chunk_overlap: int = 200
     
-    # Fájl specifikus
+    # File specific
     pdf_filename: Optional[str]
     docx_filename: Optional[str]
 ```
 
-## Scrapy konfiguráció
+## Scrapy Configuration
 
-### Spider beállítások
+### Spider Settings
 
 ```python
 class ScrapySpider(Spider):
@@ -156,7 +156,7 @@ class ScrapySpider(Spider):
     }
 ```
 
-### Tartalom szűrők
+### Content Filters
 
 ```python
 CONTENT_SELECTORS = [
@@ -166,7 +166,7 @@ CONTENT_SELECTORS = [
     '.content',
     '.post',
     '.entry',
-    # További releváns selectorok...
+    # Additional relevant selectors...
 ]
 
 EXCLUDED_SELECTORS = [
@@ -176,57 +176,57 @@ EXCLUDED_SELECTORS = [
     '.sidebar',
     '.advertisement',
     '.social-share',
-    # További kizárandó elemek...
+    # Additional elements to exclude...
 ]
 ```
 
-## Tartalom feldolgozás
+## Content Processing
 
-### Szöveg kinyerés
+### Text Extraction
 
 ```python
 def extract_content(self, response):
-    # Releváns tartalom keresése
+    # Search for relevant content
     content_elements = response.css(' , '.join(CONTENT_SELECTORS))
     
     if not content_elements:
-        # Fallback: body tartalom
+        # Fallback: body content
         content_elements = response.css('body')
     
-    # Kizárandó elemek eltávolítása
+    # Remove excluded elements
     for selector in EXCLUDED_SELECTORS:
         content_elements.css(selector).remove()
     
-    # Tiszta szöveg kinyerése
+    # Extract clean text
     text = ' '.join(content_elements.css('::text').getall())
     return self.clean_text(text)
 ```
 
-### Szöveg tisztítás
+### Text Cleaning
 
 ```python
 def clean_text(self, text: str) -> str:
-    # Többszörös whitespace-ek eltávolítása
+    # Remove multiple whitespace
     text = re.sub(r'\s+', ' ', text)
     
-    # Speciális karakterek normalizálása
+    # Normalize special characters
     text = text.replace('\xa0', ' ')  # Non-breaking space
     text = text.replace('\u200b', '')  # Zero-width space
     
-    # Trimmelés
+    # Trim
     return text.strip()
 ```
 
-## PDF generálás
+## PDF Generation
 
-### ReportLab integráció
+### ReportLab Integration
 
 ```python
 async def generate_pdf(self, scraped_data: list, filename: str) -> str:
     pdf_buffer = BytesIO()
     doc = SimpleDocTemplate(pdf_buffer, pagesize=letter)
     
-    # Magyar betűtípus támogatás
+    # Hungarian font support
     font_path = Path(__file__).parent / "fonts" / "DejaVuSans.ttf"
     if font_path.exists():
         pdfmetrics.registerFont(TTFont('DejaVuSans', str(font_path)))
@@ -237,19 +237,19 @@ async def generate_pdf(self, scraped_data: list, filename: str) -> str:
     story = []
     
     for item in scraped_data:
-        # Cím hozzáadása
-        title = Paragraph(item.get('title', 'Nincs cím'), 
+        # Add title
+        title = Paragraph(item.get('title', 'No Title'), 
                          getSampleStyleSheet()['Title'])
         story.append(title)
         
-        # URL hozzáadása
-        url = Paragraph(f"Forrás: {item.get('url', 'Ismeretlen')}", 
+        # Add URL
+        url = Paragraph(f"Source: {item.get('url', 'Unknown')}", 
                        getSampleStyleSheet()['Normal'])
         story.append(url)
         
-        # Tartalom hozzáadása
+        # Add content
         content = item.get('content', '')
-        if len(content) > 5000:  # Túl hosszú tartalom rövidítése
+        if len(content) > 5000:  # Truncate too long content
             content = content[:5000] + "..."
         
         content_para = Paragraph(content, getSampleStyleSheet()['Normal'])
@@ -258,32 +258,32 @@ async def generate_pdf(self, scraped_data: list, filename: str) -> str:
     
     doc.build(story)
     
-    # Base64 kódolás
+    # Base64 encoding
     pdf_buffer.seek(0)
     return base64.b64encode(pdf_buffer.read()).decode('utf-8')
 ```
 
-## DOCX generálás
+## DOCX Generation
 
-### Python-docx integráció
+### Python-docx Integration
 
 ```python
 async def generate_docx(self, scraped_data: list, filename: str) -> str:
     doc = Document()
     
-    # Dokumentum címe
-    title = doc.add_heading('Web Scraping Eredmények', 0)
+    # Document title
+    title = doc.add_heading('Web Scraping Results', 0)
     
     for item in scraped_data:
-        # Oldal címe
-        doc.add_heading(item.get('title', 'Nincs cím'), level=1)
+        # Page title
+        doc.add_heading(item.get('title', 'No Title'), level=1)
         
         # URL
         url_para = doc.add_paragraph()
-        url_para.add_run('Forrás: ').bold = True
-        url_para.add_run(item.get('url', 'Ismeretlen'))
+        url_para.add_run('Source: ').bold = True
+        url_para.add_run(item.get('url', 'Unknown'))
         
-        # Tartalom
+        # Content
         content = item.get('content', '')
         if len(content) > 5000:
             content = content[:5000] + "..."
@@ -291,25 +291,25 @@ async def generate_docx(self, scraped_data: list, filename: str) -> str:
         doc.add_paragraph(content)
         doc.add_page_break()
     
-    # Memóriába mentés
+    # Save to memory
     docx_buffer = BytesIO()
     doc.save(docx_buffer)
     
-    # Base64 kódolás
+    # Base64 encoding
     docx_buffer.seek(0)
     return base64.b64encode(docx_buffer.read()).decode('utf-8')
 ```
 
-## Vector Database integráció
+## Vector Database Integration
 
-### Embedding és tárolás
+### Embedding and Storage
 
 ```python
 async def store_in_vector_db(self, scraped_data: list, request: WebScrapingRequestSchema):
-    # Embedding modell inicializálás
+    # Initialize embedding model
     embedding_model = get_embedding_model(request.embedding_model)
     
-    # Redis konfiguráció
+    # Redis configuration
     redis_config = RedisConfig(
         index_name=request.vector_db_index,
         redis_url=self.redis_url
@@ -320,10 +320,10 @@ async def store_in_vector_db(self, scraped_data: list, request: WebScrapingReque
         config=redis_config
     )
     
-    # Dokumentumok előkészítése
+    # Prepare documents
     documents = []
     for item in scraped_data:
-        # Szöveg darabolás
+        # Text chunking
         text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=request.chunk_size,
             chunk_overlap=request.chunk_overlap
@@ -342,15 +342,15 @@ async def store_in_vector_db(self, scraped_data: list, request: WebScrapingReque
             )
             documents.append(doc)
     
-    # Vector store-ba mentés
+    # Save to vector store
     await vector_store.aadd_documents(documents)
     
-    return f"Sikeresen mentve {len(documents)} dokumentum a vector DB-be"
+    return f"Successfully saved {len(documents)} documents to vector DB"
 ```
 
-## Hibakezelés
+## Error Handling
 
-### Network hibák
+### Network Errors
 
 ```python
 def handle_network_errors(self, failure):
@@ -364,11 +364,11 @@ def handle_network_errors(self, failure):
         return f"Network error: {failure.value}"
 ```
 
-### Content hibák
+### Content Errors
 
 ```python
 def validate_content(self, content: str) -> bool:
-    # Minimális tartalom ellenőrzés
+    # Minimum content check
     if len(content.strip()) < 100:
         return False
     
@@ -380,9 +380,9 @@ def validate_content(self, content: str) -> bool:
     return True
 ```
 
-## Teljesítmény optimalizáció
+## Performance Optimization
 
-### Aszinkron Reactor
+### Asynchronous Reactor
 
 ```python
 def install_reactor():
@@ -392,34 +392,34 @@ def install_reactor():
         twisted.internet.asyncioreactor.install()
 ```
 
-### Memória kezelés
+### Memory Management
 
 ```python
 class MemoryEfficientPipeline:
     def process_item(self, item, spider):
-        # Nagy tartalmak streaming feldolgozása
+        # Streaming processing for large content
         if len(item.get('content', '')) > 10000:
-            # Chunk-okban feldolgozás
+            # Process in chunks
             content = item['content']
             chunks = [content[i:i+1000] for i in range(0, len(content), 1000)]
             item['content_chunks'] = chunks
-            del item['content']  # Memória felszabadítás
+            del item['content']  # Free memory
         
         return item
 ```
 
-## Biztonsági szempontok
+## Security Considerations
 
-### Robots.txt tisztelet
+### Robots.txt Compliance
 
 ```python
 custom_settings = {
-    'ROBOTSTXT_OBEY': True,  # robots.txt követése
-    'ROBOTSTXT_USER_AGENT': '*'  # User agent a robots.txt-hez
+    'ROBOTSTXT_OBEY': True,  # Follow robots.txt
+    'ROBOTSTXT_USER_AGENT': '*'  # User agent for robots.txt
 }
 ```
 
-### Rate limiting
+### Rate Limiting
 
 ```python
 custom_settings = {
@@ -430,16 +430,16 @@ custom_settings = {
 }
 ```
 
-### URL validáció
+### URL Validation
 
 ```python
 def validate_url(self, url: str) -> bool:
-    # Alapvető URL validáció
+    # Basic URL validation
     parsed = urlparse(url)
     if not parsed.scheme or not parsed.netloc:
         return False
     
-    # Biztonsági blacklist
+    # Security blacklist
     blocked_domains = ['localhost', '127.0.0.1', '0.0.0.0']
     if parsed.netloc in blocked_domains:
         return False
@@ -447,12 +447,12 @@ def validate_url(self, url: str) -> bool:
     return True
 ```
 
-## Függőségek
+## Dependencies
 
-- `scrapy`: Web scraping keretrendszer
-- `twisted`: Aszinkron networking
-- `langchain_redis`: Vector store integráció
-- `reportlab`: PDF generálás
-- `python-docx`: DOCX fájlok létrehozása
-- `asyncio`: Aszinkron programozás
-- `base64`: Fájl kódolás
+- `scrapy`: Web scraping framework
+- `twisted`: Asynchronous networking
+- `langchain_redis`: Vector store integration
+- `reportlab`: PDF generation
+- `python-docx`: DOCX file creation
+- `asyncio`: Asynchronous programming
+- `base64`: File encoding

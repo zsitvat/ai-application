@@ -1,36 +1,36 @@
 # Rate Limit Service
 
-## Áttekintés
+## Overview
 
-A Rate Limit Service felelős az API hívások sebességének korlátozásáért Token Bucket algoritmus használatával. Ez a service védi az alkalmazást a túlterheléstől és biztosítja a fair használatot a különböző kliensek között.
+The Rate Limit Service is responsible for controlling API call rates using the Token Bucket algorithm. This service protects the application from overload and ensures fair usage among different clients.
 
-## Főbb komponensek
+## Main Components
 
 ### TokenBucket
 
-A `TokenBucket` osztály implementálja a token bucket algoritmus logikáját a rate limiting számára.
+The `TokenBucket` class implements the token bucket algorithm logic for rate limiting.
 
-#### Működési elv
+#### Operating Principle
 
-- **Kapacitás**: Maximális token szám
-- **Feltöltési ráta**: Token-ek másodpercenkénti generálása
-- **Token fogyasztás**: Kérés végrehajtáshoz szükséges token-ek
-- **Várakozási idő**: Nem elég token esetén számított delay
+- **Capacity**: Maximum number of tokens
+- **Refill rate**: Token generation per second
+- **Token consumption**: Tokens required for request execution
+- **Wait time**: Calculated delay when insufficient tokens
 
 ### RateLimitMiddleware
 
-FastAPI middleware a bejövő HTTP kérések sebességének korlátozására.
+FastAPI middleware for limiting incoming HTTP request rates.
 
-#### Főbb funkciók
+#### Main Features
 
-- **IP-alapú korlátozás**: Kliens IP címek szerint
-- **Automatikus token feltöltés**: Időalapú token regenerálás
-- **Aszinkron várakozás**: Non-blocking delay kezelés
-- **Dinamikus bucket kezelés**: Kliens-specifikus token buckets
+- **IP-based limiting**: Based on client IP addresses
+- **Automatic token refill**: Time-based token regeneration
+- **Asynchronous waiting**: Non-blocking delay handling
+- **Dynamic bucket management**: Client-specific token buckets
 
-## Használat
+## Usage
 
-### Middleware beállítás
+### Middleware Setup
 
 ```python
 from fastapi import FastAPI
@@ -38,76 +38,76 @@ from src.services.rate_limit.rate_limit import RateLimitMiddleware
 
 app = FastAPI()
 
-# Rate limiting middleware hozzáadása
+# Add rate limiting middleware
 app.add_middleware(
     RateLimitMiddleware,
-    capacity=100,      # 100 token kapacitás
-    refill_rate=10.0   # 10 token/másodperc feltöltés
+    capacity=100,      # 100 token capacity
+    refill_rate=10.0   # 10 tokens/second refill
 )
 ```
 
-### Konfiguráció példák
+### Configuration Examples
 
-#### Alapvető API korlátozás
+#### Basic API Limiting
 ```python
-# 60 kérés/perc
+# 60 requests/minute
 app.add_middleware(RateLimitMiddleware, capacity=60, refill_rate=1.0)
 ```
 
-#### Burst támogatással
+#### With Burst Support
 ```python
-# 1000 kérés burst, majd 100 kérés/másodperc
+# 1000 request burst, then 100 requests/second
 app.add_middleware(RateLimitMiddleware, capacity=1000, refill_rate=100.0)
 ```
 
-#### Szigorú korlátozás
+#### Strict Limiting
 ```python
-# 10 kérés/perc
+# 10 requests/minute
 app.add_middleware(RateLimitMiddleware, capacity=10, refill_rate=0.167)
 ```
 
-## Token Bucket algoritmus
+## Token Bucket Algorithm
 
-### Alapelvek
+### Principles
 
-1. **Token készlet**: Minden kliens rendelkezik token készlettel
-2. **Token fogyasztás**: Minden kérés elvesz egy token-t
-3. **Automatikus feltöltés**: Token-ek rendszeresen pótlódnak
-4. **Várakozás**: Nincs elég token esetén a kérés várakozik
+1. **Token pool**: Each client has a token pool
+2. **Token consumption**: Each request consumes one token
+3. **Automatic refill**: Tokens are regularly replenished
+4. **Waiting**: Request waits when insufficient tokens
 
-### Implementáció részletek
+### Implementation Details
 
 ```python
 def consume(self, tokens: int = 1) -> float:
     now = time.time()
     elapsed = now - self.last_refill
     
-    # Token-ek pótlása az eltelt idő alapján
+    # Refill tokens based on elapsed time
     self.tokens = min(self.capacity, self.tokens + elapsed * self.refill_rate)
     self.last_refill = now
     
     if self.tokens >= tokens:
         self.tokens -= tokens
-        return 0.0  # Nincs várakozás
+        return 0.0  # No waiting
     else:
-        # Várakozási idő számítása
+        # Calculate wait time
         required_tokens = tokens - self.tokens
         wait_time = required_tokens / self.refill_rate
         self.tokens = 0
         return wait_time
 ```
 
-## Middleware működés
+## Middleware Operation
 
-### Request feldolgozás
+### Request Processing
 
-1. **Kliens azonosítás**: IP cím alapú bucket lekérés
-2. **Token bucket létrehozás**: Új kliens esetén
-3. **Token fogyasztás**: Kérés végrehajtásához
-4. **Várakozás**: Szükség esetén aszinkron delay
-5. **Request továbbítás**: Rate limit után
+1. **Client identification**: IP-based bucket retrieval
+2. **Token bucket creation**: For new clients
+3. **Token consumption**: For request execution
+4. **Waiting**: Asynchronous delay when needed
+5. **Request forwarding**: After rate limit check
 
-### IP-alapú bucket kezelés
+### IP-based Bucket Management
 
 ```python
 async def dispatch(self, request: Request, call_next):
@@ -126,26 +126,26 @@ async def dispatch(self, request: Request, call_next):
     return response
 ```
 
-## Konfigurációs paraméterek
+## Configuration Parameters
 
-### Capacity (Kapacitás)
+### Capacity
 
-- **Jelentés**: Maximális token szám a bucket-ben
-- **Hatás**: Burst forgalom kezelése
-- **Ajánlás**: Várható peak forgalom alapján
+- **Meaning**: Maximum number of tokens in the bucket
+- **Effect**: Burst traffic handling
+- **Recommendation**: Based on expected peak traffic
 
-### Refill Rate (Feltöltési ráta)
+### Refill Rate
 
-- **Jelentés**: Token-ek másodpercenkénti generálása
-- **Hatás**: Tartós áteresztőképesség
-- **Ajánlás**: Kívánt QPS (Queries Per Second) alapján
+- **Meaning**: Token generation per second
+- **Effect**: Sustained throughput
+- **Recommendation**: Based on desired QPS (Queries Per Second)
 
-## Teljesítmény szempontok
+## Performance Considerations
 
-### Memória használat
+### Memory Usage
 
 ```python
-# Bucket cleanup implementáció (opcionális)
+# Bucket cleanup implementation (optional)
 class RateLimitMiddleware(BaseHTTPMiddleware):
     def __init__(self, app, capacity: int, refill_rate: float, cleanup_interval: int = 3600):
         super().__init__(app)
@@ -156,7 +156,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     def _cleanup_old_buckets(self):
         now = time.time()
         if now - self.last_cleanup > self.cleanup_interval:
-            # Régi, inaktív bucket-ek törlése
+            # Delete old, inactive buckets
             inactive_ips = [
                 ip for ip, bucket in self.buckets.items()
                 if now - bucket.last_refill > self.cleanup_interval
@@ -166,60 +166,60 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             self.last_cleanup = now
 ```
 
-### Scaling megfontolások
+### Scaling Considerations
 
-- **Memory growth**: Bucket szám növekedés nagy forgalomnál
-- **CPU usage**: Token számítások overhead
-- **Network latency**: Várakozási idők hatása
+- **Memory growth**: Bucket count increase with high traffic
+- **CPU usage**: Token calculation overhead
+- **Network latency**: Effect of wait times
 
-## Hibakezelés
+## Error Handling
 
-### Exception handling
+### Exception Handling
 
 ```python
 async def dispatch(self, request: Request, call_next):
     try:
         client_ip = request.client.host
-        # Rate limiting logika...
+        # Rate limiting logic...
         response = await call_next(request)
         return response
     except Exception as e:
-        # Hibás rate limiting esetén is engedjük át a kérést
+        # Allow requests through even with rate limiting errors
         logger.error(f"Rate limiting error: {e}")
         return await call_next(request)
 ```
 
-### Graceful degradation
+### Graceful Degradation
 
-- **Hiba esetén**: Átenged minden kérést
-- **Részleges működés**: Token bucket hibák esetén
-- **Monitoring**: Hibák naplózása
+- **On error**: Pass through all requests
+- **Partial operation**: Handle token bucket errors
+- **Monitoring**: Log errors
 
-## Biztonsági szempontok
+## Security Considerations
 
-### DDoS védelem
+### DDoS Protection
 
 ```python
-# Extrém rate limiting agresszív támadások ellen
+# Extreme rate limiting against aggressive attacks
 class StrictRateLimitMiddleware(RateLimitMiddleware):
     def __init__(self, app):
-        super().__init__(app, capacity=10, refill_rate=0.1)  # 6 kérés/perc max
+        super().__init__(app, capacity=10, refill_rate=0.1)  # 6 requests/minute max
 ```
 
-### IP spoofing védelem
+### IP Spoofing Protection
 
 ```python
 def get_real_client_ip(self, request: Request) -> str:
-    # X-Forwarded-For header kezelése proxy esetén
+    # Handle X-Forwarded-For header for proxy cases
     forwarded_for = request.headers.get("X-Forwarded-For")
     if forwarded_for:
         return forwarded_for.split(",")[0].strip()
     return request.client.host
 ```
 
-## Monitorozás és naplózás
+## Monitoring and Logging
 
-### Rate limit események
+### Rate Limit Events
 
 ```python
 import logging
@@ -236,10 +236,10 @@ class MonitoredRateLimitMiddleware(RateLimitMiddleware):
         if wait_time > 0:
             logger.warning(f"Rate limit applied for {client_ip}, wait: {wait_time}s")
         
-        # Middleware folytatása...
+        # Continue middleware...
 ```
 
-### Metrikák gyűjtése
+### Metrics Collection
 
 ```python
 class MetricsRateLimitMiddleware(RateLimitMiddleware):
@@ -258,11 +258,11 @@ class MetricsRateLimitMiddleware(RateLimitMiddleware):
         # Rate limiting logic...
 ```
 
-## Alternatívák és kiterjesztések
+## Alternatives and Extensions
 
-### Redis-alapú rate limiting
+### Redis-based Rate Limiting
 
-Skálázható megoldás több server instance esetén:
+Scalable solution for multiple server instances:
 
 ```python
 import redis.asyncio as redis
@@ -275,9 +275,9 @@ class RedisRateLimitMiddleware(BaseHTTPMiddleware):
         self.refill_rate = refill_rate
 ```
 
-### Kulcs-alapú rate limiting
+### Key-based Rate Limiting
 
-API kulcsok szerint korlátozás IP helyett:
+Rate limiting by API keys instead of IP:
 
 ```python
 def get_rate_limit_key(self, request: Request) -> str:
@@ -287,9 +287,9 @@ def get_rate_limit_key(self, request: Request) -> str:
     return f"ip:{request.client.host}"
 ```
 
-## Függőségek
+## Dependencies
 
-- `asyncio`: Aszinkron műveletek
-- `time`: Időkezelés
-- `fastapi`: Request/Response objektumok
-- `starlette.middleware.base`: Middleware alaposztály
+- `asyncio`: Asynchronous operations
+- `time`: Time handling
+- `fastapi`: Request/Response objects
+- `starlette.middleware.base`: Middleware base class

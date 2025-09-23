@@ -8,11 +8,13 @@ This document describes the two graph execution endpoints available in the recru
 **Endpoint:** `POST /api/graph`  
 **Response Type:** JSON String  
 **Use Case:** When you need the complete result after all agents have finished processing.
+**Data Protection:** Automatic personal data filtering applied to responses.
 
 ### 2. Streaming Graph Execution  
 **Endpoint:** `POST /api/graph/stream`  
 **Response Type:** Server-Sent Events (SSE)  
 **Use Case:** When you want real-time updates as each agent processes the request.
+**Data Protection:** Personal data filtering applied before final response.
 
 ## Request Schema
 
@@ -211,9 +213,36 @@ Graph configurations can be provided in the request parameters or loaded from ap
           }
         }
       },
-      "allow_supervisor_finish": true
+      "allow_supervisor_finish": true,
+      "personal_data_filter": {
+        "enabled": true,
+        "use_regex_only": false,
+        "replacement_strategy": "mask"
+      }
     }
   }
+}
+```
+
+## Data Protection Features
+
+### Automatic Personal Data Filtering
+
+Both endpoints automatically filter personal data from responses:
+
+- **Regex-based filtering**: Fast pattern matching for emails, phone numbers, IDs
+- **AI-powered filtering**: Contextual detection of names and sensitive information  
+- **Configurable strategies**: Mask, remove, or anonymize detected data
+- **GDPR compliance**: Ensures personal data protection in API responses
+
+### Filter Configuration Options
+
+```json
+"personal_data_filter": {
+  "enabled": true,              // Enable/disable filtering
+  "use_regex_only": false,      // true = regex only, false = regex + AI
+  "replacement_strategy": "mask", // "mask", "remove", "anonymize"
+  "mask_character": "*"         // Character used for masking
 }
 ```
 

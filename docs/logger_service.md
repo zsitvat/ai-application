@@ -1,30 +1,30 @@
 # Logger Service
 
-## Áttekintés
+## Overview
 
-A Logger Service felelős az alkalmazás strukturált naplózásáért. JSON formátumú naplózást biztosít mind konzol, mind fájl kimenethez, forgatható fájlokkal és konfigurálható naplózási szintekkel.
+The Logger Service is responsible for structured application logging. It provides JSON-formatted logging for both console and file output, with rotating files and configurable log levels.
 
-## Főbb komponensek
+## Main Components
 
 ### LoggerService
 
-A `LoggerService` osztály centralizált naplózási funkcionalitást biztosít az egész alkalmazás számára.
+The `LoggerService` class provides centralized logging functionality for the entire application.
 
-#### Főbb funkciók
+#### Main Features
 
-- **Strukturált naplózás**: JSON formátumú log üzenetek
-- **Többszintű kimenet**: Konzol és fájl logging
-- **Fájl rotáció**: Automatikus log fájl forgatás
-- **Konfigurálható szintek**: Rugalmas log level beállítások
-- **Singleton pattern**: Egy logger instance per név
+- **Structured logging**: JSON-formatted log messages
+- **Multi-level output**: Console and file logging
+- **File rotation**: Automatic log file rotation
+- **Configurable levels**: Flexible log level settings
+- **Singleton pattern**: One logger instance per name
 
 ### JSONFormatter
 
-Egyedi JSON formatter a strukturált naplózáshoz.
+Custom JSON formatter for structured logging.
 
-## Használat
+## Usage
 
-### Környezeti változók
+### Environment Variables
 
 ```bash
 LOG_FILE_PATH=/path/to/logs/app.log
@@ -32,7 +32,7 @@ LOG_MAX_FILE_SIZE_MB=10
 LOG_BACKUP_COUNT=5
 ```
 
-### Inicializálás
+### Initialization
 
 ```python
 from src.services.logger.logger_service import LoggerService
@@ -44,64 +44,64 @@ logger = logger_service.setup_logger(
 )
 ```
 
-### Alapvető használat
+### Basic Usage
 
 ```python
-logger.info("Alkalmazás elindult")
-logger.debug("Debug információ")
-logger.warning("Figyelmeztetés")
-logger.error("Hiba történt")
-logger.critical("Kritikus hiba")
+logger.info("Application started")
+logger.debug("Debug information")
+logger.warning("Warning message")
+logger.error("An error occurred")
+logger.critical("Critical error")
 ```
 
-## Konfigurációs opciók
+## Configuration Options
 
-### Log szintek
+### Log Levels
 
-- **DEBUG**: Részletes fejlesztői információk
-- **INFO**: Általános információs üzenetek
-- **WARNING**: Figyelmeztetések
-- **ERROR**: Hibák
-- **CRITICAL**: Kritikus hibák
+- **DEBUG**: Detailed developer information
+- **INFO**: General informational messages
+- **WARNING**: Warning messages
+- **ERROR**: Error messages
+- **CRITICAL**: Critical errors
 
-### Fájl konfiguráció
+### File Configuration
 
-#### Fájl méret korlát
+#### File Size Limit
 
 ```python
 max_bytes = int(os.getenv("LOG_MAX_FILE_SIZE_MB", "10")) * 1024 * 1024
 ```
 
-#### Backup fájlok száma
+#### Number of Backup Files
 
 ```python
 backup_count = int(os.getenv("LOG_BACKUP_COUNT", "5"))
 ```
 
-## JSON kimenet formátum
+## JSON Output Format
 
-### Standard mezők
+### Standard Fields
 
 ```json
 {
     "timestamp": "2024-01-15T10:30:45.123Z",
     "level": "INFO",
     "logger": "my_application",
-    "message": "Üzenet szövege",
+    "message": "Message text",
     "module": "module_name",
     "function": "function_name",
     "line": 42
 }
 ```
 
-### Hibák esetén
+### For Errors
 
 ```json
 {
     "timestamp": "2024-01-15T10:30:45.123Z",
     "level": "ERROR",
     "logger": "my_application", 
-    "message": "Hiba üzenet",
+    "message": "Error message",
     "exception": {
         "type": "ValueError",
         "message": "Invalid value provided",
@@ -110,7 +110,7 @@ backup_count = int(os.getenv("LOG_BACKUP_COUNT", "5"))
 }
 ```
 
-## Fájl rotáció
+## File Rotation
 
 ### RotatingFileHandler
 
@@ -123,69 +123,69 @@ file_handler = RotatingFileHandler(
 )
 ```
 
-### Rotációs logika
+### Rotation Logic
 
-- **Méret alapú**: Fájl eléri a max méretet
-- **Automatikus**: Új fájl indítása és régi átnevezése
-- **Backup limit**: Maximális backup fájlok száma
-- **UTF-8 encoding**: Unicode karakterek támogatása
+- **Size-based**: File reaches maximum size
+- **Automatic**: Start new file and rename old one
+- **Backup limit**: Maximum number of backup files
+- **UTF-8 encoding**: Unicode character support
 
-## Singleton pattern
+## Singleton Pattern
 
-### Logger cache
+### Logger Cache
 
 ```python
 def setup_logger(self, log_level: str = "DEBUG", logger_name: str = "logger"):
     if logger_name in self._loggers:
         return self._loggers[logger_name]
     
-    # Új logger létrehozása...
+    # Create new logger...
     self._loggers[logger_name] = logger
     return logger
 ```
 
-### Előnyök
+### Benefits
 
-- **Memória hatékonyság**: Egy instance per logger név
-- **Konzisztencia**: Ugyanazok a beállítások
-- **Performance**: Gyorsabb hozzáférés
+- **Memory efficiency**: One instance per logger name
+- **Consistency**: Same settings throughout
+- **Performance**: Faster access
 
-## Hibakezelés
+## Error Handling
 
-### Fájl írási hibák
+### File Writing Errors
 
 ```python
 try:
     self._ensure_log_directory(log_file_path)
-    # Fájl handler létrehozása
+    # Create file handler
 except Exception as e:
     logger.warning(f"Failed to setup file logging: {e}")
-    # Folytatás csak konzol logginggal
+    # Continue with console logging only
 ```
 
-### Graceful degradation
+### Graceful Degradation
 
-- Fájl logging hiba esetén konzol logging folytatódik
-- Hiányzó könyvtárak automatikus létrehozása
-- Hálózati meghajtók kezelése
+- Console logging continues if file logging fails
+- Automatic creation of missing directories
+- Network drive handling
 
-## Teljesítmény szempontok
+## Performance Considerations
 
 ### Buffering
 
-- **Automatikus buffer**: OS szintű optimalizáció
-- **Flush policy**: Kritikus üzenetek azonnali írása
-- **Async logging**: Non-blocking log írás
+- **Automatic buffer**: OS-level optimization
+- **Flush policy**: Immediate writing for critical messages
+- **Async logging**: Non-blocking log writing
 
-### Memory usage
+### Memory Usage
 
-- **Circular buffer**: Korlátozott memória használat
-- **Lazy initialization**: Logger on-demand létrehozás
-- **Cleanup**: Automatikus resource felszabadítás
+- **Circular buffer**: Limited memory usage
+- **Lazy initialization**: Logger creation on-demand
+- **Cleanup**: Automatic resource cleanup
 
-## Biztonsági szempontok
+## Security Considerations
 
-### Fájl jogosultságok
+### File Permissions
 
 ```python
 def _ensure_log_directory(self, log_file_path: str):
@@ -193,35 +193,35 @@ def _ensure_log_directory(self, log_file_path: str):
     log_dir.mkdir(parents=True, exist_ok=True, mode=0o755)
 ```
 
-### Sensitive data
+### Sensitive Data
 
-- **Data masking**: Érzékeny adatok maszkolása
-- **PII filtering**: Személyes adatok szűrése
-- **Secure deletion**: Biztonságos log törlés
+- **Data masking**: Masking sensitive data
+- **PII filtering**: Personal data filtering
+- **Secure deletion**: Secure log deletion
 
-## Monitorozás és elemzés
+## Monitoring and Analysis
 
-### Log aggregáció
+### Log Aggregation
 
-A JSON formátum lehetővé teszi:
+The JSON format enables:
 
 - **ELK Stack**: Elasticsearch, Logstash, Kibana
 - **Splunk**: Enterprise log management
-- **Grafana**: Vizualizáció és alerting
-- **Custom parsers**: Egyedi elemző eszközök
+- **Grafana**: Visualization and alerting
+- **Custom parsers**: Custom analysis tools
 
-### Metrikák kinyerése
+### Metrics Extraction
 
 ```python
-# Példa: Error rate számítás
+# Example: Error rate calculation
 error_count = len([log for log in logs if log["level"] == "ERROR"])
 total_count = len(logs)
 error_rate = error_count / total_count * 100
 ```
 
-## Integráció más szolgáltatásokkal
+## Integration with Other Services
 
-### FastAPI integration
+### FastAPI Integration
 
 ```python
 import logging
@@ -238,7 +238,7 @@ async def log_requests(request: Request, call_next):
     return response
 ```
 
-### Database logging
+### Database Logging
 
 ```python
 class DatabaseLogger:
@@ -253,10 +253,10 @@ class DatabaseLogger:
         })
 ```
 
-## Függőségek
+## Dependencies
 
 - `logging`: Python standard logging
 - `logging.handlers`: RotatingFileHandler
-- `pathlib`: Path kezelés
+- `pathlib`: Path handling
 - `sys`: Standard output
 - `os`: Környezeti változók

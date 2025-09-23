@@ -76,8 +76,9 @@ The application follows a Service-Oriented Architecture (SOA) where each service
 - State management and checkpointing
 - Streaming responses
 - Tool integration
+- Personal data filtering
 
-**Technologies**: LangGraph, LangChain, Redis, importlib
+**Technologies**: LangGraph, LangChain, Redis, importlib, Personal Data Filter
 
 ---
 
@@ -143,33 +144,10 @@ The application follows a Service-Oriented Architecture (SOA) where each service
 
 **Main Components**:
 - **Token Validation**: Token counting and text truncation
-- **Personal Data Filter**: Personal data detection and filtering
+- **Personal Data Filter**: Dual-mode personal data detection and filtering (regex + AI)
 - **Topic Validator**: Topic relevance validation
 
-**Technologies**: tiktoken, spaCy, Transformers, AsyncIO
-
-## Inter-Service Dependencies
-
-```mermaid
-graph TD
-    A[Graph Service] --> B[Data API Service]
-    A --> C[Chat History Service]
-    A --> D[Document Service]
-    A --> E[Validator Services]
-    
-    D --> F[Logger Service]
-    B --> F
-    C --> F
-    
-    G[System Service] --> B
-    G --> C
-    G --> F
-    
-    H[Web Scraper Service] --> D
-    H --> F
-    
-    I[Rate Limit Service] --> F
-```
+**Technologies**: tiktoken, spaCy, Transformers, AsyncIO, regex pattern matching
 
 ## Configuration Overview
 

@@ -1,7 +1,6 @@
-vagy pip-pel:
 # Recruiter AI App
 
-This application is a multi-agent artificial intelligence system capable of processing, searching, and filtering documents, web data, and other sources. The system supports vector database, personal data masking, web search, and graph-based workflows.
+This application is a multi-agent artificial intelligence system capable of processing, searching, and filtering documents, web data, and other sources. The system supports vector database, personal data masking, web search, and graph-bsased workflows.
 
 ## Getting Started
 

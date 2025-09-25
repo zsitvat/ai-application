@@ -6,6 +6,7 @@ handling environment variables and providing type-safe configuration access.
 """
 
 import os
+
 from pydantic import BaseModel, Field, computed_field, field_validator
 
 from .constants import (

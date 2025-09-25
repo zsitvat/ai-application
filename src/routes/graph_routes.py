@@ -14,7 +14,7 @@ router = APIRouter(tags=["graph"])
 
 def get_app_settings_service() -> AppSettingsService:
     """Dependency injection for AppSettingsService.
-    
+
     Returns:
         AppSettingsService: Instance of the application settings service
     """
@@ -25,10 +25,10 @@ def get_graph_dependency(
     app_settings_service: AppSettingsService = Depends(get_app_settings_service),
 ) -> Graph:
     """Dependency injection for Graph instance.
-    
+
     Args:
         app_settings_service: Application settings service dependency
-        
+
     Returns:
         Graph: Configured graph instance
     """
@@ -44,11 +44,11 @@ def get_graph_service(
     graph: Graph = Depends(get_graph_dependency),
 ) -> GraphService:
     """Dependency injection for GraphService.
-    
+
     Args:
         app_settings_service: Application settings service dependency
         graph: Graph instance dependency
-        
+
     Returns:
         GraphService: Configured graph service instance
     """
@@ -61,17 +61,17 @@ async def execute_graph(
     graph_service: GraphService = Depends(get_graph_service),
 ) -> str:
     """Execute multi-agent graph solution.
-    
+
     This endpoint executes a multi-agent workflow using the provided input
     and returns the final response as a complete string.
-    
+
     Args:
         request: The graph execution request containing user input and parameters
         graph_service: Injected graph service for workflow execution
-        
+
     Returns:
         str: Final response from the multi-agent graph execution
-        
+
     Raises:
         HTTPException: 400 for invalid input, 503 for service unavailable,
                       500 for unexpected errors
@@ -115,17 +115,17 @@ async def execute_graph_stream(
     graph_service: GraphService = Depends(get_graph_service),
 ) -> StreamingResponse:
     """Execute multi-agent graph solution with token-by-token streaming.
-    
+
     This endpoint executes a multi-agent workflow and streams the final
     response token by token for real-time user experience.
-    
+
     Args:
         request: The graph execution request containing user input and parameters
         graph_service: Injected graph service for workflow execution
-        
+
     Returns:
         StreamingResponse: Streaming response with tokens from graph execution
-        
+
     Raises:
         HTTPException: 400 for invalid input, 503 for service unavailable,
                       500 for unexpected errors

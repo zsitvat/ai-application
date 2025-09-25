@@ -1,6 +1,6 @@
 # Recruiter AI App
 
-This application is a multi-agent artificial intelligence system capable of processing, searching, and filtering documents, web data, and other sources. The system supports vector database, personal data masking, web search, and graph-bsased workflows.
+This application is a multi-agent artificial intelligence system capable of processing, searching, and filtering documents, web data, and other sources. The system supports vector database, personal data masking, web search, and graph-based workflows.
 
 ## Getting Started
 
@@ -187,3 +187,40 @@ For testing and interacting with the multi-agent system, you can use the **LangC
 This provides a user-friendly interface for testing your multi-agent workflows, trying different inputs, and observing how the personal data filter, topic validation, and other components work together.
 
 **Repository:** https://github.com/langchain-ai/agent-chat-ui
+
+## Examples and Research Materials
+
+This repository contains comprehensive examples and research notebooks related to the thesis work:
+
+### 📁 Examples Directory (`/examples/`)
+- **Configuration Examples**: Sample graph configurations for different AI providers (OpenAI, Azure OpenAI)
+- **Document Examples**: Sample position descriptions and company documents for testing
+- **API Examples**: Postman collection with ready-to-use API requests
+
+### 📓 Research Notebooks (`/notebooks/`)
+The notebooks directory contains detailed research and experimentation work for the thesis:
+
+- **`graphs.ipynb`** - Multi-agent graph workflow development and testing
+- **`fine_tunning.ipynb`** - Model fine-tuning experiments and analysis
+- **`guardrails.ipynb`** - AI safety and content filtering research
+- **`local_llms.ipynb`** - Local language model integration and benchmarking
+- **`retriver_test.ipynb`** - Vector database and retrieval system optimization
+- **`redis_filter.ipynb`** - Redis-based filtering and caching mechanisms
+- **`prompt_copy_script.ipynb`** - Prompt engineering and optimization techniques
+
+#### Intent Recognition Research (`/notebooks/intent_recognition/`)
+Specialized notebooks for natural language understanding:
+- **`BERT.ipynb`** - BERT model implementation for intent classification
+- **`HuBERT.ipynb`** - Hungarian BERT model adaptation
+- **`HuSpaCy.ipynb`** - Hungarian language processing with spaCy
+- **`tensorflow_IR.ipynb`** - TensorFlow-based intent recognition
+- **`whisper_openai.ipynb`** - Speech-to-text integration with OpenAI Whisper
+- **`rasa.ipynb`** - Conversational AI development with Rasa framework
+
+### 📋 Documentation (`/docs/`)
+Comprehensive API and service documentation:
+- Service architecture overview
+- API endpoint specifications
+- Implementation guides for each component
+
+These materials provide complete insight into the research process, experimental results, and technical implementation details of the multi-agent AI system developed for the thesis.

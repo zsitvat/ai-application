@@ -12,16 +12,29 @@ logger = LoggerService().setup_logger()
 router = APIRouter(tags=["graph"])
 
 
-def get_app_settings_service():
+def get_app_settings_service() -> AppSettingsService:
+    """Dependency injection for AppSettingsService.
+    
+    Returns:
+        AppSettingsService: Instance of the application settings service
+    """
     return AppSettingsService()
 
 
 def get_graph_dependency(
     app_settings_service: AppSettingsService = Depends(get_app_settings_service),
-):
+) -> Graph:
+    """Dependency injection for Graph instance.
+    
+    Args:
+        app_settings_service: Application settings service dependency
+        
+    Returns:
+        Graph: Configured graph instance
+    """
     return Graph(
         graph_config=None,
-        logger=LoggerService().get_logger(__name__),
+        logger=LoggerService().setup_logger(),
         app_settings_service=app_settings_service,
     )
 
@@ -29,7 +42,16 @@ def get_graph_dependency(
 def get_graph_service(
     app_settings_service: AppSettingsService = Depends(get_app_settings_service),
     graph: Graph = Depends(get_graph_dependency),
-):
+) -> GraphService:
+    """Dependency injection for GraphService.
+    
+    Args:
+        app_settings_service: Application settings service dependency
+        graph: Graph instance dependency
+        
+    Returns:
+        GraphService: Configured graph service instance
+    """
     return GraphService(app_settings_service, graph)
 
 
@@ -37,8 +59,23 @@ def get_graph_service(
 async def execute_graph(
     request: RestOperationPostSchema,
     graph_service: GraphService = Depends(get_graph_service),
-):
-    """Execute multi-agent graph solution."""
+) -> str:
+    """Execute multi-agent graph solution.
+    
+    This endpoint executes a multi-agent workflow using the provided input
+    and returns the final response as a complete string.
+    
+    Args:
+        request: The graph execution request containing user input and parameters
+        graph_service: Injected graph service for workflow execution
+        
+    Returns:
+        str: Final response from the multi-agent graph execution
+        
+    Raises:
+        HTTPException: 400 for invalid input, 503 for service unavailable,
+                      500 for unexpected errors
+    """
     try:
         app_id = int(request.applicationIdentifier.applicationIdentifier)
 
@@ -52,11 +89,23 @@ async def execute_graph(
 
         return result
 
+    except ValueError as ex:
+        logger.error(f"[GraphRoutes] Invalid input in graph execution: {str(ex)}")
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid input for graph execution: {str(ex)}",
+        )
+    except RuntimeError as ex:
+        logger.error(f"[GraphRoutes] Runtime error in graph execution: {str(ex)}")
+        raise HTTPException(
+            status_code=503,
+            detail=f"Graph execution service unavailable: {str(ex)}",
+        )
     except Exception as ex:
-        logger.error(f"[GraphRoutes] Error in graph execution: {str(ex)}")
+        logger.error(f"[GraphRoutes] Unexpected error in graph execution: {str(ex)}")
         raise HTTPException(
             status_code=500,
-            detail=f"Error executing multi-agent graph: {str(ex)}",
+            detail=f"Unexpected error executing multi-agent graph: {str(ex)}",
         )
 
 
@@ -64,8 +113,23 @@ async def execute_graph(
 async def execute_graph_stream(
     request: RestOperationPostSchema,
     graph_service: GraphService = Depends(get_graph_service),
-):
-    """Execute multi-agent graph solution with token-by-token streaming."""
+) -> StreamingResponse:
+    """Execute multi-agent graph solution with token-by-token streaming.
+    
+    This endpoint executes a multi-agent workflow and streams the final
+    response token by token for real-time user experience.
+    
+    Args:
+        request: The graph execution request containing user input and parameters
+        graph_service: Injected graph service for workflow execution
+        
+    Returns:
+        StreamingResponse: Streaming response with tokens from graph execution
+        
+    Raises:
+        HTTPException: 400 for invalid input, 503 for service unavailable,
+                      500 for unexpected errors
+    """
     try:
         app_id = int(request.applicationIdentifier.applicationIdentifier)
 
@@ -89,9 +153,21 @@ async def execute_graph_stream(
             },
         )
 
+    except ValueError as ex:
+        logger.error(f"[GraphRoutes] Invalid input in graph streaming: {str(ex)}")
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid input for graph streaming: {str(ex)}",
+        )
+    except RuntimeError as ex:
+        logger.error(f"[GraphRoutes] Runtime error in graph streaming: {str(ex)}")
+        raise HTTPException(
+            status_code=503,
+            detail=f"Graph streaming service unavailable: {str(ex)}",
+        )
     except Exception as ex:
-        logger.error(f"[GraphRoutes] Error in graph streaming execution: {str(ex)}")
+        logger.error(f"[GraphRoutes] Unexpected error in graph streaming: {str(ex)}")
         raise HTTPException(
             status_code=500,
-            detail=f"Error executing streaming multi-agent graph: {str(ex)}",
+            detail=f"Unexpected error executing streaming multi-agent graph: {str(ex)}",
         )

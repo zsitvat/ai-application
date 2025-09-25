@@ -9,7 +9,7 @@ from redis.commands.search.query import Query
 from src.services.logger.logger_service import LoggerService
 from src.utils.quote_if_space import quote_if_space
 
-logger = LoggerService().get_logger(__name__)
+logger = LoggerService().setup_logger()
 
 
 def _filter_document_fields(doc: Any) -> dict[str, Any]:

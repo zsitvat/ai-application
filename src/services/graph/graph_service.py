@@ -5,23 +5,43 @@ from uuid import uuid4
 from langchain_core.messages import HumanMessage
 from langchain_core.runnables.config import RunnableConfig
 
+from src.config.app_config import config
 from src.config.constants import DEFAULT_RECURSION_LIMIT
 from src.schemas.graph_schema import AgentState
 from src.services.data_api.app_settings import AppSettingsService
+from src.services.graph.graph import Graph
 from src.services.logger.logger_service import LoggerService
 
 
 class GraphService:
-    """Service for handling multi-agent graph execution with supervisor pattern."""
+    """Service for handling multi-agent graph execution with supervisor pattern.
 
-    def __init__(self, app_settings_service: AppSettingsService, graph):
-        self.logger = LoggerService().get_logger(__name__)
+    This service manages the execution of multi-agent workflows using a supervisor
+    pattern for coordinating different agents in the system.
+
+    Attributes:
+        logger: Logger instance for debugging and monitoring
+        app_settings_service: Service for managing application settings
+        graph: Graph instance for workflow execution
+        redis_history_db: Redis database for chat history
+        redis_url: Connection URL for Redis
+        tracer_type: Type of tracer for monitoring
+    """
+
+    def __init__(self, app_settings_service: AppSettingsService, graph: Graph) -> None:
+        """Initialize the GraphService.
+
+        Args:
+            app_settings_service: Service for managing application settings
+            graph: Graph instance for workflow execution
+        """
+        self.logger = LoggerService().setup_logger()
         self.app_settings_service = app_settings_service
         self.graph = graph
 
-        self.redis_history_db = os.getenv("REDIS_HISTORY_DB")
-        self.redis_url = f"redis://{os.getenv('REDIS_PASSWORD', '') + '@' if os.getenv('REDIS_PASSWORD') else ''}{os.getenv('REDIS_HOST')}:{os.getenv('REDIS_PORT')}{'/' + self.redis_history_db if self.redis_history_db else ''}"
-        self.tracer_type = os.getenv("TRACER_TYPE", "langsmith")
+        self.redis_config = config.redis
+        self.redis_url = config.redis.url
+        self.tracer_type = config.tracing.tracer_type
         os.environ["REDIS_URL"] = self.redis_url
 
     def _prepare_initial_state(
@@ -29,10 +49,21 @@ class GraphService:
         user_input: str,
         app_id: int,
         user_id: str | None = None,
-        context: dict | None = None,
-        parameters: dict | None = None,
+        context: dict[str, any] | None = None,
+        parameters: dict[str, any] | None = None,
     ) -> AgentState:
-        """Prepare the initial state for graph execution."""
+        """Prepare the initial state for graph execution.
+
+        Args:
+            user_input: The user's input message
+            app_id: Application identifier
+            user_id: Optional user identifier, generates UUID if None
+            context: Optional context dictionary for the conversation
+            parameters: Optional parameters for graph execution
+
+        Returns:
+            AgentState: Prepared initial state for the workflow
+        """
         initial_parameters = dict(parameters) if parameters else {}
         initial_parameters["app_id"] = app_id
 
@@ -43,8 +74,15 @@ class GraphService:
             user_id=user_id or uuid4(),
         )
 
-    async def _execute_workflow(self, initial_state: AgentState) -> dict:
-        """Execute the workflow with the given initial state."""
+    async def _execute_workflow(self, initial_state: AgentState) -> dict[str, any]:
+        """Execute the workflow with the given initial state.
+
+        Args:
+            initial_state: The prepared initial state for workflow execution
+
+        Returns:
+            Dict[str, Any]: Result of the workflow execution
+        """
         recursion_limit = getattr(
             self.graph.graph_config, "recursion_limit", DEFAULT_RECURSION_LIMIT
         )
@@ -58,13 +96,26 @@ class GraphService:
         user_input: str,
         app_id: int,
         user_id: str | None = None,
-        context: dict | None = None,
-        parameters: dict | None = None,
+        context: dict[str, any] | None = None,
+        parameters: dict[str, any] | None = None,
     ) -> str:
-        """Execute the multi-agent graph solution with supervisor pattern."""
-        self.logger.info(
-            f"[GraphService|execute_graph] started (app_id={app_id}, user_id={user_id})"
-        )
+        """Execute the multi-agent graph solution with supervisor pattern.
+
+        Args:
+            user_input: The user's input message
+            app_id: Application identifier
+            user_id: Optional user identifier
+            context: Optional context dictionary for the conversation
+            parameters: Optional parameters for graph execution
+
+        Returns:
+            str: Final response from the graph execution
+
+        Raises:
+            RuntimeError: When there's a runtime error in graph execution
+            Exception: When there's an unexpected error
+        """
+        self.logger.debug(f"Executing graph for app_id={app_id}, user_id={user_id}")
         try:
             # Prepare graph configuration
             graph_config = parameters.get("graph_config") if parameters else None
@@ -79,13 +130,15 @@ class GraphService:
             result = await self._execute_workflow(initial_state)
 
             final_response = self.graph._generate_final_response(result)
-            self.logger.info(
-                f"[GraphService|execute_graph] finished (app_id={app_id}, user_id={user_id})"
-            )
             return final_response
+        except RuntimeError as ex:
+            self.logger.error(
+                f"Runtime error in graph execution (app_id={app_id}): {str(ex)}"
+            )
+            return await self.graph._handle_execution_error(user_input, str(ex))
         except Exception as ex:
             self.logger.error(
-                f"[GraphService|execute_graph] error (app_id={app_id}, user_id={user_id}): {str(ex)}"
+                f"Unexpected error in graph execution (app_id={app_id}): {str(ex)}"
             )
             return await self.graph._handle_execution_error(user_input, str(ex))
 
@@ -94,12 +147,27 @@ class GraphService:
         user_input: str,
         app_id: int,
         user_id: str | None = None,
-        context: dict | None = None,
-        parameters: dict | None = None,
+        context: dict[str, any] | None = None,
+        parameters: dict[str, any] | None = None,
     ) -> AsyncGenerator[str, None]:
-        """Execute the multi-agent graph solution and stream only the final response token by token."""
-        self.logger.info(
-            f"[GraphService|execute_graph_stream] started (app_id={app_id}, user_id={user_id})"
+        """Execute the multi-agent graph solution and stream the final response token by token.
+
+        Args:
+            user_input: The user's input message
+            app_id: Application identifier
+            user_id: Optional user identifier
+            context: Optional context dictionary for the conversation
+            parameters: Optional parameters for graph execution
+
+        Yields:
+            str: Tokens from the final response
+
+        Raises:
+            RuntimeError: When there's a runtime error in graph execution
+            Exception: When there's an unexpected error
+        """
+        self.logger.debug(
+            f"Streaming graph execution for app_id={app_id}, user_id={user_id}"
         )
         try:
             # Prepare graph configuration
@@ -117,15 +185,18 @@ class GraphService:
             final_response = self.graph._generate_final_response(result)
             async for token in self.graph._tokenize(final_response):
                 yield token
-            self.logger.info(
-                f"[GraphService|execute_graph_stream] finished (app_id={app_id}, user_id={user_id})"
+        except RuntimeError as ex:
+            self.logger.error(
+                f"Runtime error in graph streaming (app_id={app_id}): {str(ex)}"
             )
+            error_response = await self.graph._handle_execution_error(
+                user_input, str(ex)
+            )
+            async for token in self.graph._tokenize(error_response):
+                yield token
         except Exception as ex:
             self.logger.error(
-                f"[GraphService|execute_graph_stream] error (app_id={app_id}, user_id={user_id}): {str(ex)}"
-            )
-            self.logger.info(
-                f"[GraphService|execute_graph_stream] finished (app_id={app_id}, user_id={user_id})"
+                f"Unexpected error in graph streaming (app_id={app_id}): {str(ex)}"
             )
             error_response = await self.graph._handle_execution_error(
                 user_input, str(ex)
@@ -134,5 +205,13 @@ class GraphService:
                 yield token
 
     async def _tokenize(self, text: str) -> AsyncGenerator[str, None]:
+        """Tokenize text by splitting into words and yielding them with spaces.
+
+        Args:
+            text: Text to tokenize
+
+        Yields:
+            str: Individual tokens with trailing spaces
+        """
         for word in text.split():
             yield word + " "

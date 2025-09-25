@@ -17,12 +17,12 @@ class RedisChatHistoryService:
     async def get_chat_histories(
         self, chat_memory_db: str, chat_memory_index_name: str, user_id: str
     ):
-        LoggerService().get_logger("uvicorn").debug(
+        LoggerService().setup_logger().debug(
             "Getting chat history for user: " + user_id
         )
 
         redis_connection_string = REDIS_URL_PREFIX + str(chat_memory_db)
-        LoggerService().get_logger("uvicorn").debug(
+        LoggerService().setup_logger().debug(
             "Connecting to redis: " + redis_connection_string
         )
         redis_client = redis.from_url(redis_connection_string)
@@ -32,7 +32,7 @@ class RedisChatHistoryService:
         try:
             cursor = 0
             while True:
-                LoggerService().get_logger("uvicorn").debug(
+                LoggerService().setup_logger().debug(
                     f"Scanning chat history for user: {user_id} with cursor: {cursor}"
                 )
                 cursor, keys = await redis_client.scan(
@@ -41,7 +41,7 @@ class RedisChatHistoryService:
                     count=1000,
                 )
 
-                LoggerService().get_logger("uvicorn").debug(f"Found keys: {keys}")
+                LoggerService().setup_logger().debug(f"Found keys: {keys}")
                 for key in keys:
                     chat_history = await redis_client.lrange(key, 0, -1)
 
@@ -81,12 +81,12 @@ class RedisChatHistoryService:
         session_id: str,
         elements: list[Any],
     ):
-        LoggerService().get_logger("uvicorn").debug(
+        LoggerService().setup_logger().debug(
             f"Creating chat history for user: {user_id} and session: {session_id}"
         )
 
         redis_connection_string = REDIS_URL_PREFIX + str(chat_memory_db)
-        LoggerService().get_logger("uvicorn").debug(
+        LoggerService().setup_logger().debug(
             "Connecting to redis: " + redis_connection_string
         )
         redis_client = redis.from_url(redis_connection_string)
@@ -98,7 +98,7 @@ class RedisChatHistoryService:
                     json.dumps(element),
                 )
 
-            LoggerService().get_logger("uvicorn").debug(
+            LoggerService().setup_logger().debug(
                 f"Created chat history for session: {session_id}"
             )
         finally:
@@ -113,12 +113,12 @@ class RedisChatHistoryService:
         user_id: str,
         session_id: str,
     ):
-        LoggerService().get_logger("uvicorn").debug(
+        LoggerService().setup_logger().debug(
             f"Getting chat history for user: {user_id} and session: {session_id}"
         )
 
         redis_connection_string = REDIS_URL_PREFIX + str(chat_memory_db)
-        LoggerService().get_logger("uvicorn").debug(
+        LoggerService().setup_logger().debug(
             "Connecting to redis: " + redis_connection_string
         )
         redis_client = redis.from_url(redis_connection_string)
@@ -127,7 +127,7 @@ class RedisChatHistoryService:
             chat_history = await redis_client.lrange(
                 f"{chat_memory_index_name}:{user_id}:{session_id}", 0, -1
             )
-            LoggerService().get_logger("uvicorn").debug(
+            LoggerService().setup_logger().debug(
                 f"Chat history for session: {session_id} is {chat_history}"
             )
 
@@ -142,12 +142,12 @@ class RedisChatHistoryService:
         user_id: str,
         session_id: str | None,
     ):
-        LoggerService().get_logger("uvicorn").debug(
+        LoggerService().setup_logger().debug(
             f"Deleting chat history for user: {user_id} and session: {session_id}"
         )
 
         redis_connection_string = REDIS_URL_PREFIX + str(chat_memory_db)
-        LoggerService().get_logger("uvicorn").debug(
+        LoggerService().setup_logger().debug(
             "Connecting to redis: " + redis_connection_string
         )
         redis_client = redis.from_url(redis_connection_string)
@@ -158,14 +158,14 @@ class RedisChatHistoryService:
                     f"{chat_memory_index_name}:{user_id}:*"
                 ):
                     await redis_client.delete(key)
-                LoggerService().get_logger("uvicorn").debug(
+                LoggerService().setup_logger().debug(
                     f"Deleted all chat history for user: {user_id}"
                 )
             else:
                 await redis_client.delete(
                     f"{chat_memory_index_name}:{user_id}:{session_id}"
                 )
-                LoggerService().get_logger("uvicorn").debug(
+                LoggerService().setup_logger().debug(
                     f"Deleted chat history for session: {session_id}"
                 )
         finally:

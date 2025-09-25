@@ -1,5 +1,4 @@
 import logging
-import os
 from typing import Optional
 
 import uvicorn
@@ -8,7 +7,7 @@ from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
 from langfuse import Langfuse
 
-from src.config.constants import DEFAULT_LOG_LEVEL, DEFAULT_PORT, DEFAULT_RATE_LIMIT
+from src.config.app_config import config
 from src.routes.dataset_routes import router as dataset_router
 from src.routes.document_routes import router as document_router
 from src.routes.graph_config_loader_routes import router as graph_config_loader_router
@@ -24,19 +23,19 @@ from src.services.rate_limit.semaphore import SemaphoreMiddleware
 
 def _initialize_langfuse() -> Optional[Langfuse]:
     """Initialize Langfuse if TRACER_TYPE is set to langfuse."""
-    if os.getenv("TRACER_TYPE") == "langfuse":
+    if config.tracing.tracer_type == "langfuse":
         return Langfuse(
-            secret_key=os.getenv("LANGFUSE_SECRET_KEY"),
-            public_key=os.getenv("LANGFUSE_PUBLIC_KEY"),
-            project_id=os.getenv("LANGFUSE_PROJECT"),
-            host=os.getenv("LANGFUSE_ENDPOINT"),
+            secret_key=config.tracing.langfuse_secret_key,
+            public_key=config.tracing.langfuse_public_key,
+            project_id=config.tracing.langfuse_project,
+            host=config.tracing.langfuse_endpoint,
         )
     return None
 
 
 def _setup_logging() -> None:
     """Setup application logging with JSON formatter."""
-    LoggerService().setup_logger(os.getenv("LOG_LEVEL", DEFAULT_LOG_LEVEL))
+    LoggerService().setup_logger(config.logging.level)
 
     for logger_name in ["uvicorn", "uvicorn.error", "uvicorn.access"]:
         logger = logging.getLogger(logger_name)
@@ -46,7 +45,7 @@ def _setup_logging() -> None:
 
 def _setup_middleware(app: FastAPI) -> None:
     """Setup middleware for the FastAPI application."""
-    default_limit = int(os.getenv("RATELIMIT", str(DEFAULT_RATE_LIMIT)))
+    default_limit = config.rate_limit
     paths_to_limit = [
         "/api/graph",
         "/api/graph/stream",
@@ -105,6 +104,6 @@ if __name__ == "__main__":
     uvicorn.run(
         "app:app",
         reload=False,
-        port=int(os.getenv("PORT", str(DEFAULT_PORT))),
+        port=config.port,
         host="0.0.0.0",
     )

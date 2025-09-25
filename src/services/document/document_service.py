@@ -1,5 +1,4 @@
 import json
-import logging
 import os
 import tempfile
 from urllib.parse import urlparse
@@ -18,52 +17,73 @@ from langchain_redis import RedisConfig, RedisVectorStore
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from redisvl.schema import IndexSchema
 
+from src.config.app_config import config
 from src.schemas.schema import Model
+from src.services.logger.logger_service import LoggerService
 from src.utils.select_model import get_embedding_model
 
 from .default_schema import DEFAULT_INDEX_SCHEMA
 
 
 class DocumentService:
-    """
-    Service for document processing and management.
+    """Service for document processing and management.
+
+    This service handles document ingestion, processing, and storage in vector databases.
+    It supports various document formats including PDF, DOCX, TXT, and Excel files.
+
+    Attributes:
+        logger: Logger instance for debugging and monitoring
+        redis_url: Connection URL for Redis database
     """
 
-    def __init__(self):
-        self.logger = logging.getLogger(__name__)
-
-        self.redis_url = f"redis://{os.getenv('REDIS_USER')}:{os.getenv('REDIS_PASSWORD')}@{os.getenv('REDIS_HOST')}:{os.getenv('REDIS_PORT')}"
+    def __init__(self) -> None:
+        """Initialize the DocumentService with logger and Redis configuration."""
+        self.logger = LoggerService().setup_logger()
+        self.redis_url = config.redis.url
 
     async def ingest_documents(
         self,
         vector_db_index: str,
-        chunk_size: int = 5000,
-        chunk_overlap: int = 250,
-        files: list[str] = [],
-        index_schema: list[dict] | None = None,
-        json_data: list[dict] = [],
+        chunk_size: int | None = None,
+        chunk_overlap: int | None = None,
+        files: list[str] | None = None,
+        index_schema: list[dict[str, any]] | None = None,
+        json_data: list[dict[str, any]] | None = None,
         model: Model | None = None,
     ) -> tuple[bool, str, list[str], list[str]]:
-        """
-        Process and ingest documents into vector database.
+        """Process and ingest documents into vector database.
+
+        This method handles document ingestion from either files or JSON data,
+        processes them into chunks, and stores them in a vector database.
 
         Args:
-            model (Model): Model configuration for embeddings
-            files (list[str]): List of file paths
-            vector_db_index (str): Vector DB index name
-            chunk_size (int): Size of text chunks
-            chunk_overlap (int): Overlap between chunks
-            index_schema (list[dict], optional): Custom index schema for Redis
-            json_data (list[dict], optional): Direct JSON data for ingestion
+            vector_db_index: Vector database index name
+            chunk_size: Size of text chunks for processing (default: 5000)
+            chunk_overlap: Overlap between chunks (default: 250)
+            files: List of file paths to process (optional)
+            index_schema: Custom index schema for Redis (optional)
+            json_data: Direct JSON data for ingestion (optional)
+            model: Model configuration for embeddings (optional)
 
         Returns:
-            tuple[bool, str, list[str], list[str]]: (success, message, processed_files, failed_files)
+            Tuple containing:
+                - success: Boolean indicating if operation succeeded
+                - message: Status message
+                - processed_files: List of successfully processed files
+                - failed_files: List of files that failed processing
+
+        Raises:
+            Exception: When document processing or ingestion fails
         """
+        # Use config defaults if not provided
+        chunk_size = chunk_size or config.document.chunk_size
+        chunk_overlap = chunk_overlap or config.document.chunk_overlap
+
         self.logger.info(
             f"[DocumentService|ingest_documents] started (vector_db_index={vector_db_index})"
         )
         try:
-            if json_data is not None:
+            if json_data is not None and len(json_data) > 0:
                 return self.ingest_documents_from_json(
                     model=model,
                     vector_db_index=vector_db_index,
@@ -76,7 +96,7 @@ class DocumentService:
             else:
                 return await self.ingest_documents_from_files(
                     model=model,
-                    files=files,
+                    files=files or [],
                     vector_db_index=vector_db_index,
                     chunk_size=chunk_size,
                     chunk_overlap=chunk_overlap,

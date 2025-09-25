@@ -1,12 +1,13 @@
-import logging
-
 from fastapi import APIRouter, HTTPException
 
 from src.schemas.web_scraping_schema import (
     WebScrapingRequestSchema,
     WebScrapingResponseSchema,
 )
+from src.services.logger.logger_service import LoggerService
 from src.services.web_scraper.scrapy_web_scraping_service import ScrapySpider
+
+logger = LoggerService().setup_logger()
 
 router = APIRouter(tags=["web_scraping"])
 
@@ -20,7 +21,7 @@ async def scrape_websites(request: WebScrapingRequestSchema):
     "Extract and process website content automatically."
     try:
         scraping_service = get_web_scraping_service()
-        logging.getLogger("logger").debug(
+        logger.debug(
             f"Received web scraping request with parameters: {request.model_dump()}"
         )
 
@@ -38,7 +39,7 @@ async def scrape_websites(request: WebScrapingRequestSchema):
             )
         )
 
-        logging.getLogger("logger").debug(
+        logger.debug(
             f"Scraping completed. Success: {success}, Message: {message}, Scraped URLs: {scraped_urls}, Failed URLs: {failed_urls}"
         )
 
@@ -55,9 +56,27 @@ async def scrape_websites(request: WebScrapingRequestSchema):
             content=content,
         )
 
+    except ConnectionError as ex:
+        logger.error(f"Connection error in web scraping: {str(ex)}")
+        raise HTTPException(
+            status_code=503,
+            detail=f"Unable to connect to target websites: {str(ex)}",
+        )
+    except TimeoutError as ex:
+        logger.error(f"Timeout error in web scraping: {str(ex)}")
+        raise HTTPException(
+            status_code=408,
+            detail=f"Web scraping request timed out: {str(ex)}",
+        )
+    except ValueError as ex:
+        logger.error(f"Invalid input in web scraping: {str(ex)}")
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid web scraping parameters: {str(ex)}",
+        )
     except Exception as ex:
-        logging.getLogger("logger").error(f"Error in web scraping: {str(ex)}")
+        logger.error(f"Unexpected error in web scraping: {str(ex)}")
         raise HTTPException(
             status_code=500,
-            detail=f"Error scraping websites: {str(ex)}",
+            detail=f"Unexpected error scraping websites: {str(ex)}",
         )

@@ -59,4 +59,4 @@ def test_web_scraping_route_error(monkeypatch):
         error_detail = response.json().get("detail", "")
     except Exception:
         error_detail = response.text
-    assert "Error scraping websites" in error_detail
+    assert "Unexpected error scraping websites" in error_detail

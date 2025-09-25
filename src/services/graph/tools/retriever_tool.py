@@ -7,7 +7,7 @@ from langchain_core.vectorstores import VectorStoreRetriever
 from src.services.document.document_service import DocumentService
 from src.services.logger.logger_service import LoggerService
 
-logger = LoggerService().get_logger(__name__)
+logger = LoggerService().setup_logger()
 
 
 @tool

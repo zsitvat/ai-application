@@ -7,7 +7,7 @@ from redis.commands.search.query import Query
 
 from src.services.logger.logger_service import LoggerService
 
-logger = LoggerService().get_logger(__name__)
+logger = LoggerService().setup_logger()
 
 
 def _build_county_city_field_string(labels):

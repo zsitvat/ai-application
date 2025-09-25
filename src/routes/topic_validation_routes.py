@@ -1,4 +1,3 @@
-import logging
 import os
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -8,9 +7,12 @@ from src.schemas.topic_validation_schema import (
     TopicValidationRequestSchema,
     TopicValidationResponseSchema,
 )
+from src.services.logger.logger_service import LoggerService
 from src.services.validators.topic_validator.topic_validator_service import (
     TopicValidatorService,
 )
+
+logger = LoggerService().setup_logger()
 
 router = APIRouter(tags=["topic_validation"])
 
@@ -51,9 +53,21 @@ async def validate_topic(
             is_valid=is_valid, topic=topic, reason=reason
         )
 
+    except ValueError as ex:
+        logger.error(f"Invalid input in topic validation: {str(ex)}")
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid topic validation parameters: {str(ex)}",
+        )
+    except RuntimeError as ex:
+        logger.error(f"Runtime error in topic validation: {str(ex)}")
+        raise HTTPException(
+            status_code=503,
+            detail=f"Topic validation service unavailable: {str(ex)}",
+        )
     except Exception as ex:
-        logging.getLogger("logger").error(f"Error in topic validation: {str(ex)}")
+        logger.error(f"Unexpected error in topic validation: {str(ex)}")
         raise HTTPException(
             status_code=500,
-            detail=f"Error validating topic: {str(ex)}",
+            detail=f"Unexpected error validating topic: {str(ex)}",
         )

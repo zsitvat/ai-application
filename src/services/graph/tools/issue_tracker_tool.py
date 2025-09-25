@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 
 from src.services.logger.logger_service import LoggerService
 
-logger = LoggerService().get_logger(__name__)
+logger = LoggerService().setup_logger()
 
 
 class IssueInput(BaseModel):

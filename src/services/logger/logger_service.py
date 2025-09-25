@@ -57,8 +57,18 @@ class LoggerService:
                 file_handler.setFormatter(JSONFormatter())
                 logger.addHandler(file_handler)
 
+            except (OSError, IOError) as e:
+                logger.error(
+                    f"[LoggerService] Failed to setup file logging (I/O error): {str(e)}"
+                )
+            except (ValueError, TypeError) as e:
+                logger.error(
+                    f"[LoggerService] Failed to setup file logging (configuration error): {str(e)}"
+                )
             except Exception as e:
-                logger.error(f"[LoggerService] Failed to setup file logging: {str(e)}")
+                logger.error(
+                    f"[LoggerService] Failed to setup file logging (unexpected error): {str(e)}"
+                )
 
         logger.propagate = False
 

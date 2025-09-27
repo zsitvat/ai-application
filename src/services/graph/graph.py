@@ -646,7 +646,7 @@ Select one of: {available_options}"""
                 state.last_agent = agent_name
 
                 self.logger.debug(
-                    f"[GraphService] Supervisor node decided next action: {state['next_agent']}. State: {state}"
+                    f"[GraphService] Supervisor node decided next action: {state['next_agent']}."
                 )
                 return state
 

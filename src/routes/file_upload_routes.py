@@ -2,12 +2,12 @@ from typing import Any, Optional
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 
+from services.document.file_upload_service import FileUploadService
 from src.schemas.file_upload_schema import (
     Base64FileUpload,
     FileUploadResponse,
     StorageBackendConfig,
 )
-from services.document.file_upload_service import FileUploadService
 from src.services.logger.logger_service import LoggerService
 
 router = APIRouter(prefix="/api/files", tags=["file_upload"])

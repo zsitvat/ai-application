@@ -1,12 +1,13 @@
-import asyncio
+import os
 
+import numpy as np
 from langchain_core.tools import tool
 from langchain_core.tools.retriever import create_retriever_tool
 from langchain_core.vectorstores import VectorStoreRetriever
+from redis import Redis
 
-from src.services.document.document_service import DocumentService
 from src.services.logger.logger_service import LoggerService
-from src.services.document.default_schema import DEFAULT_INDEX_SCHEMA
+from src.utils.select_model import get_embedding_model
 
 logger = LoggerService().setup_logger()
 
@@ -35,47 +36,69 @@ def create_vector_retriever_tool(
 
 
 @tool
-async def redis_vector_search_tool(
-    question: str, index_name: str = "knowledge_base", search_kwargs: dict | None = None
+def redis_vector_search_tool(
+    question: str,
+    index_name: str = "knowledge_base",
+    k: int = 10,
+    embedding_field: str = "embedding",
 ) -> list:
     """
-    Search in the Redis vector store.
+    Vektor alapú keresés a Redis FT indexben.
     Parameters:
-        question (str): The user question to search for.
+        question (str): A keresett kérdés.
+        index_name (str): Az index neve.
+        k (int): Találatok száma.
+        embedding_field (str): Az embedding mező neve az indexben.
     Returns:
-        list: A list of documents that match the question.
+        list: A releváns dokumentumok szövege.
     """
-    document_service = DocumentService()
-    logger.info(
-        f"[REDIS DEBUG] redis_url: {getattr(document_service, 'redis_url', None)}"
-    )
-
-    if search_kwargs is None:
-        search_kwargs = {"k": 10, "lambda_mult": 0.5}
-
     try:
-        logger.info(f"[REDIS DEBUG] Initializing retriever for index: {index_name}")
-        retriever = await asyncio.to_thread(
-            document_service.get_retriever,
-            index_name,
-            None,
-            DEFAULT_INDEX_SCHEMA,
-            search_kwargs,
+        # Get embedding model
+        embedding_model = get_embedding_model(
+            provider=os.getenv("EMBEDDING_PROVIDER", ""),
+            deployment=os.getenv("AZURE_EMBEDDING_DEPLOYMENT_NAME", ""),
+            model=os.getenv("EMBEDDING_MODEL", ""),
+        )
+        logger.info(f"[REDIS VECTOR] Embedding model: {embedding_model}")
+
+        # Embed the question
+        embedding = embedding_model.embed_query(question)
+        if embedding is None:
+            logger.error("Nem sikerült embeddinget generálni a kérdéshez.")
+            return ["Embedding error: Nem sikerült embeddinget generálni a kérdéshez."]
+
+        # Redis connection
+        redis = Redis(
+            host=os.getenv("REDIS_HOST", "localhost"),
+            port=int(os.getenv("REDIS_PORT", 6379)),
+            username=os.getenv("REDIS_USER"),
+            password=os.getenv("REDIS_PASSWORD"),
+            decode_responses=False,
         )
 
-        results = await retriever.aget_relevant_documents(query=question)
+        # KNN query
+        base_query = "*"
+        query_params = {"vec": np.array(embedding, dtype=np.float32).tobytes()}
+        query_str = f"{base_query}=>[KNN {k} @{embedding_field} $vec AS {embedding_field}_score]"
+        logger.info(f"[REDIS VECTOR] Query: {query_str}")
 
-        logger.info(f"[REDIS DEBUG] Search finished. Results count: {len(results)}")
-        if len(results) == 0:
-            logger.warning(f"No relevant documents found for question: {question}")
+        results = redis.ft(index_name).search(query_str, query_params)
+
+        logger.info(f"[REDIS VECTOR] Találatok száma: {results.total}")
+        if results.total == 0:
+            logger.warning(f"Nincs releváns dokumentum a kérdésre: {question}")
             return ["No relevant documents found."]
-        return [doc.page_content for doc in results]
+        output = []
+        for doc in results.docs:
+            text = getattr(doc, "text", b"")
+            if isinstance(text, bytes):
+                output.append(text.decode("utf-8", errors="ignore"))
+            else:
+                output.append(str(text))
+        return output
     except Exception as e:
         logger.error(f"[RetrieverTool] Error during Redis vector search: {e}")
         logger.error(f"[RetrieverTool] Error type: {type(e).__name__}")
-        logger.error(
-            f"[RetrieverTool] Search parameters: index_name={index_name}, search_kwargs={search_kwargs}"
-        )
         if "Connection" in str(e) or "redis" in str(e).lower():
             return [
                 f"Redis connection error: {str(e)}. Please check if Redis is running and accessible."

@@ -53,7 +53,7 @@ def redis_vector_search_tool(
         list: A releváns dokumentumok szövege.
     """
     try:
-        # Get embedding model
+
         embedding_model = get_embedding_model(
             provider=os.getenv("EMBEDDING_PROVIDER", ""),
             deployment=os.getenv("AZURE_EMBEDDING_DEPLOYMENT_NAME", ""),
@@ -61,13 +61,11 @@ def redis_vector_search_tool(
         )
         logger.info(f"[REDIS VECTOR] Embedding model: {embedding_model}")
 
-        # Embed the question
         embedding = embedding_model.embed_query(question)
         if embedding is None:
             logger.error("Nem sikerült embeddinget generálni a kérdéshez.")
             return ["Embedding error: Nem sikerült embeddinget generálni a kérdéshez."]
 
-        # Redis connection
         redis = Redis(
             host=os.getenv("REDIS_HOST", "localhost"),
             port=int(os.getenv("REDIS_PORT", 6379)),
@@ -76,7 +74,6 @@ def redis_vector_search_tool(
             decode_responses=False,
         )
 
-        # KNN query
         base_query = "*"
         query_params = {"vec": np.array(embedding, dtype=np.float32).tobytes()}
         query_str = f"{base_query}=>[KNN {k} @{embedding_field} $vec AS {embedding_field}_score]"

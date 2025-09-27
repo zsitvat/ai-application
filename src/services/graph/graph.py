@@ -972,7 +972,7 @@ Select one of: {available_options}"""
                 return self._handle_invalid_topic(state, reason)
 
             self.logger.debug(
-                f"[GraphService] Topic validation passed, proceeding to supervisor. State: {state}"
+                "[GraphService] Topic validation passed, proceeding to supervisor."
             )
 
             state["next_agent"] = "supervisor"

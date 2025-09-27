@@ -233,5 +233,5 @@
     "enable_checkpointer": true,
     "checkpointer_type": "redis",
     "allow_supervisor_finish": false,
-    "recursion_limit": 5
+    "recursion_limit": 8
 }

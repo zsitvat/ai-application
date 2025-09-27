@@ -10,7 +10,7 @@ class DocumentIngestRequestSchema(BaseModel):
     files: list[str] | str
     chunk_size: int = 8000
     chunk_overlap: int = 300
-    json_data: Optional[list[dict]] = None
+    json_data: list[dict] | None = None
     embedding_model: Optional[Model] = Field(
         default=None,
         description="Embedding model configuration. If not provided, environment variables will be used.",

@@ -13,6 +13,7 @@ from langchain_community.document_loaders import (
     TextLoader,
     UnstructuredExcelLoader,
 )
+from langchain_community.vectorstores.redis import Redis
 from langchain_redis import RedisConfig, RedisVectorStore
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from redisvl.schema import IndexSchema
@@ -402,7 +403,6 @@ class DocumentService:
             Retriever: LangChain retriever object
         """
         try:
-            from langchain_community.vectorstores.redis import Redis
 
             embeddings_model = get_embedding_model(
                 provider=(

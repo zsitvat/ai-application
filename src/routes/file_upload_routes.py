@@ -7,7 +7,7 @@ from src.schemas.file_upload_schema import (
     FileUploadResponse,
     StorageBackendConfig,
 )
-from src.services.documents.file_upload_service import FileUploadService
+from services.document.file_upload_service import FileUploadService
 from src.services.logger.logger_service import LoggerService
 
 router = APIRouter(prefix="/api/files", tags=["file_upload"])

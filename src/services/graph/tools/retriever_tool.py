@@ -6,6 +6,7 @@ from langchain_core.vectorstores import VectorStoreRetriever
 
 from src.services.document.document_service import DocumentService
 from src.services.logger.logger_service import LoggerService
+from src.services.document.default_schema import DEFAULT_INDEX_SCHEMA
 
 logger = LoggerService().setup_logger()
 
@@ -44,43 +45,37 @@ async def redis_vector_search_tool(
     Returns:
         list: A list of documents that match the question.
     """
-    logger.debug(
-        f"Received question for Redis vector search: {question} with index_name: {index_name} and search_kwargs: {search_kwargs}"
-    )
-
     document_service = DocumentService()
+    logger.info(
+        f"[REDIS DEBUG] redis_url: {getattr(document_service, 'redis_url', None)}"
+    )
 
     if search_kwargs is None:
         search_kwargs = {"k": 10, "lambda_mult": 0.5}
 
     try:
-        logger.debug(f"Attempting to get retriever for index: {index_name}")
-
+        logger.info(f"[REDIS DEBUG] Initializing retriever for index: {index_name}")
         retriever = await asyncio.to_thread(
             document_service.get_retriever,
             index_name,
             None,
-            None,
+            DEFAULT_INDEX_SCHEMA,
             search_kwargs,
         )
 
-        logger.debug(f"Successfully got retriever, now searching for: {question}")
-        results = await retriever.aget_relevant_documents(question)
+        results = await retriever.aget_relevant_documents(query=question)
 
+        logger.info(f"[REDIS DEBUG] Search finished. Results count: {len(results)}")
         if len(results) == 0:
             logger.warning(f"No relevant documents found for question: {question}")
             return ["No relevant documents found."]
-
-        logger.debug(f"Found {len(results)} relevant documents")
         return [doc.page_content for doc in results]
-
     except Exception as e:
         logger.error(f"[RetrieverTool] Error during Redis vector search: {e}")
         logger.error(f"[RetrieverTool] Error type: {type(e).__name__}")
         logger.error(
             f"[RetrieverTool] Search parameters: index_name={index_name}, search_kwargs={search_kwargs}"
         )
-
         if "Connection" in str(e) or "redis" in str(e).lower():
             return [
                 f"Redis connection error: {str(e)}. Please check if Redis is running and accessible."

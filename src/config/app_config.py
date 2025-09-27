@@ -30,15 +30,26 @@ class RedisConfig(BaseModel):
     """Redis database configuration."""
 
     host: str = Field(default="localhost", description="Redis host")
-    port: int = Field(default=6379, ge=1, le=65535, description="Redis port")
+    port: int = Field(default=6380, ge=1, le=65535, description="Redis port")
     user: str | None = Field(default=None, description="Redis username")
     password: str | None = Field(default=None, description="Redis password")
+    db: str | None = Field(default=None, description="Redis database")
     history_db: str | None = Field(default=None, description="Redis history database")
 
     @computed_field
     @property
     def url(self) -> str:
         """Get Redis connection URL."""
+        auth_part = (
+            f"{self.user}:{self.password}@" if self.user and self.password else ""
+        )
+        db_part = f"/{self.db}" if self.db else ""
+        return f"redis://{auth_part}{self.host}:{self.port}{db_part}"
+
+    @computed_field
+    @property
+    def history_url(self) -> str:
+        """Get Redis connection URL for history database."""
         auth_part = (
             f"{self.user}:{self.password}@" if self.user and self.password else ""
         )
@@ -209,6 +220,7 @@ def load_config() -> AppConfig:
             port=int(os.getenv("REDIS_PORT", "6379")),
             user=os.getenv("REDIS_USER"),
             password=os.getenv("REDIS_PASSWORD"),
+            db=os.getenv("REDIS_DB"),
             history_db=os.getenv("REDIS_HISTORY_DB"),
         ),
         azure=AzureConfig(

@@ -1,7 +1,7 @@
 import os
 from typing import AsyncGenerator
 from uuid import uuid4
-
+import re
 from langchain_core.messages import HumanMessage
 from langchain_core.runnables.config import RunnableConfig
 
@@ -53,7 +53,6 @@ class GraphService:
         Returns:
             str: Cleaned user input without file upload notifications
         """
-        import re
 
         # Remove [File uploaded: ...] and [Image uploaded: ...] patterns
         cleaned_input = re.sub(r"\[(?:File|Image) uploaded: [^\]]+\]", "", user_input)
@@ -83,13 +82,17 @@ class GraphService:
         """
         initial_parameters = dict(parameters) if parameters else {}
         initial_parameters["app_id"] = app_id
+        thread_id = user_id if user_id is not None else str(uuid4())
+        initial_parameters["thread_id"] = thread_id
 
-        # Clean the user input by removing file upload notifications
         cleaned_input = self._clean_user_input(user_input)
+
+        initial_context = dict(context) if context else {}
+        initial_context["thread_id"] = thread_id
 
         return AgentState(
             messages=[HumanMessage(content=cleaned_input)],
-            context=context or {},
+            context=initial_context,
             parameters=initial_parameters,
             user_id=user_id or uuid4(),
         )
@@ -106,9 +109,17 @@ class GraphService:
         recursion_limit = getattr(
             self.graph.graph_config, "recursion_limit", DEFAULT_RECURSION_LIMIT
         )
+        thread_id = None
+        if hasattr(initial_state, "context") and "thread_id" in initial_state.context:
+            thread_id = initial_state.context["thread_id"]
+        elif (
+            hasattr(initial_state, "parameters")
+            and "thread_id" in initial_state.parameters
+        ):
+            thread_id = initial_state.parameters["thread_id"]
         return await self.graph.workflow.ainvoke(
             initial_state,
-            RunnableConfig(recursion_limit=recursion_limit),
+            RunnableConfig(recursion_limit=recursion_limit, thread_id=thread_id),
         )
 
     async def execute_graph(

@@ -130,7 +130,7 @@ class TokenValidationService:
             current_text = ""
 
             for sentence in reversed(sentences):
-                test_text = sentence + ". " + current_text
+                test_text = f"{sentence}. {current_text}"
                 test_tokens = await token_counter(test_text.strip(), encoding_name)
 
                 if test_tokens <= max_tokens:

@@ -51,6 +51,70 @@ This application is a multi-agent artificial intelligence system capable of proc
    uvicorn app:app --reload --host 0.0.0.0 --port 5000
    ```
 
+## File Upload Storage Configuration
+
+The application supports multiple file storage backends with automatic selection based on your configuration. The system prioritizes cloud storage over local storage.
+
+### Storage Backend Priority:
+1. **AWS S3** (highest priority)
+2. **Google Drive** (medium priority)  
+3. **Local Storage** (fallback - always available)
+
+### Configuration Options:
+
+#### 🗄️ **AWS S3 Storage**
+For production environments with AWS infrastructure:
+
+```bash
+# Required environment variables in .env
+AWS_S3_BUCKET=your-bucket-name
+AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
+AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+AWS_REGION=us-east-1
+```
+
+**Setup Steps:**
+1. Create an S3 bucket in AWS Console
+2. Create IAM user with S3 permissions
+3. Add credentials to `.env` file
+4. Files will be automatically uploaded to S3
+
+#### 📁 **Google Drive Storage**
+For Google Workspace integration:
+
+```bash
+# Required environment variables in .env
+GOOGLE_OAUTH_CREDENTIALS_FILE=credentials.json
+GOOGLE_DRIVE_FOLDER_ID=1ap2VA2V7sOPLCGwf7FxwRIsEENI0c4lR
+```
+
+**Setup Steps:**
+1. Create Google Cloud Project and enable Drive API
+2. Create OAuth 2.0 credentials and download `credentials.json`
+3. Create a Google Drive folder and copy its ID from the URL
+4. Run `uv run python generate_google_token.py` to authenticate
+5. Files will be named as: `{thread_id}_{timestamp}_{filename}`
+
+#### 💾 **Local Storage (Default)**
+No configuration needed - works out of the box:
+
+- Files stored in: `./files/uploads/`
+- Automatic directory creation
+- UUID-based filenames
+- Perfect for development and testing
+
+### Supported File Types:
+- **Images**: JPEG, PNG, GIF, WEBP
+- **Documents**: PDF
+- **Max file size**: 15MB (configurable)
+
+### Testing File Upload:
+```bash
+# Test file upload via API
+curl -X POST "http://localhost:5000/api/file_upload/upload" \
+  -H "Content-Type: multipart/form-data" \
+  -F "file=@your-file.pdf"
+```
 
 ## Main API Endpoints (Summary)
 

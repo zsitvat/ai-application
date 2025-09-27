@@ -54,6 +54,7 @@ async def redis_vector_search_tool(
         search_kwargs = {"k": 10, "lambda_mult": 0.5}
 
     try:
+        logger.debug(f"Attempting to get retriever for index: {index_name}")
 
         retriever = await asyncio.to_thread(
             document_service.get_retriever,
@@ -63,13 +64,32 @@ async def redis_vector_search_tool(
             search_kwargs,
         )
 
+        logger.debug(f"Successfully got retriever, now searching for: {question}")
         results = await retriever.aget_relevant_documents(question)
 
         if len(results) == 0:
+            logger.warning(f"No relevant documents found for question: {question}")
             return ["No relevant documents found."]
 
+        logger.debug(f"Found {len(results)} relevant documents")
         return [doc.page_content for doc in results]
 
     except Exception as e:
         logger.error(f"[RetrieverTool] Error during Redis vector search: {e}")
-        return ["Error occurred during search."]
+        logger.error(f"[RetrieverTool] Error type: {type(e).__name__}")
+        logger.error(
+            f"[RetrieverTool] Search parameters: index_name={index_name}, search_kwargs={search_kwargs}"
+        )
+
+        if "Connection" in str(e) or "redis" in str(e).lower():
+            return [
+                f"Redis connection error: {str(e)}. Please check if Redis is running and accessible."
+            ]
+        elif "index" in str(e).lower() or "unknown index" in str(e).lower():
+            return [f"Index '{index_name}' not found or not accessible: {str(e)}"]
+        elif "embedding" in str(e).lower():
+            return [
+                f"Embedding model error: {str(e)}. Please check embedding provider configuration."
+            ]
+        else:
+            return [f"Search error: {str(e)}"]

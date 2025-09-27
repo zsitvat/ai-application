@@ -44,6 +44,23 @@ class GraphService:
         self.tracer_type = config.tracing.tracer_type
         os.environ["REDIS_URL"] = self.redis_url
 
+    def _clean_user_input(self, user_input: str) -> str:
+        """Remove file upload notifications from user input before sending to AI.
+
+        Args:
+            user_input: The original user input that may contain file upload notifications
+
+        Returns:
+            str: Cleaned user input without file upload notifications
+        """
+        import re
+
+        # Remove [File uploaded: ...] and [Image uploaded: ...] patterns
+        cleaned_input = re.sub(r"\[(?:File|Image) uploaded: [^\]]+\]", "", user_input)
+        # Clean up extra whitespace
+        cleaned_input = " ".join(cleaned_input.split())
+        return cleaned_input.strip()
+
     def _prepare_initial_state(
         self,
         user_input: str,
@@ -67,8 +84,11 @@ class GraphService:
         initial_parameters = dict(parameters) if parameters else {}
         initial_parameters["app_id"] = app_id
 
+        # Clean the user input by removing file upload notifications
+        cleaned_input = self._clean_user_input(user_input)
+
         return AgentState(
-            messages=[HumanMessage(content=user_input)],
+            messages=[HumanMessage(content=cleaned_input)],
             context=context or {},
             parameters=initial_parameters,
             user_id=user_id or uuid4(),

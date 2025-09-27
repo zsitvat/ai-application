@@ -18,12 +18,12 @@ class RedisChatHistoryService:
         self, chat_memory_db: str, chat_memory_index_name: str, user_id: str
     ):
         LoggerService().setup_logger().debug(
-            "Getting chat history for user: " + user_id
+            f"Getting chat history for user: {user_id}"
         )
 
-        redis_connection_string = REDIS_URL_PREFIX + str(chat_memory_db)
+        redis_connection_string = f"{REDIS_URL_PREFIX}{chat_memory_db}"
         LoggerService().setup_logger().debug(
-            "Connecting to redis: " + redis_connection_string
+            f"Connecting to redis: {redis_connection_string}"
         )
         redis_client = redis.from_url(redis_connection_string)
 
@@ -85,9 +85,9 @@ class RedisChatHistoryService:
             f"Creating chat history for user: {user_id} and session: {session_id}"
         )
 
-        redis_connection_string = REDIS_URL_PREFIX + str(chat_memory_db)
+        redis_connection_string = f"{REDIS_URL_PREFIX}{chat_memory_db}"
         LoggerService().setup_logger().debug(
-            "Connecting to redis: " + redis_connection_string
+            f"Connecting to redis: {redis_connection_string}"
         )
         redis_client = redis.from_url(redis_connection_string)
 
@@ -117,9 +117,9 @@ class RedisChatHistoryService:
             f"Getting chat history for user: {user_id} and session: {session_id}"
         )
 
-        redis_connection_string = REDIS_URL_PREFIX + str(chat_memory_db)
+        redis_connection_string = f"{REDIS_URL_PREFIX}{chat_memory_db}"
         LoggerService().setup_logger().debug(
-            "Connecting to redis: " + redis_connection_string
+            f"Connecting to redis: {redis_connection_string}"
         )
         redis_client = redis.from_url(redis_connection_string)
 
@@ -146,9 +146,9 @@ class RedisChatHistoryService:
             f"Deleting chat history for user: {user_id} and session: {session_id}"
         )
 
-        redis_connection_string = REDIS_URL_PREFIX + str(chat_memory_db)
+        redis_connection_string = f"{REDIS_URL_PREFIX}{chat_memory_db}"
         LoggerService().setup_logger().debug(
-            "Connecting to redis: " + redis_connection_string
+            f"Connecting to redis: {redis_connection_string}"
         )
         redis_client = redis.from_url(redis_connection_string)
 

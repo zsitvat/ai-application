@@ -44,10 +44,10 @@ class DataChatHistoryService:
                 else:
                     if reverse:
                         history_messages = (
-                            message["messageAsText"] + " " + history_messages
+                            f"{message['messageAsText']} {history_messages}"
                         )
                     else:
-                        history_messages += message["messageAsText"] + " "
+                        history_messages += f"{message['messageAsText']} "
 
             elif index >= history_lenght:
                 break
@@ -73,10 +73,10 @@ class DataChatHistoryService:
                 if message["type"] == "human":
                     if reverse:
                         history_messages = (
-                            message["messageAsText"] + " | " + history_messages
+                            f"{message['messageAsText']} | {history_messages}"
                         )
                     else:
-                        history_messages += message["messageAsText"] + " | "
+                        history_messages += f"{message['messageAsText']} | "
 
             elif index >= history_lenght:
                 break

@@ -4,12 +4,14 @@ from typing import Optional
 import uvicorn
 from dotenv.main import find_dotenv, load_dotenv
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from langfuse import Langfuse
 
 from src.config.app_config import config
 from src.routes.dataset_routes import router as dataset_router
 from src.routes.document_routes import router as document_router
+from src.routes.file_upload_routes import router as file_upload_router
 from src.routes.graph_config_loader_routes import router as graph_config_loader_router
 from src.routes.graph_routes import router as graph_router
 from src.routes.personal_data_filter_routes import router as personal_data_filter_router
@@ -45,6 +47,21 @@ def _setup_logging() -> None:
 
 def _setup_middleware(app: FastAPI) -> None:
     """Setup middleware for the FastAPI application."""
+    # Add CORS middleware to allow frontend connections
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[
+            "http://localhost:3000",
+            "http://localhost:2024",
+            "http://127.0.0.1:3000",
+            "http://127.0.0.1:2024",
+        ],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    # Add rate limiting middleware
     default_limit = config.rate_limit
     paths_to_limit = [
         "/api/graph",
@@ -81,6 +98,7 @@ def create_app() -> FastAPI:
         document_router,
         dataset_router,
         system_router,
+        file_upload_router,
     ]
 
     for router in routers:

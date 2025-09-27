@@ -28,6 +28,8 @@ dependencies = [
     "langgraph-checkpoint-redis",
     "langchain-tavily",
     "google-api-python-client",
+    "google-auth-httplib2",
+    "google-auth-oauthlib",
     "tavily-python",
     "openai",
     "tiktoken",
@@ -49,12 +51,11 @@ dependencies = [
     "scrapy-user-agents",
     "langgraph-cli[inmem]>=0.3.6",
     "pytest>=8.4.1",
+    "pytest-asyncio",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest",
-    "pytest-asyncio",
     "pytest-cov",
     "black",
     "isort",
@@ -107,10 +108,19 @@ python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = [
-    "--cov=src",
-    "--cov-report=term-missing",
-    "--cov-report=html",
-    "--cov-fail-under=80",
     "-v"
 ]
 asyncio_mode = "auto"
+
+[dependency-groups]
+dev = [
+    "autoflake>=2.3.1",
+    "bandit>=1.8.6",
+    "black>=25.1.0",
+    "flake8>=7.3.0",
+    "httpx>=0.28.1",
+    "isort>=6.0.1",
+    "mypy>=1.17.1",
+    "pre-commit>=4.2.0",
+    "safety>=3.2.9",
+]

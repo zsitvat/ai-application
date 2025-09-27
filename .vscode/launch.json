@@ -2,7 +2,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "FastAPI: Import without src prefix",
+            "name": "FastAPI",
             "type": "debugpy",
             "request": "launch",
             "module": "uvicorn",
@@ -70,6 +70,37 @@
             ],
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "FastAPI + LangGraph (UV Parallel)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/run_dev_servers.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/src"
+            },
+            "justMyCode": false
+        },
+        {
+            "name": "🚀 Full Stack (FastAPI + LangGraph + Agent UI)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/run_dev_servers.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/src"
+            },
+            "justMyCode": false
+        },
+        {
+            "name": "🖥️ Agent Chat UI Only",
+            "type": "node-terminal",
+            "request": "launch",
+            "command": "pnpm dev",
+            "cwd": "${workspaceFolder}/agent-chat-ui"
         }
     ]
 }

@@ -1,4 +1,4 @@
-def str2bool(v: str) -> bool:
+def str2bool(value: str) -> bool:
     """Convert string to boolean.
 
     Args:
@@ -10,14 +10,14 @@ def str2bool(v: str) -> bool:
     Raises:
         ValueError: If the string cannot be converted to a boolean
     """
-    if not isinstance(v, str):
-        raise ValueError(f"Expected string input, got {type(v)}")
+    if not isinstance(value, str):
+        raise ValueError(f"Expected string input, got {type(value)}")
 
-    v_lower = v.lower().strip()
+    v_lower = value.lower().strip()
 
     if v_lower in ("true", "1", "yes", "on"):
         return True
     elif v_lower in ("false", "0", "no", "off", ""):
         return False
     else:
-        raise ValueError(f"Cannot convert string '{v}' to boolean")
+        raise ValueError(f"Cannot convert string '{value}' to boolean")

@@ -3,7 +3,7 @@ import re
 
 from src.schemas.schema import Model
 from src.utils.get_prompt import get_prompt_by_type
-from src.utils.select_model import get_chat_model
+from src.utils.select_model import get_model
 
 
 class PersonalDataFilterService:
@@ -57,7 +57,12 @@ class PersonalDataFilterService:
                 )
 
             if prompt:
-                chat_model = get_chat_model(model.provider, model.deployment)
+                chat_model = get_model(
+                    model.provider,
+                    model.deployment,
+                    model=getattr(model, "name", None),
+                    type="chat",
+                )
                 prompt_template = await get_prompt_by_type(prompt)
 
                 messages = prompt_template.format_messages(

@@ -28,7 +28,7 @@ from src.services.validators.topic_validator.topic_validator_service import (
 )
 from src.utils.extract_message_content import extract_message_content
 from src.utils.get_prompt import get_prompt_by_type
-from src.utils.select_model import get_chat_model
+from src.utils.select_model import get_model
 
 
 class Graph:
@@ -193,10 +193,11 @@ class Graph:
             if extractor_config is None:
                 return state
 
-            llm = get_chat_model(
+            llm = get_model(
                 provider=extractor_config.model.provider.value,
                 deployment=extractor_config.model.deployment,
                 model=extractor_config.model.name,
+                type="chat",
             ).with_structured_output(schema=ApplicationAttributes)
 
             prompt = await get_prompt_by_type(
@@ -389,10 +390,11 @@ class Graph:
     ) -> AgentState:
         """Handle agent node execution."""
         try:
-            llm = get_chat_model(
+            llm = get_model(
                 provider=agent_config.chain.model.provider.value,
                 deployment=agent_config.chain.model.deployment,
                 model=agent_config.chain.model.name,
+                type="chat",
             )
             prompt = await get_prompt_by_type(
                 prompt_id=agent_config.chain.prompt_id, tracer_type=self.tracer_type
@@ -579,10 +581,11 @@ Select one of: {available_options}"""
 
         async def supervisor_node(state: AgentState) -> AgentState:
             try:
-                llm = get_chat_model(
+                llm = get_model(
                     provider=self.graph_config.supervisor.chain.model.provider.value,
                     deployment=self.graph_config.supervisor.chain.model.deployment,
                     model=self.graph_config.supervisor.chain.model.name,
+                    type="chat",
                 )
 
                 enabled_agents = [
@@ -862,10 +865,11 @@ Select one of: {available_options}"""
         """Handle exceptions using the configured exception chain."""
 
         try:
-            llm = get_chat_model(
+            llm = get_model(
                 provider=self.graph_config.exception_chain.chain.model.provider.value,
                 deployment=self.graph_config.exception_chain.chain.model.deployment,
                 model=self.graph_config.exception_chain.chain.model.name,
+                type="chat",
             )
 
             prompt = await get_prompt_by_type(
@@ -990,10 +994,11 @@ Select one of: {available_options}"""
     async def _exception_chain_node(self, state: AgentState) -> AgentState:
         """Exception chain node for handling errors and invalid inputs."""
         try:
-            llm = get_chat_model(
+            llm = get_model(
                 provider=self.graph_config.exception_chain.chain.model.provider.value,
                 deployment=self.graph_config.exception_chain.chain.model.deployment,
                 model=self.graph_config.exception_chain.chain.model.name,
+                type="chat",
             )
         except Exception as ex:
             self.logger.error(

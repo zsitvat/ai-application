@@ -21,7 +21,7 @@ from redisvl.schema import IndexSchema
 from src.config.app_config import config
 from src.schemas.schema import Model
 from src.services.logger.logger_service import LoggerService
-from src.utils.select_model import get_embedding_model
+from src.utils.select_model import get_model
 
 from .default_schema import DEFAULT_INDEX_SCHEMA
 
@@ -129,7 +129,7 @@ class DocumentService:
             f"Starting document ingestion from direct JSON data into index '{vector_db_index}'"
         )
 
-        embeddings_model = get_embedding_model(
+        embeddings_model = get_model(
             provider=(
                 model.provider
                 if model and model.provider
@@ -143,6 +143,7 @@ class DocumentService:
             model=(
                 model.name if model and model.name else os.getenv("EMBEDDING_MODEL", "")
             ),
+            type="embedding",
         )
 
         processed_files = ["json_data"]
@@ -194,7 +195,7 @@ class DocumentService:
             f"Starting document ingestion for {len(files) if files is not None else 0} files into index '{vector_db_index}'"
         )
 
-        embeddings_model = get_embedding_model(
+        embeddings_model = get_model(
             provider=(
                 model.provider
                 if model and model.provider
@@ -208,6 +209,7 @@ class DocumentService:
             model=(
                 model.name if model and model.name else os.getenv("EMBEDDING_MODEL", "")
             ),
+            type="embedding",
         )
 
         processed_files = []
@@ -404,7 +406,7 @@ class DocumentService:
         """
         try:
 
-            embeddings_model = get_embedding_model(
+            embeddings_model = get_model(
                 provider=(
                     model.provider
                     if model and model.provider
@@ -420,6 +422,7 @@ class DocumentService:
                     if model and model.name
                     else os.getenv("EMBEDDING_MODEL", "")
                 ),
+                type="embedding",
             )
 
             if search_kwargs is None:

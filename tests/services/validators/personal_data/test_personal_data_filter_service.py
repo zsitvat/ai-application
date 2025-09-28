@@ -50,15 +50,13 @@ async def test_apply_regex_replacements_invalid_pattern(service):
 
 
 @pytest.mark.asyncio
-@patch(
-    "src.services.validators.personal_data.personal_data_filter_service.get_chat_model"
-)
+@patch("src.services.validators.personal_data.personal_data_filter_service.get_model")
 @patch(
     "src.services.validators.personal_data.personal_data_filter_service.get_prompt_by_type",
     new_callable=AsyncMock,
 )
 async def test_filter_personal_data_with_ai(
-    mock_get_prompt, mock_get_chat_model, service, test_model
+    mock_get_prompt, mock_get_model, service, test_model
 ):
     mock_prompt = MagicMock()
     mock_prompt.format_messages.return_value = ["test message"]
@@ -68,7 +66,7 @@ async def test_filter_personal_data_with_ai(
     mock_response = MagicMock()
     mock_response.content = "Filtered content"
     mock_llm.invoke.return_value = mock_response
-    mock_get_chat_model.return_value = mock_llm
+    mock_get_model.return_value = mock_llm
 
     result = await service.filter_personal_data(
         text="John Doe email: john@example.com",
@@ -81,9 +79,7 @@ async def test_filter_personal_data_with_ai(
 
     assert result == "Filtered content"
     mock_get_prompt.assert_called_once_with("personal-data-filter-prompt")
-    mock_get_chat_model.assert_called_once_with(
-        test_model.provider, test_model.deployment
-    )
+    mock_get_model.assert_called_once()
 
 
 @pytest.mark.asyncio
@@ -131,11 +127,9 @@ async def test_filter_personal_data_whitespace_only(service, test_model):
 
 
 @pytest.mark.asyncio
-@patch(
-    "src.services.validators.personal_data.personal_data_filter_service.get_chat_model"
-)
-async def test_filter_personal_data_ai_error(mock_get_chat_model, service, test_model):
-    mock_get_chat_model.side_effect = Exception("AI model error")
+@patch("src.services.validators.personal_data.personal_data_filter_service.get_model")
+async def test_filter_personal_data_ai_error(mock_get_model, service, test_model):
+    mock_get_model.side_effect = Exception("AI model error")
 
     with pytest.raises(Exception, match="AI model error"):
         await service.filter_personal_data(

@@ -25,7 +25,7 @@ from src.services.web_scraper.scraper_config import (
     EXCLUDED_SELECTORS,
     IGNORED_EXTENSIONS,
 )
-from src.utils.select_model import get_embedding_model
+from src.utils.select_model import get_model
 
 
 def install_reactor() -> None:
@@ -955,11 +955,11 @@ class ScrapySpider(Spider):
                 if embedding_model_config.name is not None
                 else ""
             )
-            embedding_model = get_embedding_model(
-                provider=provider, deployment=deployment, model=name
+            embedding_model = get_model(
+                provider=provider, deployment=deployment, model=name, type="embedding"
             )
         else:
-            embedding_model = get_embedding_model()
+            embedding_model = get_model(type="embedding")
 
         redis_config = RedisConfig(
             index_name=vector_db_index,

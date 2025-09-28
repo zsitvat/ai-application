@@ -5,7 +5,7 @@ from typing import Optional
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 
-from src.utils.select_model import get_chat_model
+from src.utils.select_model import get_model
 
 
 class InvalidTopicException(Exception):
@@ -168,10 +168,11 @@ class TopicValidatorService:
             str: Classified topic
         """
         try:
-            llm = get_chat_model(
+            llm = get_model(
                 provider=provider,
                 deployment=deployment,
                 model=name,
+                type="chat",
             )
 
             prompt = ChatPromptTemplate.from_template(self._default_prompt)

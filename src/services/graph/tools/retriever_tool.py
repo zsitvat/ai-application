@@ -7,7 +7,7 @@ from langchain_core.vectorstores import VectorStoreRetriever
 from redis import Redis
 
 from src.services.logger.logger_service import LoggerService
-from src.utils.select_model import get_embedding_model
+from src.utils.select_model import get_model
 
 logger = LoggerService().setup_logger()
 
@@ -54,10 +54,11 @@ def redis_vector_search_tool(
     """
     try:
 
-        embedding_model = get_embedding_model(
+        embedding_model = get_model(
             provider=os.getenv("EMBEDDING_PROVIDER", ""),
             deployment=os.getenv("AZURE_EMBEDDING_DEPLOYMENT_NAME", ""),
             model=os.getenv("EMBEDDING_MODEL", ""),
+            type="embedding",
         )
         logger.info(f"[REDIS VECTOR] Embedding model: {embedding_model}")
 
@@ -95,16 +96,4 @@ def redis_vector_search_tool(
         return output
     except Exception as e:
         logger.error(f"[RetrieverTool] Error during Redis vector search: {e}")
-        logger.error(f"[RetrieverTool] Error type: {type(e).__name__}")
-        if "Connection" in str(e) or "redis" in str(e).lower():
-            return [
-                f"Redis connection error: {str(e)}. Please check if Redis is running and accessible."
-            ]
-        elif "index" in str(e).lower() or "unknown index" in str(e).lower():
-            return [f"Index '{index_name}' not found or not accessible: {str(e)}"]
-        elif "embedding" in str(e).lower():
-            return [
-                f"Embedding model error: {str(e)}. Please check embedding provider configuration."
-            ]
-        else:
-            return [f"Search error: {str(e)}"]
+        return [f"Search error: {str(e)}"]

@@ -1,39 +1,53 @@
-import logging
+from fastapi import APIRouter, HTTPException
 
-from fastapi import APIRouter, Depends, HTTPException
-
-from schemas.web_scraping_schema import (
+from src.schemas.web_scraping_schema import (
     WebScrapingRequestSchema,
     WebScrapingResponseSchema,
 )
-from services.web_scraper.scrapy_web_scraping_service import ScrapyWebScrapingService
+from src.services.logger.logger_service import LoggerService
+from src.services.web_scraper.scrapy_web_scraping_service import ScrapySpider
 
-router = APIRouter(tags=["Web Scraping"])
+logger = LoggerService().setup_logger()
+
+router = APIRouter(tags=["web_scraping"])
 
 
 def get_web_scraping_service():
-    return ScrapyWebScrapingService()
+    return ScrapySpider()
 
 
 @router.post("/api/web-scraping", response_model=WebScrapingResponseSchema)
-async def scrape_websites(
-    request: WebScrapingRequestSchema,
-    scraping_service: ScrapyWebScrapingService = Depends(get_web_scraping_service),
-):
+async def scrape_websites(request: WebScrapingRequestSchema):
     "Extract and process website content automatically."
-
     try:
+        scraping_service = get_web_scraping_service()
+        logger.debug(
+            f"Received web scraping request with parameters: {request.model_dump()}"
+        )
+
         success, message, scraped_urls, failed_urls, content = (
             await scraping_service.scrape_websites(
                 urls=request.urls,
                 max_depth=request.max_depth,
                 output_type=request.output_type.value,
                 output_path=request.output_path,
-                vector_db_index=request.vector_db_index,
+                vector_db_index=request.vector_db_index or "",
                 allowed_domains=request.allowed_domains,
+                content_selectors=request.content_selectors,
+                excluded_selectors=request.excluded_selectors,
+                embedding_model_config=request.embedding_model,
             )
         )
 
+        logger.debug(
+            f"Scraping completed. Success: {success}, Message: {message}, Scraped URLs: {scraped_urls}, Failed URLs: {failed_urls}"
+        )
+
+        # Ensure content is a string for response schema
+        import json
+
+        if isinstance(content, (list, dict)):
+            content = json.dumps(content)
         return WebScrapingResponseSchema(
             success=success,
             message=message,
@@ -42,9 +56,27 @@ async def scrape_websites(
             content=content,
         )
 
+    except ConnectionError as ex:
+        logger.error(f"Connection error in web scraping: {str(ex)}")
+        raise HTTPException(
+            status_code=503,
+            detail=f"Unable to connect to target websites: {str(ex)}",
+        )
+    except TimeoutError as ex:
+        logger.error(f"Timeout error in web scraping: {str(ex)}")
+        raise HTTPException(
+            status_code=408,
+            detail=f"Web scraping request timed out: {str(ex)}",
+        )
+    except ValueError as ex:
+        logger.error(f"Invalid input in web scraping: {str(ex)}")
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid web scraping parameters: {str(ex)}",
+        )
     except Exception as ex:
-        logging.getLogger("logger").error(f"Error in web scraping: {str(ex)}")
+        logger.error(f"Unexpected error in web scraping: {str(ex)}")
         raise HTTPException(
             status_code=500,
-            detail=f"Error scraping websites: {str(ex)}",
+            detail=f"Unexpected error scraping websites: {str(ex)}",
         )

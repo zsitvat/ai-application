@@ -16,26 +16,17 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          version: latest
-          virtualenvs-create: true
-          virtualenvs-in-project: true
+      - name: Install uv
+        run: pip install uv
 
-      - name: Load cached venv
-        id: cached-poetry-dependencies
-        uses: actions/cache@v3
-        with:
-          path: .venv
-          key: venv-${{ runner.os }}-3.11-${{ hashFiles('**/poetry.lock') }}
+      - name: Create venv
+        run: uv venv
 
-      - name: Install dependencies
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --no-interaction --no-root
+      - name: Install dependencies with uv
+        run: uv pip install --requirements pyproject.toml
 
       - name: Run safety check for vulnerabilities
-        run: poetry run safety check --full-report || true
+        run: safety check --full-report || true
 
       - name: Run bandit security linter
-        run: poetry run bandit -r src || true
+        run: bandit -r src || true

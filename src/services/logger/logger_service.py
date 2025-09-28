@@ -8,33 +8,10 @@ from .logs_json_formatter import JSONFormatter
 
 
 class LoggerService:
+    """Service for managing application logging with JSON formatting."""
+
     def __init__(self):
         self._loggers = {}
-
-    def _get_log_level(self, log_level: str = "DEBUG"):
-        """Get the log level based on the log level string.
-
-        Args:
-            log_level (str): The log level string
-
-        Returns:
-            int: The log level integer
-        """
-        log_levels = {
-            "DEBUG": logging.DEBUG,
-            "INFO": logging.INFO,
-            "WARNING": logging.WARNING,
-            "ERROR": logging.ERROR,
-            "CRITICAL": logging.CRITICAL,
-            "FATAL": logging.FATAL,
-            "NOTSET": logging.NOTSET,
-        }
-        return log_levels.get(log_level.upper(), logging.DEBUG)
-
-    def _ensure_log_directory(self, log_file_path: str):
-        """Ensure the log directory exists."""
-        log_dir = Path(log_file_path).parent
-        log_dir.mkdir(parents=True, exist_ok=True)
 
     def setup_logger(self, log_level: str = "DEBUG", logger_name: str = "logger"):
         """Setup the logger with JSON formatting for both console and file output.
@@ -80,10 +57,18 @@ class LoggerService:
                 file_handler.setFormatter(JSONFormatter())
                 logger.addHandler(file_handler)
 
-                logger.info(f"File logging enabled: {log_file_path}")
-
+            except (OSError, IOError) as e:
+                logger.error(
+                    f"[LoggerService] Failed to setup file logging (I/O error): {str(e)}"
+                )
+            except (ValueError, TypeError) as e:
+                logger.error(
+                    f"[LoggerService] Failed to setup file logging (configuration error): {str(e)}"
+                )
             except Exception as e:
-                logger.error(f"Failed to setup file logging: {str(e)}")
+                logger.error(
+                    f"[LoggerService] Failed to setup file logging (unexpected error): {str(e)}"
+                )
 
         logger.propagate = False
 
@@ -117,11 +102,10 @@ class LoggerService:
             new_level = self._get_log_level(log_level)
             logger.setLevel(new_level)
 
-            # Update all handlers
             for handler in logger.handlers:
                 handler.setLevel(new_level)
 
-            logger.info(f"Log level updated to {log_level}")
+            logger.info(f"[LoggerService] Log level updated to {log_level}")
 
     def list_log_files(self):
         """List all log files in the log directory.
@@ -145,3 +129,28 @@ class LoggerService:
                 log_files.append(str(file_path))
 
         return sorted(log_files)
+
+    def _get_log_level(self, log_level: str = "DEBUG"):
+        """Get the log level based on the log level string.
+
+        Args:
+            log_level (str): The log level string
+
+        Returns:
+            int: The log level integer
+        """
+        log_levels = {
+            "DEBUG": logging.DEBUG,
+            "INFO": logging.INFO,
+            "WARNING": logging.WARNING,
+            "ERROR": logging.ERROR,
+            "CRITICAL": logging.CRITICAL,
+            "FATAL": logging.FATAL,
+            "NOTSET": logging.NOTSET,
+        }
+        return log_levels.get(log_level.upper(), logging.DEBUG)
+
+    def _ensure_log_directory(self, log_file_path: str):
+        """Ensure the log directory exists."""
+        log_dir = Path(log_file_path).parent
+        log_dir.mkdir(parents=True, exist_ok=True)

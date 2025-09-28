@@ -1,0 +1,43 @@
+{
+  "vector_db_index": "positions",
+  "files": [
+    "/home/tamas/recruiter_AI_app/diploma_munka/examples/positions_example.json"
+  ],
+  "chunk_size": 8000,
+  "chunk_overlap": 300,
+  "embedding_model": {
+    "name": "text-embedding-3-large",
+    "provider": "azure",
+    "type": "embedding",
+    "deployment": "chatboss_sweden-central_embedding_text-embedding-3-large_1"
+  },
+  "index_schema": [
+    { "name": "id", "type": "text" },
+    { "name": "slug", "type": "text" },
+    { "name": "external_id", "type": "text" },
+    { "name": "status", "type": "text" },
+    { "name": "name", "type": "text" },
+    { "name": "description", "type": "text" },
+    { "name": "starts_at", "type": "text" },
+    { "name": "expires_at", "type": "text" },
+    { "name": "labels_city", "type": "text" },
+    { "name": "labels_field", "type": "text" },
+    { "name": "labels_job_type", "type": "text" },
+    { "name": "labels_county", "type": "text" },
+    { "name": "image_url", "type": "text" },
+    { "name": "application_id", "type": "text" },
+    { "name": "content", "type": "text" },
+    { "name": "source", "type": "text" },
+    { "name": "document_index", "type": "text" },
+    {
+      "name": "vector",
+      "type": "vector",
+      "attrs": {
+        "algorithm": "flat",
+        "datatype": "float32",
+        "dims": 1536,
+        "distance_metric": "cosine"
+      }
+    }
+  ]
+}

@@ -1,8 +1,14 @@
 from pydantic import BaseModel
 
+from .schema import Model
+
 
 class TopicValidationRequestSchema(BaseModel):
     question: str
+    model: Model | None = None
+    allowed_topics: list[str] | None = None
+    invalid_topics: list[str] | None = None
+    enabled: bool = True
 
 
 class TopicValidationResponseSchema(BaseModel):

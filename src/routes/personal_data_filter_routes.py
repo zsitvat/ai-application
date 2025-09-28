@@ -1,16 +1,20 @@
-import logging
+import os
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from schemas.personal_data_filter_schema import (
+from src.schemas.personal_data_filter_schema import (
     PersonalDataFilterRequestSchema,
     PersonalDataFilterResponseSchema,
 )
-from services.validators.personal_data.personal_data_filter_service import (
+from src.schemas.schema import Model, ModelProviderType, ModelType
+from src.services.logger.logger_service import LoggerService
+from src.services.validators.personal_data.personal_data_filter_service import (
     PersonalDataFilterService,
 )
 
-router = APIRouter(tags=["Personal Data Filter"])
+logger = LoggerService().setup_logger()
+
+router = APIRouter(tags=["personal_data_filter"])
 
 
 def get_personal_data_filter_service():
@@ -26,21 +30,41 @@ async def filter_personal_data(
         get_personal_data_filter_service
     ),
 ):
-    """Filter personal and sensitive data from text."""
 
     try:
-        filtered_text, original_text = await filter_service.filter_personal_data(
+        if request.model is None:
+            request.model = Model(
+                provider=ModelProviderType.AZURE,
+                name="gpt-4o-mini",
+                deployment=os.getenv("AZURE_DEPLOYMENT_NAME"),
+                type=ModelType.CHAT,
+            )
+
+        if request.sensitive_words is None:
+            request.sensitive_words = ["phone", "email", "name", "address"]
+
+        if request.regex_patterns is None:
+            request.regex_patterns = [
+                r"\+36\s?\d{2}\s?\d{3}\s?\d{4}",
+                r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}",
+            ]
+
+        filtered_text = await filter_service.filter_personal_data(
             text=request.text,
-            config=request.config,
+            model=request.model,
+            sensitive_words=request.sensitive_words,
+            regex_patterns=request.regex_patterns,
+            prompt=request.prompt,
+            mask_char=request.mask_char,
         )
 
         return PersonalDataFilterResponseSchema(
-            filtered_text=filtered_text, original_text=original_text
+            filtered_text=filtered_text, original_text=request.text
         )
 
     except Exception as ex:
-        logging.getLogger("logger").error(
-            f"Error in personal data filtering: {str(ex)}"
+        logger.error(
+            f"[PersonalDataFilterRoutes] Error in personal data filtering: {str(ex)}"
         )
         raise HTTPException(
             status_code=500,

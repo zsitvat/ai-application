@@ -1,0 +1,237 @@
+{
+    "agents": {
+        "retriever_agent": {
+            "enabled": true,
+            "chain": {
+                "model": {
+                    "provider": "azure",
+                    "name": "gpt-4o-mini",
+                    "deployment": "attr-gpt4.1nano-aicore"
+                },
+                "prompt_id": "retriever-agent-prompt",
+                "description": "Searches and retrieves relevant information about the company from the knowledge base to answer user questions"
+            },
+            "tool_choice": "required",
+            "tools": {
+                "vector_retriever_tool": {
+                    "index_name": "knowledge_base",
+                    "search_type": "mmr",
+                    "search_kwargs": {
+                        "k": 10,
+                        "lambda_mult": 0.5
+                    }
+                }
+            }
+        },
+        "issue_reporter_agent": {
+            "enabled": true,
+            "chain": {
+                "model": {
+                    "provider": "azure",
+                    "name": "gpt-4o-mini",
+                    "deployment": "attr-gpt4.1nano-aicore"
+                },
+                "prompt_id": "issue-reporter-agent-prompt",
+                "description": "Handles user complaints, feedback, and issue reporting with appropriate categorization and priority assignment. Use this agent if the user explicitly wants to report an issue, complaint, feedback, or if the user describes a problem with the application process, technical difficulties, or cannot apply for a position. Do NOT use this agent if the user is only asked for email or phone number for job application and does not want to provide it."
+            },
+            "tool_choice": "auto",
+            "tools": {
+                "issue_tracker_tool": {
+                    "priority_levels": [
+                        "low",
+                        "medium",
+                        "high",
+                        "critical"
+                    ],
+                    "categories": [
+                        "technical",
+                        "account",
+                        "billing",
+                        "feature_request",
+                        "bug_report"
+                    ]
+                }
+            }
+        },
+        "recruiter_agent": {
+            "enabled": true,
+            "chain": {
+                "model": {
+                    "provider": "azure",
+                    "name": "gpt-4o-mini",
+                    "deployment": "attr-gpt4.1mini-aicore",
+                    "temperature": 0.25
+                },
+                "prompt_id": "recruiter",
+                "description": "Assists users with job searching, finding positions, and providing career guidance based on location, field, and job type preferences, apply to the positions and asking prefilter questions or getting user application informations (name,email,phone etc.)"
+            },
+            "tool_choice": "auto",
+            "tools": {
+                "get_position_tool": {
+                    "description": "Position search tool that finds jobs by county, city, field, and job type using fuzzy metadata filtering in Redis database. Use only 1 word for each attribute. If the user provides multiple values for an attribute, choose the most relevant one. If the user gives more than one attributes, search more than one times.",
+                    "input_fields": [
+                        "labels_county",
+                        "labels_city",
+                        "labels_field",
+                        "name"
+                    ],
+                    "index_name": "positions"
+                },
+                "get_labels_tool": {
+                    "description": "Tool to fetch all unique labels all the time grouped by county and city, and lists of fields and job types.",
+                    "required": true,
+                    "index_name": "positions"
+                }
+            }
+        }
+    },
+    "topic_validator": {
+        "enabled": true,
+        "model": {
+            "provider": "azure",
+            "name": "gpt-4o-mini",
+            "deployment": "attr-gpt4.1nano-aicore"
+        },
+        "allowed_topics": [
+            "job_search",
+            "employment",
+            "recruitment",
+            "hiring",
+            "job_application",
+            "job_offer",
+            "job_interview",
+            "resume",
+            "cv",
+            "cities-county",
+            "job_description",
+            "job_requirements",
+            "job_skills",
+            "job_positions",
+            "job_openings",
+            "job_companies",
+            "company_information",
+            "company_culture",
+            "company_benefits",
+            "salary",
+            "workplace",
+            "career",
+            "professional",
+            "work",
+            "complaint",
+            "issue_reporting",
+            "problem",
+            "feedback",
+            "concern",
+            "greetings",
+            "smalltalk",
+            "other",
+            "school",
+            "programming languages",
+            "personal data",
+            "email",
+            "phone number",
+            "name",
+            "education",
+            "experience",
+            "skills",
+            "position applied for",
+            "application status"
+        ],
+        "invalid_topics": [
+            "politics",
+            "inappropriate",
+            "coding",
+            "math",
+            "history",
+            "sports",
+            "entertainment",
+            "music",
+            "movies",
+            "games",
+            "books",
+            "art",
+            "literature",
+            "food",
+            "drinks",
+            "fashion",
+            "beauty",
+            "finance",
+            "investment"
+        ]
+    },
+    "personal_data_filter": {
+        "enabled": true,
+        "chain": {
+            "model": {
+                "provider": "azure",
+                "name": "gpt-4o-mini",
+                "deployment": "attr-gpt4.1mini-aicore"
+            },
+            "prompt_id": "personal-data-filter-prompt"
+        },
+        "sensitive_data_types": [
+            "email",
+            "phone",
+            "ssn",
+            "credit_card",
+            "address",
+            "full_name"
+        ],
+        "mask_char": "*"
+    },
+    "supervisor": {
+        "enabled": true,
+        "chain": {
+            "model": {
+                "provider": "azure",
+                "name": "gpt-4o-mini",
+                "deployment": "attr-gpt4.1mini-aicore"
+            },
+            "prompt_id": "supervisor-prompt",
+            "description": "Manages and routes user requests to the appropriate specialized agent based on the content and context of the conversation. If the user is asked for personal data (such as email or phone number) for job application or position-related purposes, always select the recruiter_agent. Select issue_reporter_agent ONLY if the user explicitly wants to report an issue, complaint, feedback, or describes a real problem with the application process, technical difficulties, or cannot apply for a position due to a technical or system error. Do NOT select issue_reporter_agent if the user simply does not want to provide email or phone number, or does not wish to apply for a position. Refusal to provide data or lack of application intent is NOT a problem."
+        }
+    },
+    "applicant_attributes_extractor": {
+        "model": {
+            "provider": "azure",
+            "name": "gpt-4o-mini",
+            "deployment": "attr-gpt4.1nano-aicore"
+        },
+        "prompt_id": "applicant-extractor-prompt",
+        "required_attributes": [
+            "applicant_name",
+            "phone_number",
+            "position_name",
+            "position_id",
+            "application_reason",
+            "experience",
+            "email"
+        ]
+    },
+    "exception_chain": {
+        "enabled": true,
+        "chain": {
+            "model": {
+                "provider": "azure",
+                "name": "gpt-4o-mini",
+                "deployment": "attr-gpt4.1mini-aicore"
+            },
+            "prompt_id": "exception-chain-prompt",
+            "description": "Handles errors, invalid requests, and off-topic conversations with appropriate responses and guidance"
+        },
+        "tool_choice": "auto",
+        "tools": {}
+    },
+    "max_input_length": 4000,
+    "chat_memory_db": 0,
+    "chat_memory_index_name": "chat_memory",
+    "chat_memory_type": "redis",
+    "chat_history_max_length": 12,
+    "tags": [
+        "recruiter"
+    ],
+    "enable_checkpointer": true,
+    "checkpointer_type": "redis",
+    "allow_supervisor_finish": false,
+    "recursion_limit": 8
+}

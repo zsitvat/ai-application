@@ -1,69 +1,82 @@
-[tool.poetry]
+[project]
 name = "recruiter-ai-app"
 version = "0.1.0"
 description = "Multi-agent AI system app with document processing and web scraping capabilities"
-authors = ["tamas.zsitva"]
+authors = [
+    {name = "tamas.zsitva"}
+]
 readme = "README.md"
-packages = [{include = "src"}]
+requires-python = ">=3.11,<3.12"
+dependencies = [
+    "google-search-results",
+    "fastapi",
+    "uvicorn[standard]",
+    "python-dotenv",
+    "pydantic",
+    "python-multipart",
+    "langfuse",
+    "langsmith",
+    "langchain",
+    "langchain-core",
+    "langchain-community",
+    "langchain-openai",
+    "langchain-anthropic",
+    "langchain-aws",
+    "langchain-redis",
+    "langchain-google-community",
+    "langgraph",
+    "langgraph-checkpoint-redis",
+    "langchain-tavily",
+    "google-api-python-client",
+    "google-auth-httplib2",
+    "google-auth-oauthlib",
+    "tavily-python",
+    "openai",
+    "tiktoken",
+    "requests",
+    "docx2txt",
+    "unstructured",
+    "pandas",
+    "aiohttp",
+    "beautifulsoup4",
+    "redis",
+    "psutil",
+    "boto3",
+    "aiofiles",
+    "scrapy",
+    "twisted",
+    "python-docx",
+    "openpyxl",
+    "reportlab",
+    "scrapy-user-agents",
+    "langgraph-cli[inmem]>=0.3.6",
+    "pytest>=8.4.1",
+    "pytest-asyncio",
+]
 
-[tool.poetry.dependencies]
-python = "^3.11"
-fastapi = "*"
-uvicorn = {extras = ["standard"], version = "*"}
-python-dotenv = "*"
-pydantic = "*"
-python-multipart = "*"
-langfuse = "*"
-langsmith = "*"
-langchain = "*"
-langchain-core = "*"
-langchain-community = "*"
-langchain-openai = "*"
-langchain-anthropic = "*"
-langchain-aws = "*"
-langchain-redis = "*"
-langgraph = "*"
-openai = "*"
-tiktoken = "*"
-requests = "*"
-deeplake = "*"
-docx2txt = "*"
-unstructured = "*"
-pandas = "*"
-aiohttp = "*"
-beautifulsoup4 = "*"
-sentence-transformers = "*"
-redis = "*"
-psutil = "*"
-boto3 = "*"
-aiofiles = "*"
-scrapy = "*"
-twisted = "*"
-python-docx = "*"
-reportlab = "*"
-scrapy-user-agents = "*"
+[project.optional-dependencies]
+dev = [
+    "pytest-cov",
+    "black",
+    "isort",
+    "flake8",
+    "mypy",
+    "pre-commit",
+    "httpx",
+    "safety",
+    "bandit",
+    "autoflake>=2.3.1",
+]
 
-
-[tool.poetry.group.dev.dependencies]
-pytest = "*"
-pytest-asyncio = "*"
-pytest-cov = "*"
-black = "*"
-isort = "*"
-flake8 = "*"
-mypy = "*"
-pre-commit = "*"
-httpx = "*"
-safety = "*"
-bandit = "*"
-autoflake = "^2.3.1"
-
-[tool.poetry.scripts]
+[project.scripts]
 start = "src.app:main"
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
 
 [tool.black]
 line-length = 88
@@ -95,10 +108,19 @@ python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = [
-    "--cov=src",
-    "--cov-report=term-missing",
-    "--cov-report=html",
-    "--cov-fail-under=80",
     "-v"
 ]
 asyncio_mode = "auto"
+
+[dependency-groups]
+dev = [
+    "autoflake>=2.3.1",
+    "bandit>=1.8.6",
+    "black>=25.1.0",
+    "flake8>=7.3.0",
+    "httpx>=0.28.1",
+    "isort>=6.0.1",
+    "mypy>=1.17.1",
+    "pre-commit>=4.2.0",
+    "safety>=3.2.9",
+]

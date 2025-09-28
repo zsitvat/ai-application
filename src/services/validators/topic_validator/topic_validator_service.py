@@ -1,4 +1,20 @@
+import json
 import logging
+from typing import Optional
+
+from langchain_core.output_parsers import JsonOutputParser
+from langchain_core.prompts import ChatPromptTemplate
+
+from src.utils.select_model import get_model
+
+
+class InvalidTopicException(Exception):
+    """Exception raised when a topic is invalid."""
+
+    def __init__(self, topic: str, reason: str):
+        self.topic = topic
+        self.reason = reason
+        super().__init__(f"Invalid topic '{topic}': {reason}")
 
 
 class TopicValidatorService:
@@ -8,21 +24,176 @@ class TopicValidatorService:
 
     def __init__(self):
         self.logger = logging.getLogger(__name__)
+        self._default_prompt = """Classify the following text '{text}' into one of these topics: {topics}.
+        Format the response as JSON with the following schema: ```json {{"topic": "most_relevant_topic"}}```"""
 
     async def validate_topic(
-        self, question: str, user_id: str
+        self,
+        question: str,
+        provider: str,
+        name: str,
+        deployment: str,
+        allowed_topics: Optional[list[str]] = None,
+        invalid_topics: Optional[list[str]] = None,
+        raise_on_invalid: bool = False,
     ) -> tuple[bool, str, str]:
         """
         Validate if the question belongs to acceptable topics.
 
         Args:
             question (str): Question to validate
-            user_id (str): User identifier
+            provider (str): LLM provider
+            name (str): Model name
+            deployment (str): Model deployment
+            valid_topics (list[str], optional): List of valid topics
+            invalid_topics (list[str], optional): List of invalid topics
+            raise_on_invalid (bool): Whether to raise exception on invalid topic
 
         Returns:
             tuple[bool, str, str]: (is_valid, topic, reason)
+
+        Raises:
+            InvalidTopicException: If raise_on_invalid=True and topic is invalid
         """
-        # TODO: Implement LLM-based topic validation
-        # Should use predefined topic selection prompt
-        self.logger.info(f"Validating topic for question: {question[:50]}...")
-        raise NotImplementedError("Topic validation not implemented yet")
+        self.logger.info(
+            f"[TopicValidatorService] Validating topic for question: {question[:50]}..."
+        )
+
+        if invalid_topics is None:
+            invalid_topics = [
+                "personal",
+                "politics",
+                "religion",
+                "inappropriate",
+                "programming",
+                "other",
+            ]
+
+        if not allowed_topics:
+            raise ValueError(
+                "allowed_topics must be set and contain at least one topic."
+            )
+
+        # Treat empty or whitespace-only questions as invalid
+        if not isinstance(question, str) or not question.strip():
+            reason = "Question is empty or invalid."
+            self.logger.debug(reason)
+            return False, "error", reason
+
+        allowed_set = set(allowed_topics)
+        invalid_set = set(invalid_topics)
+
+        if allowed_set.intersection(invalid_set):
+            raise ValueError("A topic cannot be allowed and invalid at the same time.")
+
+        # Only add "other" to invalid_set if it's not explicitly in allowed_topics
+        if "other" not in allowed_set and "other" not in invalid_set:
+            invalid_set.add("other")
+            self.logger.debug("Added 'other' to invalid_set")
+
+        candidate_topics = list(allowed_set.union(invalid_set))
+        self.logger.debug(
+            f"[TopicValidatorService] candidate_topics: {candidate_topics}"
+        )
+
+        try:
+            topic = await self._classify_with_llm(
+                question, candidate_topics, provider, name, deployment
+            )
+
+            self.logger.debug(
+                f"[TopicValidatorService] LLM classified topic as: {topic}"
+            )
+
+            normalized_topic = topic.strip().lower()
+            normalized_allowed_topics = [t.strip().lower() for t in allowed_topics]
+
+            is_allowed = normalized_topic in normalized_allowed_topics
+            self.logger.debug(
+                f"Topic '{topic}' (normalized: '{normalized_topic}') in allowed_topics: {is_allowed}"
+            )
+
+            # Find the original topic name for consistent response
+            if is_allowed:
+                original_topic = None
+                for orig_topic in allowed_topics:
+                    if orig_topic.strip().lower() == normalized_topic:
+                        original_topic = orig_topic
+                        break
+                topic = original_topic or topic
+
+            if is_allowed:
+                reason = f"Question classified as '{topic}' which is an allowed topic."
+                self.logger.debug(f"Topic validation passed: {topic}")
+                return True, topic, reason
+            else:
+                reason = (
+                    f"Question classified as '{topic}' which is not an allowed topic."
+                )
+                self.logger.debug(f"Topic validation failed: {topic}")
+
+                if raise_on_invalid:
+                    raise InvalidTopicException(topic, reason)
+
+                return False, topic, reason
+
+        except Exception as ex:
+            error_msg = f"Error during topic validation: {str(ex)}"
+            self.logger.error(error_msg)
+
+            if raise_on_invalid and isinstance(ex, InvalidTopicException):
+                raise
+
+            return False, "error", error_msg
+
+    async def _classify_with_llm(
+        self,
+        text: str,
+        topics: list[str],
+        provider: str,
+        name: str,
+        deployment: str,
+    ) -> str:
+        """
+        Classify text using LLM.
+
+        Args:
+            text (str): Text to classify
+            topics (list[str]): List of candidate topics
+            provider (str): LLM provider
+            name (str): Model name
+            deployment (str): Model deployment
+
+        Returns:
+            str: Classified topic
+        """
+        try:
+            llm = get_model(
+                provider=provider,
+                deployment=deployment,
+                model=name,
+                type="chat",
+            )
+
+            prompt = ChatPromptTemplate.from_template(self._default_prompt)
+
+            chain = prompt | llm | JsonOutputParser()
+
+            response = await chain.ainvoke({"text": text, "topics": ", ".join(topics)})
+
+            self.logger.debug(f"LLM raw response: {response}")
+
+            if isinstance(response, dict) and "topic" in response:
+                topic = response["topic"]
+                self.logger.debug(f"Extracted topic from response: '{topic}'")
+                return topic
+            else:
+                self.logger.warning(f"Unexpected LLM response format: {response}")
+                return "other"
+
+        except json.JSONDecodeError as e:
+            self.logger.warning(f"Cannot parse LLM result, not a JSON format: {e}")
+            return "other"
+        except Exception as e:
+            self.logger.error(f"Error calling LLM for topic classification: {e}")
+            raise

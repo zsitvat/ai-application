@@ -1,0 +1,39 @@
+{
+    "dependencies": [
+        "."
+    ],
+    "graphs": {
+        "agent": {
+            "path": "src.services.graph.graph_studio:get_compiled_workflow_for_studio",
+            "config_schema": {
+                "type": "object",
+                "properties": {
+                    "app_id": {
+                        "type": "integer",
+                        "description": "Application ID for loading graph configuration"
+                    },
+                    "parameters": {
+                        "type": "object",
+                        "description": "Runtime parameters including graph configurations",
+                        "properties": {
+                            "graph_config": {
+                                "type": "object",
+                                "description": "Graph configuration object"
+                            }
+                        }
+                    }
+                },
+                "required": [
+                    "app_id"
+                ]
+            }
+        }
+    },
+    "env": {
+        "PYTHONPATH": "./src",
+        "ENV_FILE": ".env"
+    },
+    "dockerfile_lines": [
+        "RUN poetry install --no-interaction --no-ansi"
+    ]
+}

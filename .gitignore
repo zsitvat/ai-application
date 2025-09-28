@@ -1,15 +1,24 @@
+.langgraph_*.pckl
+store.pckl
+store.vectors.pckl
 deeplake_db
 deeplake
 deeplake_databases
 deeplake_databases/
 *deeplake*
-
+files/
 .vscode/settings.json
 .vscode/extensions.json
 .vscode/c_cpp_properties.json
 .vscode/tasks.json
 venv/*
 myenv/*
+*.lock
+uv.lock
+agent-chat-ui/
+app.log*
+.langgraph_api*
+logs/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -142,6 +151,13 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+
+# Google OAuth credentials and tokens
+credentials.json
+token.json
+service-account.json
+*-credentials.json
+*-token.json
 
 # Spyder project settings
 .spyderproject

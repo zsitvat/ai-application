@@ -9,7 +9,7 @@ async def create_score_string(doc, index):
     if not doc or len(doc) < 2:
         return "Invalid document data"
 
-    return "Doc" + str(index) + " " + str(doc[1]) + "\n"
+    return f"Doc{index} {doc[1]}\n"
 
 
 async def get_scores_as_string(docs):

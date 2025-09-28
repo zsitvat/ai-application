@@ -1,0 +1,225 @@
+{
+    "agents": {
+        "retriever_agent": {
+            "enabled": true,
+            "chain": {
+                "model": {
+                    "provider": "azure",
+                    "name": "gpt-4o-mini",
+                    "deployment": "chatboss_sweden-central_chat_gpt-4o-mini"
+                },
+                "prompt_id": "retriever-agent-prompt",
+                "description": "Searches and retrieves relevant information about the company from the knowledge base to answer user questions",
+                "debug": false
+            },
+            "tool_choice": "auto",
+            "tools": {
+                "vector_retriever_tool": {
+                    "index_name": "knowledge_base",
+                    "search_type": "mmr",
+                    "search_kwargs": {
+                        "k": 10,
+                        "lambda_mult": 0.5
+                    }
+                }
+            }
+        },
+        "issue_reporter_agent": {
+            "enabled": true,
+            "chain": {
+                "model": {
+                    "provider": "azure",
+                    "name": "gpt-4o-mini",
+                    "deployment": "chatboss_sweden-central_chat_gpt-4o-mini"
+                },
+                "prompt_id": "issue-reporter-agent-prompt",
+                "description": "Handles user complaints, feedback, and issue reporting with appropriate categorization and priority assignment. At getting applicant informations do not use this if user don't want to report an issue, just don't want to give email or phone numbers",
+                "debug": false
+            },
+            "tool_choice": "auto",
+            "tools": {
+                "issue_tracker_tool": {
+                    "priority_levels": [
+                        "low",
+                        "medium",
+                        "high",
+                        "critical"
+                    ],
+                    "categories": [
+                        "technical",
+                        "account",
+                        "billing",
+                        "feature_request",
+                        "bug_report"
+                    ]
+                }
+            }
+        },
+        "recruiter_agent": {
+            "enabled": true,
+            "chain": {
+                "model": {
+                    "provider": "azure",
+                    "name": "gpt-4o-mini",
+                    "deployment": "chatboss_sweden-central_chat_gpt-4o-mini",
+                    "temperature": 0.25
+                },
+                "prompt_id": "recruiter",
+                "description": "Assists users with job searching, finding positions, and providing career guidance based on location, field, and job type preferences, apply to the positions or getting user application informations",
+                "debug": false
+            },
+            "tool_choice": "auto",
+            "tools": {
+                "get_position_tool": {
+                    "description": "Position search tool that finds jobs by county, city, field, and job type using fuzzy metadata filtering in Redis database.",
+                    "input_fields": [
+                        "labels_county",
+                        "labels_city",
+                        "labels_field",
+                        "labels_job_type",
+                        "name"
+                    ],
+                    "index_name": "positions"
+                },
+                "get_labels_tool": {
+                    "description": "Tool to fetch all unique labels all the time grouped by county and city, and lists of fields and job types.",
+                    "required": true,
+                    "index_name": "positions"
+                }
+            }
+        }
+    },
+    "topic_validator": {
+        "enabled": true,
+        "model": {
+            "provider": "azure",
+            "name": "gpt-4o-mini",
+            "deployment": "chatboss_sweden-central_chat_gpt-4o-mini"
+        },
+        "allowed_topics": [
+            "job_search",
+            "employment",
+            "recruitment",
+            "hiring",
+            "job_application",
+            "job_offer",
+            "job_interview",
+            "resume",
+            "cv",
+            "cities-county",
+            "job_description",
+            "job_requirements",
+            "job_skills",
+            "job_positions",
+            "job_openings",
+            "job_companies",
+            "company_information",
+            "company_culture",
+            "company_benefits",
+            "salary",
+            "workplace",
+            "career",
+            "professional",
+            "work",
+            "complaint",
+            "issue_reporting",
+            "problem",
+            "feedback",
+            "concern",
+            "greetings",
+            "smalltalk",
+            "other"
+        ],
+        "invalid_topics": [
+            "personal",
+            "politics",
+            "religion",
+            "inappropriate",
+            "programming",
+            "coding",
+            "math",
+            "history",
+            "sports",
+            "entertainment",
+            "music",
+            "movies",
+            "games",
+            "books",
+            "art",
+            "literature",
+            "health",
+            "medical",
+            "finance",
+            "investment"
+        ]
+    },
+    "personal_data_filter": {
+        "enabled": true,
+        "chain": {
+            "model": {
+                "provider": "azure",
+                "name": "gpt-4o-mini",
+                "deployment": "chatboss_sweden-central_chat_gpt-4o-mini"
+            },
+            "prompt_id": "personal-data-filter-prompt"
+        },
+        "sensitive_data_types": [
+            "email",
+            "phone",
+            "ssn",
+            "credit_card",
+            "address",
+            "full_name"
+        ],
+        "mask_char": "*"
+    },
+    "supervisor": {
+        "enabled": true,
+        "chain": {
+            "model": {
+                "provider": "azure",
+                "name": "gpt-4o-mini",
+                "deployment": "chatboss_sweden-central_chat_gpt-4o-mini"
+            },
+            "prompt_id": "supervisor-prompt",
+            "description": "Manages and routes user requests to the appropriate specialized agent based on the content and context of the conversation",
+            "debug": false
+        }
+    },
+    "applicant_attributes_extractor": {
+        "model": {
+            "provider": "azure",
+            "name": "gpt-4o-mini",
+            "deployment": "chatboss_sweden-central_chat_gpt-4o-mini"
+        },
+        "prompt_id": "applicant-attributes-extractor-prompt",
+        "debug": false
+    },
+    "exception_chain": {
+        "enabled": true,
+        "chain": {
+            "model": {
+                "provider": "azure",
+                "name": "gpt-4o-mini",
+                "deployment": "chatboss_sweden-central_chat_gpt-4o-mini"
+            },
+            "prompt_id": "exception-chain-prompt",
+            "description": "Handles errors, invalid requests, and off-topic conversations with appropriate responses and guidance",
+            "debug": false
+        },
+        "tool_choice": "auto",
+        "tools": {}
+    },
+    "max_input_length": 4000,
+    "chat_memory_db": 0,
+    "chat_memory_index_name": "chat_memory",
+    "chat_memory_type": "redis",
+    "chat_history_max_length": 12,
+    "tags": [
+        "recruiter"
+    ],
+    "enable_checkpointer": true,
+    "checkpointer_type": "redis",
+    "allow_supervisor_finish": false,
+    "recursion_limit": 5
+}

@@ -1,15 +1,17 @@
-import logging
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from schemas.system_schema import (
+from src.schemas.system_schema import (
     HealthCheckResponseSchema,
     LogsResponseSchema,
 )
-from services.system.system_service import SystemService
+from src.services.logger.logger_service import LoggerService
+from src.services.system.system_service import SystemService
 
-router = APIRouter(tags=["System"])
+logger = LoggerService().setup_logger()
+
+router = APIRouter(tags=["system"])
 
 
 def get_system_service():
@@ -27,7 +29,7 @@ async def health_check(
         return HealthCheckResponseSchema(**health_data)
 
     except Exception as ex:
-        logging.getLogger("logger").error(f"Error in health check: {str(ex)}")
+        logger.error(f"[SystemRoutes] Error in health check: {str(ex)}")
         raise HTTPException(
             status_code=500,
             detail=f"Error checking health: {str(ex)}",
@@ -58,7 +60,7 @@ async def get_logs(
         return LogsResponseSchema(**logs_data)
 
     except Exception as ex:
-        logging.getLogger("logger").error(f"Error getting logs: {str(ex)}")
+        logger.error(f"[SystemRoutes] Error getting logs: {str(ex)}")
         raise HTTPException(
             status_code=500,
             detail=f"Error retrieving logs: {str(ex)}",

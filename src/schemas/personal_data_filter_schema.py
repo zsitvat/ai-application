@@ -1,18 +1,15 @@
 from pydantic import BaseModel
 
-from schemas.graph_schema import Model
-
-
-class PersonalDataFilterConfigSchema(BaseModel):
-    sensitive_words: list[str] | None = None
-    regex_patterns: list[str] | None = None
-    model: Model | None = None
-    prompt: str | None = None
+from .schema import Model
 
 
 class PersonalDataFilterRequestSchema(BaseModel):
     text: str
-    config: PersonalDataFilterConfigSchema | None = None
+    model: Model | None = None
+    sensitive_words: list[str] | None = None
+    regex_patterns: list[str] | None = None
+    prompt: str | None = None
+    mask_char: str = "*"
 
 
 class PersonalDataFilterResponseSchema(BaseModel):

@@ -36,7 +36,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         self.buckets: dict[str, TokenBucket] = {}
 
     async def dispatch(self, request: Request, call_next):
-        client_ip = request.client.host
+        client_ip = request.client.host if request.client is not None else "unknown"
         bucket = self.buckets.get(client_ip)
 
         if not bucket:

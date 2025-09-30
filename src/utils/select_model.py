@@ -49,12 +49,10 @@ def get_model(
         if provider == OPENAI_PROVIDER:
             return OpenAIEmbeddings(model=model)
         elif provider == AZURE_PROVIDER:
-            azure_endpoint = os.environ.get("AZURE_BASE_URL")
-            api_version = os.environ.get("AZURE_API_VERSION", DEFAULT_API_VERSION)
             return AzureOpenAIEmbeddings(
-                azure_endpoint=azure_endpoint,
+                azure_endpoint=os.environ.get("AZURE_BASE_URL"),
                 azure_deployment=deployment,
-                api_version=api_version,
+                api_version=os.environ.get("AZURE_API_VERSION", DEFAULT_API_VERSION),
             )
         else:
             logger.error(f"[SelectModel] Unsupported embedding provider: {provider}")
@@ -64,9 +62,8 @@ def get_model(
         if provider == OPENAI_PROVIDER:
             return OpenAI(model=model, temperature=temperature)
         elif provider == AZURE_PROVIDER:
-            azure_endpoint = os.environ.get("AZURE_BASE_URL")
             return AzureOpenAI(
-                azure_endpoint=azure_endpoint,
+                azure_endpoint=os.environ.get("AZURE_BASE_URL"),
                 azure_deployment=deployment,
                 temperature=temperature,
             )
@@ -78,9 +75,8 @@ def get_model(
         if provider == OPENAI_PROVIDER:
             return ChatOpenAI(model=model, temperature=temperature)
         elif provider == AZURE_PROVIDER:
-            azure_endpoint = os.environ.get("AZURE_BASE_URL")
             return AzureChatOpenAI(
-                azure_endpoint=azure_endpoint,
+                azure_endpoint=os.environ.get("AZURE_BASE_URL"),
                 azure_deployment=deployment,
                 temperature=temperature,
             )

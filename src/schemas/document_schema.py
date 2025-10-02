@@ -2,7 +2,7 @@ from typing import Optional
 
 from pydantic import BaseModel, Field
 
-from src.schemas.schema import Model
+from schemas.model_schema import Model
 
 
 class DocumentIngestRequestSchema(BaseModel):

@@ -14,10 +14,6 @@ DEFAULT_CHAT_MODEL = "gpt-4.1-mini"
 DEFAULT_TEMPERATURE = 0.0
 DEFAULT_TIMEOUT = 60
 
-# Provider Constants
-OPENAI_PROVIDER = "openai"
-AZURE_PROVIDER = "azure"
-ANTHROPIC_PROVIDER = "anthropic"
 
 # Model Types
 CHAT_TYPE = "chat"

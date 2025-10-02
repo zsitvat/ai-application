@@ -7,7 +7,7 @@ from src.schemas.web_scraping_schema import (
 
 def test_web_scraping_request_schema():
     """Test WebScrapingRequestSchema instantiation and field values."""
-    from src.schemas.schema import Model, ModelProviderType, ModelType
+    from schemas.model_schema import Model, ModelProviderType, ModelType
 
     model = Model(
         provider=ModelProviderType.OPENAI,

@@ -1,7 +1,7 @@
 import logging
 import re
 
-from src.schemas.schema import Model
+from schemas.model_schema import Model
 from src.utils.get_prompt import get_prompt_by_type
 from src.utils.select_model import get_model
 

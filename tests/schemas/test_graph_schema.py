@@ -53,8 +53,8 @@ def test_checkpointer_type_enum():
 
 
 def test_chain_model():
-    from src.schemas.graph_schema import Chain
     from schemas.model_schema import Model
+    from src.schemas.graph_schema import Chain
 
     chain = Chain(model=Model(), prompt_id="pid", description="desc")
     assert chain.prompt_id == "pid"
@@ -62,8 +62,8 @@ def test_chain_model():
 
 
 def test_embedding_model():
-    from src.schemas.graph_schema import Embedding
     from schemas.model_schema import Model
+    from src.schemas.graph_schema import Embedding
 
     emb = Embedding(model=Model())
     assert emb.search_type == "mmr"
@@ -71,8 +71,8 @@ def test_embedding_model():
 
 
 def test_agent_model():
-    from src.schemas.graph_schema import Agent, Chain
     from schemas.model_schema import Model
+    from src.schemas.graph_schema import Agent, Chain
 
     chain = Chain(model=Model(), prompt_id="pid")
     agent = Agent(chain=chain)
@@ -81,8 +81,8 @@ def test_agent_model():
 
 
 def test_topic_validator_config():
-    from src.schemas.graph_schema import TopicValidatorConfig
     from schemas.model_schema import Model
+    from src.schemas.graph_schema import TopicValidatorConfig
 
     config = TopicValidatorConfig(
         model=Model(), allowed_topics=["A"], invalid_topics=["B"]
@@ -92,8 +92,8 @@ def test_topic_validator_config():
 
 
 def test_personal_data_filter_config():
-    from src.schemas.graph_schema import Chain, PersonalDataFilterConfig
     from schemas.model_schema import Model
+    from src.schemas.graph_schema import Chain, PersonalDataFilterConfig
 
     chain = Chain(model=Model(), prompt_id="pid")
     config = PersonalDataFilterConfig(chain=chain, sensitive_data_types=["email"])
@@ -102,16 +102,16 @@ def test_personal_data_filter_config():
 
 
 def test_extractor_config():
-    from src.schemas.graph_schema import ExtractorConfig
     from schemas.model_schema import Model
+    from src.schemas.graph_schema import ExtractorConfig
 
     config = ExtractorConfig(model=Model(), prompt_id="pid")
     assert config.prompt_id == "pid"
 
 
 def test_graph_config_minimal():
-    from src.schemas.graph_schema import Agent, Chain, GraphConfig
     from schemas.model_schema import Model
+    from src.schemas.graph_schema import Agent, Chain, GraphConfig
 
     chain = Chain(model=Model(), prompt_id="pid")
     agent = Agent(chain=chain)
@@ -150,6 +150,7 @@ def test_agent_state_defaults():
 
 
 def test_graph_config_all_options():
+    from schemas.model_schema import Model
     from src.schemas.graph_schema import (
         Agent,
         Chain,
@@ -159,7 +160,6 @@ def test_graph_config_all_options():
         PersonalDataFilterConfig,
         TopicValidatorConfig,
     )
-    from schemas.model_schema import Model
 
     chain = Chain(model=Model(), prompt_id="pid")
     agent = Agent(chain=chain)

@@ -18,8 +18,8 @@ from langchain_redis import RedisConfig, RedisVectorStore
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from redisvl.schema import IndexSchema
 
-from src.config.app_config import config
 from schemas.model_schema import Model
+from src.config.app_config import config
 from src.services.logger.logger_service import LoggerService
 from src.utils.select_model import get_model
 

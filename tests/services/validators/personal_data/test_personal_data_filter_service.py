@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from src.schemas.schema import Model, ModelProviderType, ModelType
+from schemas.model_schema import Model, ModelProviderType, ModelType
 from src.services.validators.personal_data.personal_data_filter_service import (
     PersonalDataFilterService,
 )

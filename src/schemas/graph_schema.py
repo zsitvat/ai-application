@@ -7,7 +7,7 @@ from langgraph.graph.message import add_messages
 from pydantic import AliasChoices, BaseModel, Field
 from typing_extensions import TypedDict
 
-from .schema import Model
+from .model_schema import Model
 
 
 def create_empty_application_attributes() -> dict[str, str]:

@@ -6,7 +6,7 @@ from src.schemas.personal_data_filter_schema import (
     PersonalDataFilterRequestSchema,
     PersonalDataFilterResponseSchema,
 )
-from src.schemas.schema import Model, ModelProviderType, ModelType
+from schemas.model_schema import Model, ModelProviderType, ModelType
 from src.services.logger.logger_service import LoggerService
 from src.services.validators.personal_data.personal_data_filter_service import (
     PersonalDataFilterService,

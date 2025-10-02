@@ -11,13 +11,10 @@ from langchain_openai import (
 )
 
 from src.config.constants import (
-    ANTHROPIC_PROVIDER,
-    AZURE_PROVIDER,
     DEFAULT_API_VERSION,
     DEFAULT_CHAT_MODEL,
     DEFAULT_EMBEDDING_MODEL,
     DEFAULT_TIMEOUT,
-    OPENAI_PROVIDER,
 )
 from src.services.logger.logger_service import LoggerService
 
@@ -25,7 +22,7 @@ logger = LoggerService().setup_logger()
 
 
 def get_model(
-    provider: str,
+    provider: str = "openai",
     deployment: str | None = None,
     model: str | None = None,
     type: str = "chat",
@@ -46,9 +43,9 @@ def get_model(
         model = DEFAULT_CHAT_MODEL if type != "embedding" else DEFAULT_EMBEDDING_MODEL
 
     if type == "embedding":
-        if provider == OPENAI_PROVIDER:
+        if provider == "openai":
             return OpenAIEmbeddings(model=model)
-        elif provider == AZURE_PROVIDER:
+        elif provider == "azure":
             return AzureOpenAIEmbeddings(
                 azure_endpoint=os.environ.get("AZURE_BASE_URL"),
                 azure_deployment=deployment,
@@ -59,9 +56,9 @@ def get_model(
             raise KeyError(f"Unsupported provider for embedding model: {provider}")
 
     elif type == "completions":
-        if provider == OPENAI_PROVIDER:
+        if provider == "openai":
             return OpenAI(model=model, temperature=temperature)
-        elif provider == AZURE_PROVIDER:
+        elif provider == "azure":
             return AzureOpenAI(
                 azure_endpoint=os.environ.get("AZURE_BASE_URL"),
                 azure_deployment=deployment,
@@ -72,15 +69,15 @@ def get_model(
             raise KeyError(f"Unsupported provider for completion model: {provider}")
 
     elif type == "chat":
-        if provider == OPENAI_PROVIDER:
+        if provider == "openai":
             return ChatOpenAI(model=model, temperature=temperature)
-        elif provider == AZURE_PROVIDER:
+        elif provider == "azure":
             return AzureChatOpenAI(
                 azure_endpoint=os.environ.get("AZURE_BASE_URL"),
                 azure_deployment=deployment,
                 temperature=temperature,
             )
-        elif provider == ANTHROPIC_PROVIDER:
+        elif provider == "anthropic":
             return ChatAnthropic(
                 name=model, temperature=temperature, timeout=DEFAULT_TIMEOUT, stop=None
             )

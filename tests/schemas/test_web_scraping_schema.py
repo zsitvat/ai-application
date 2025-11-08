@@ -1,9 +1,9 @@
+from schemas.model_schema import Model, ModelProviderType, ModelType
 from src.schemas.web_scraping_schema import (
     OutputType,
     WebScrapingRequestSchema,
     WebScrapingResponseSchema,
 )
-from schemas.model_schema import Model, ModelProviderType, ModelType
 
 
 def test_web_scraping_request_schema():

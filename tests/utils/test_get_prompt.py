@@ -1,5 +1,6 @@
-import pytest
 from unittest.mock import patch
+
+import pytest
 
 from src.utils.get_prompt import _is_integer, get_prompt_by_type
 

@@ -4,24 +4,26 @@ import json
 import logging
 import os
 import sys
+import unicodedata
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
-import unicodedata
+
 import aiofiles
 from docx import Document
 from langchain_redis import RedisConfig, RedisVectorStore
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.platypus import Paragraph, Spacer, SimpleDocTemplate
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfbase.cidfonts import UnicodeCIDFont
 from reportlab.lib.enums import TA_CENTER
+from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.cidfonts import UnicodeCIDFont
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 from scrapy.http import Request
 from scrapy.linkextractors import LinkExtractor
 from scrapy.spiders import Spider
+
 from src.schemas.web_scraping_schema import OutputType
 from src.services.web_scraper.scraper_config import (
     CONTENT_SELECTORS,

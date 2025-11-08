@@ -1,6 +1,7 @@
 import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
 import os
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
 
 from src.services.data_api.chat_history import DataChatHistoryService

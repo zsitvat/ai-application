@@ -1,5 +1,7 @@
-from fastapi import APIRouter, HTTPException
 import json
+
+from fastapi import APIRouter, HTTPException
+
 from src.schemas.web_scraping_schema import (
     WebScrapingRequestSchema,
     WebScrapingResponseSchema,

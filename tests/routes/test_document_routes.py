@@ -3,8 +3,8 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from fastapi.testclient import TestClient
 
-from src.app import create_app
 import src.routes.document_routes as document_routes
+from src.app import create_app
 
 client = TestClient(create_app())
 

@@ -20,7 +20,7 @@ class ToolHandler:
         allowed_tool_names = []
         if hasattr(agent_config, "tools") and isinstance(agent_config.tools, dict):
             for tool_name, tool_config in agent_config.tools.items():
-                # Skip required tools
+                # Skip required tools, because they are executed automatically
                 if tool_config.get("required", False):
                     continue
                 if tool_name in AVAILABLE_TOOLS:
@@ -109,14 +109,6 @@ class ToolHandler:
         ):
             search_values = tool_args["input_fields"]
             tool_args = search_values.copy()
-
-            if tool_name in agent_config.tools:
-                config_input_fields = agent_config.tools[tool_name].get(
-                    "input_fields", []
-                )
-                if config_input_fields:
-                    # Update tool_args with config_input_fields logic here
-                    pass
 
         if tool_name in agent_config.tools and isinstance(tool_args, dict):
             tool_args = self.merge_tool_args_with_config(

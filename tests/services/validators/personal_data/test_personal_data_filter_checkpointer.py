@@ -52,7 +52,6 @@ async def test_put_sync():
     checkpointer = PersonalDataFilterCheckpointer(
         base_checkpointer, personal_data_service, config, logger
     )
-    # Should not raise
     await checkpointer.aput("cfg", checkpoint, {})
 
 

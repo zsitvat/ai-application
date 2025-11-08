@@ -128,7 +128,7 @@ def test_update_prompt_context(graph_instance):
     result = graph_instance.tool_handler._update_prompt_context(
         prompt, tool_name, "variable_name", value, None
     )
-    # Accept None or dict as valid output
+
     assert result is None or isinstance(result, dict)
 
 
@@ -138,7 +138,7 @@ def test_extract_position_info_from_list(graph_instance):
     result = graph_instance.tool_handler._extract_position_info_from_list(
         application_attributes, positions
     )
-    # Accept None or list as valid output
+
     assert result is None or isinstance(result, list)
 
 
@@ -148,7 +148,7 @@ def test_extract_location_info_from_labels(graph_instance):
     result = graph_instance.tool_handler._extract_location_info_from_labels(
         application_attributes, labels
     )
-    # Accept None or list as valid output
+
     assert result is None or isinstance(result, list)
 
 
@@ -188,7 +188,7 @@ def test_prepare_tool_args(graph_instance):
 
 
 def test_handle_exception_chain_fallback(graph_instance):
-    # Minimal test for coverage of fallback error handling
+
     class DummyState(dict):
         def __init__(self):
             super().__init__()

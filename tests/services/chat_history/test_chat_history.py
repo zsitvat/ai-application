@@ -1,6 +1,6 @@
 import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
-
+import os
 import pytest
 
 from src.services.data_api.chat_history import DataChatHistoryService
@@ -89,8 +89,6 @@ async def test_get_history_messages_as_dict(chat_service):
 
 @pytest.mark.asyncio
 async def test_get_conversations_success(chat_service):
-    import os
-
     os.environ["CHAT_HISTORY_REST_API_ROUTE_PATH"] = (
         "/api/chat/{uuid}?limit={limit}&page={page}&size={size}"
     )
@@ -107,7 +105,7 @@ async def test_get_conversations_success(chat_service):
             pass
 
         async def get(self, *args, **kwargs):
-            await asyncio.sleep(0)  # simulate async
+            await asyncio.sleep(0)
             return mock_response
 
     with patch("httpx.AsyncClient", return_value=MockAsyncClient()):
@@ -130,7 +128,7 @@ async def test_get_conversations_error(chat_service):
             pass
 
         async def get(self, *args, **kwargs):
-            await asyncio.sleep(0)  # simulate async
+            await asyncio.sleep(0)
             return mock_response
 
     with patch("httpx.AsyncClient", return_value=MockAsyncClient()):

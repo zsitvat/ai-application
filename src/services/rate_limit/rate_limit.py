@@ -9,7 +9,7 @@ class TokenBucket:
     def __init__(self, capacity: int, refill_rate: float):
         self.capacity = capacity
         self.tokens = capacity
-        self.refill_rate = refill_rate  # tokens per second
+        self.refill_rate = refill_rate
         self.last_refill = time.time()
 
     def consume(self, tokens: int = 1) -> float:
@@ -20,7 +20,7 @@ class TokenBucket:
 
         if self.tokens >= tokens:
             self.tokens -= tokens
-            return 0.0  # No wait needed
+            return 0.0
         else:
             required_tokens = tokens - self.tokens
             wait_time = required_tokens / self.refill_rate

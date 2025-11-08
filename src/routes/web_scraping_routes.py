@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException
-
+import json
 from src.schemas.web_scraping_schema import (
     WebScrapingRequestSchema,
     WebScrapingResponseSchema,
@@ -42,9 +42,6 @@ async def scrape_websites(request: WebScrapingRequestSchema):
         logger.debug(
             f"Scraping completed. Success: {success}, Message: {message}, Scraped URLs: {scraped_urls}, Failed URLs: {failed_urls}"
         )
-
-        # Ensure content is a string for response schema
-        import json
 
         if isinstance(content, (list, dict)):
             content = json.dumps(content)

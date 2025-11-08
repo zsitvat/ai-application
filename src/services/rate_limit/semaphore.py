@@ -17,11 +17,9 @@ class SemaphoreMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         path = request.url.path
 
-        # If no paths specified or current path is in the list to limit
         if not self.paths_to_limit or any(
             path.startswith(p) for p in self.paths_to_limit
         ):
-            # Check if semaphore is full before acquiring it
             if self.semaphore.locked():
                 self.logger.warning(
                     f"Semaphore full. Request to {path} is waiting... Limit: {self.semaphore_limit}"

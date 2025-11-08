@@ -3,12 +3,11 @@ from src.schemas.web_scraping_schema import (
     WebScrapingRequestSchema,
     WebScrapingResponseSchema,
 )
+from schemas.model_schema import Model, ModelProviderType, ModelType
 
 
 def test_web_scraping_request_schema():
     """Test WebScrapingRequestSchema instantiation and field values."""
-    from schemas.model_schema import Model, ModelProviderType, ModelType
-
     model = Model(
         provider=ModelProviderType.OPENAI,
         name="text-embedding-3-large",
@@ -33,7 +32,6 @@ def test_web_scraping_request_schema():
     assert obj.allowed_domains == ["example.com"]
     assert obj.content_selectors == [".main-content"]
     assert obj.excluded_selectors == [".ads"]
-    # The default value for embedding_model is a Model object, not None
     assert isinstance(obj.embedding_model, Model)
     assert obj.embedding_model.provider == ModelProviderType.OPENAI
     assert obj.embedding_model.name == "text-embedding-3-large"

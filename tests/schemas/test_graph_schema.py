@@ -1,6 +1,20 @@
 import pytest
 
-from src.schemas.graph_schema import AgentState, create_empty_application_attributes
+from schemas.model_schema import Model
+from src.schemas.graph_schema import (
+    Agent,
+    AgentState,
+    ApplicationAttributes,
+    ApplicationIdentifierSchema,
+    Chain,
+    CheckpointerType,
+    Embedding,
+    ExtractorConfig,
+    GraphConfig,
+    PersonalDataFilterConfig,
+    TopicValidatorConfig,
+    create_empty_application_attributes,
+)
 
 
 def test_create_empty_application_attributes():
@@ -22,12 +36,9 @@ def test_create_empty_application_attributes():
 
 def test_agent_state_dict_access():
     state = AgentState()
-    # __getitem__
     assert state["next_agent"] == ""
-    # __setitem__
     state["next_agent"] = "test_next"
     assert state.next_agent == "test_next"
-    # get
     assert state.get("next_agent") == "test_next"
     assert state.get("nonexistent", "default") == "default"
 
@@ -38,42 +49,29 @@ def test_agent_state_ai_related():
 
 
 def test_application_identifier_schema():
-    from src.schemas.graph_schema import ApplicationIdentifierSchema
-
     obj = ApplicationIdentifierSchema(tenantIdentifier=1, applicationIdentifier="app1")
     assert obj.tenantIdentifier == 1
     assert obj.applicationIdentifier == "app1"
 
 
 def test_checkpointer_type_enum():
-    from src.schemas.graph_schema import CheckpointerType
-
     assert CheckpointerType.MEMORY == "memory"
     assert CheckpointerType.REDIS == "redis"
 
 
 def test_chain_model():
-    from schemas.model_schema import Model
-    from src.schemas.graph_schema import Chain
-
     chain = Chain(model=Model(), prompt_id="pid", description="desc")
     assert chain.prompt_id == "pid"
     assert chain.description == "desc"
 
 
 def test_embedding_model():
-    from schemas.model_schema import Model
-    from src.schemas.graph_schema import Embedding
-
     emb = Embedding(model=Model())
     assert emb.search_type == "mmr"
     assert emb.search_kwargs["k"] == 4
 
 
 def test_agent_model():
-    from schemas.model_schema import Model
-    from src.schemas.graph_schema import Agent, Chain
-
     chain = Chain(model=Model(), prompt_id="pid")
     agent = Agent(chain=chain)
     assert agent.enabled is True
@@ -81,9 +79,6 @@ def test_agent_model():
 
 
 def test_topic_validator_config():
-    from schemas.model_schema import Model
-    from src.schemas.graph_schema import TopicValidatorConfig
-
     config = TopicValidatorConfig(
         model=Model(), allowed_topics=["A"], invalid_topics=["B"]
     )
@@ -92,9 +87,6 @@ def test_topic_validator_config():
 
 
 def test_personal_data_filter_config():
-    from schemas.model_schema import Model
-    from src.schemas.graph_schema import Chain, PersonalDataFilterConfig
-
     chain = Chain(model=Model(), prompt_id="pid")
     config = PersonalDataFilterConfig(chain=chain, sensitive_data_types=["email"])
     assert config.enabled is True
@@ -102,17 +94,11 @@ def test_personal_data_filter_config():
 
 
 def test_extractor_config():
-    from schemas.model_schema import Model
-    from src.schemas.graph_schema import ExtractorConfig
-
     config = ExtractorConfig(model=Model(), prompt_id="pid")
     assert config.prompt_id == "pid"
 
 
 def test_graph_config_minimal():
-    from schemas.model_schema import Model
-    from src.schemas.graph_schema import Agent, Chain, GraphConfig
-
     chain = Chain(model=Model(), prompt_id="pid")
     agent = Agent(chain=chain)
     config = GraphConfig(agents={"main": agent}, supervisor=agent)
@@ -121,8 +107,6 @@ def test_graph_config_minimal():
 
 
 def test_application_attributes_typed_dict():
-    from src.schemas.graph_schema import ApplicationAttributes
-
     attrs: ApplicationAttributes = {
         "applicant_name": "Test",
         "phone_number": "123",
@@ -139,8 +123,6 @@ def test_application_attributes_typed_dict():
 
 
 def test_agent_state_defaults():
-    from src.schemas.graph_schema import AgentState
-
     state = AgentState()
     assert isinstance(state.messages, list)
     assert state.next_agent == ""
@@ -150,17 +132,6 @@ def test_agent_state_defaults():
 
 
 def test_graph_config_all_options():
-    from schemas.model_schema import Model
-    from src.schemas.graph_schema import (
-        Agent,
-        Chain,
-        CheckpointerType,
-        ExtractorConfig,
-        GraphConfig,
-        PersonalDataFilterConfig,
-        TopicValidatorConfig,
-    )
-
     chain = Chain(model=Model(), prompt_id="pid")
     agent = Agent(chain=chain)
     topic_validator = TopicValidatorConfig(model=Model())

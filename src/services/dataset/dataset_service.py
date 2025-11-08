@@ -24,7 +24,6 @@ class DatasetService:
         self.client = Client()
         self.background_tasks = set()
 
-    # Public methods
     def create_dataset(
         self, name: str, description: str | None, test_cases: list[dict]
     ) -> dict:
@@ -78,8 +77,8 @@ class DatasetService:
                 else datetime.now().isoformat()
             ),
             "url": dataset.url,
-            "tags": dataset.tags,
-            "metadata": dataset.extra,
+            "tags": getattr(dataset, "tags", []),
+            "metadata": getattr(dataset, "extra", {}),
         }
 
     def get_dataset(self, dataset_name: str) -> dict:
@@ -139,8 +138,8 @@ class DatasetService:
                     dataset.modified_at.isoformat() if dataset.modified_at else None
                 ),
                 "url": dataset.url,
-                "tags": dataset.tags,
-                "metadata": dataset.extra,
+                "tags": getattr(dataset, "tags", []),
+                "metadata": getattr(dataset, "extra", {}),
             }
 
             self.logger.info(
@@ -252,14 +251,12 @@ class DatasetService:
 
             run_id = f"run_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{dataset_name}"
 
-            # Start the background task
             task = asyncio.create_task(
                 self._run_dataset_background(dataset_name, config, uuid, run_id)
             )
             self.background_tasks.add(task)
             task.add_done_callback(self.background_tasks.discard)
 
-            # Don't wait for the task to complete
             return {
                 "dataset_name": dataset_name,
                 "run_id": run_id,
@@ -310,7 +307,6 @@ class DatasetService:
             self.logger.error(f"Error deleting dataset {dataset_name}: {str(e)}")
             raise DatasetUpdateError(f"Failed to delete dataset: {str(e)}")
 
-    # Private methods
     def _prepare_examples_from_test_cases(self, test_cases: list[dict]) -> list[dict]:
         """Prepare examples from test cases for LangSmith dataset."""
         examples = []
@@ -352,7 +348,6 @@ class DatasetService:
             Exception: If the API call fails
         """
         try:
-            # Default configuration
             default_config = {
                 "url": "http://localhost:5000/api/graph",
                 "timeout": 300,
@@ -363,7 +358,6 @@ class DatasetService:
                 "parameters": {},
             }
 
-            # Use provided config or defaults
             if config:
                 config_dict = dict(config)
 
@@ -445,7 +439,6 @@ class DatasetService:
                     self.logger.warning(f"No question found in inputs: {inputs}")
                     return {"error": "No question found in test case"}
 
-                # Use asyncio to call the async API function
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
                 try:

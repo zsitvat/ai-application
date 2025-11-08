@@ -8,17 +8,20 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
-
+import unicodedata
 import aiofiles
 from docx import Document
 from langchain_redis import RedisConfig, RedisVectorStore
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.platypus import Paragraph, Spacer
+from reportlab.platypus import Paragraph, Spacer, SimpleDocTemplate
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfbase.cidfonts import UnicodeCIDFont
+from reportlab.lib.enums import TA_CENTER
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from scrapy.http import Request
 from scrapy.linkextractors import LinkExtractor
 from scrapy.spiders import Spider
-
 from src.schemas.web_scraping_schema import OutputType
 from src.services.web_scraper.scraper_config import (
     CONTENT_SELECTORS,
@@ -287,7 +290,6 @@ class ScrapySpider(Spider):
 
     def _try_register_cid_font(self, cid_font_name: str) -> str | None:
         """Try to register a CID font."""
-        from reportlab.pdfbase.cidfonts import UnicodeCIDFont
 
         try:
             pdfmetrics.registerFont(UnicodeCIDFont(cid_font_name))
@@ -338,7 +340,6 @@ class ScrapySpider(Spider):
                     )
                     return result
 
-        # Try built-in CID fonts with good Unicode support
         cid_fonts = ["HYSMyeongJoStd-Medium", "STSong-Light", "HeiseiMin-W3"]
         for cid_font in cid_fonts:
             result = self._try_register_cid_font(cid_font)
@@ -355,8 +356,6 @@ class ScrapySpider(Spider):
 
     def _create_pdf_styles(self, font_name: str) -> tuple[Any, Any, Any]:
         """Create PDF styles for the document."""
-        from reportlab.lib.enums import TA_CENTER
-        from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 
         styles = getSampleStyleSheet()
 
@@ -398,7 +397,6 @@ class ScrapySpider(Spider):
             return Spacer(1, 7)
 
         try:
-            import unicodedata
 
             normalized_text = unicodedata.normalize("NFC", line.strip())
 
@@ -454,8 +452,6 @@ class ScrapySpider(Spider):
 
     def _save_as_pdf(self, output_path: str, timestamp: str) -> str:
         """Save scraped content as PDF file."""
-        from reportlab.lib.pagesizes import letter
-        from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 
         filename = f"{output_path}/scraped_content_{timestamp}.pdf"
 
@@ -798,9 +794,7 @@ class ScrapySpider(Spider):
         """
         Extract the first valid JSON object or array from a string that may contain extra log lines.
         """
-        import json
 
-        # Try line-by-line parsing first
         lines = output.splitlines()
         for line in lines:
             line = line.strip()
@@ -810,7 +804,7 @@ class ScrapySpider(Spider):
                 return json.loads(line)
             except Exception:
                 continue
-        # If not found, try bracket matching as fallback
+
         for start_char, end_char in [("{", "}"), ("[", "]")]:
             start = output.find(start_char)
             if start != -1:
@@ -878,7 +872,6 @@ class ScrapySpider(Spider):
         try:
             decoded_stdout = stdout.decode().strip()
 
-            # First check if temp file exists at the specified location
             temp_file_path = str(
                 Path(__file__).parent.parent.parent.parent / "files" / "temp_file.json"
             )
@@ -946,7 +939,6 @@ class ScrapySpider(Spider):
 
         REDIS_URL = f"redis://{os.getenv('REDIS_USER', 'default')}:{os.getenv('REDIS_PASSWORD', '')}@{os.getenv('REDIS_HOST', '172.17.0.1')}:{os.getenv('REDIS_PORT', '6380')}"
 
-        # Configure embedding model based on provided config or use defaults
         if embedding_model_config:
             provider = embedding_model_config.provider.value
             deployment = embedding_model_config.deployment

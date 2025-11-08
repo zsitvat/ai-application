@@ -4,6 +4,12 @@ import pytest
 from fastapi.testclient import TestClient
 
 from src.app import app
+from src.schemas.dataset_schema import (
+    DatasetNotFoundError,
+    DatasetCreationError,
+    DatasetUpdateError,
+    DatasetRunError,
+)
 
 client = TestClient(app)
 
@@ -31,8 +37,6 @@ def test_create_dataset_success(mock_dataset_service):
 
 
 def test_create_dataset_error(mock_dataset_service):
-    from src.schemas.dataset_schema import DatasetCreationError
-
     mock_dataset_service.create_dataset.side_effect = DatasetCreationError("fail")
     payload = {"dataset_name": "test_ds", "description": "desc", "test_cases": []}
     response = client.post("/api/dataset", json=payload)
@@ -61,8 +65,6 @@ def test_get_dataset_success(mock_dataset_service):
 
 
 def test_get_dataset_not_found(mock_dataset_service):
-    from src.schemas.dataset_schema import DatasetNotFoundError
-
     mock_dataset_service.get_dataset.side_effect = DatasetNotFoundError("not found")
     response = client.get("/api/dataset/test_ds")
     assert response.status_code == 404
@@ -90,8 +92,6 @@ def test_update_dataset_success(mock_dataset_service):
 
 
 def test_update_dataset_not_found(mock_dataset_service):
-    from src.schemas.dataset_schema import DatasetNotFoundError
-
     mock_dataset_service.update_dataset.side_effect = DatasetNotFoundError("not found")
     payload = {"dataset_name": "test_ds", "description": "desc", "test_cases": []}
     response = client.patch("/api/dataset/test_ds", json=payload)
@@ -99,8 +99,6 @@ def test_update_dataset_not_found(mock_dataset_service):
 
 
 def test_update_dataset_error(mock_dataset_service):
-    from src.schemas.dataset_schema import DatasetUpdateError
-
     mock_dataset_service.update_dataset.side_effect = DatasetUpdateError("fail")
     payload = {"dataset_name": "test_ds", "description": "desc", "test_cases": []}
     response = client.patch("/api/dataset/test_ds", json=payload)
@@ -123,8 +121,6 @@ def test_run_dataset_success(mock_dataset_service):
 
 
 def test_run_dataset_not_found(mock_dataset_service):
-    from src.schemas.dataset_schema import DatasetNotFoundError
-
     mock_dataset_service.run_dataset.side_effect = DatasetNotFoundError("not found")
     payload = {"config": {}}
     response = client.post("/api/dataset/test_ds/run", json=payload)
@@ -132,8 +128,6 @@ def test_run_dataset_not_found(mock_dataset_service):
 
 
 def test_run_dataset_error(mock_dataset_service):
-    from src.schemas.dataset_schema import DatasetRunError
-
     mock_dataset_service.run_dataset.side_effect = DatasetRunError("fail")
     payload = {"config": {}}
     response = client.post("/api/dataset/test_ds/run", json=payload)
@@ -158,8 +152,6 @@ def test_delete_dataset_success(mock_dataset_service):
 
 
 def test_delete_dataset_not_found(mock_dataset_service):
-    from src.schemas.dataset_schema import DatasetNotFoundError
-
     mock_dataset_service.delete_dataset.side_effect = DatasetNotFoundError("not found")
     response = client.delete("/api/dataset/test_ds")
     assert response.status_code == 404

@@ -74,7 +74,6 @@ class TopicValidatorService:
                 "allowed_topics must be set and contain at least one topic."
             )
 
-        # Treat empty or whitespace-only questions as invalid
         if not isinstance(question, str) or not question.strip():
             reason = "Question is empty or invalid."
             self.logger.debug(reason)
@@ -86,7 +85,6 @@ class TopicValidatorService:
         if allowed_set.intersection(invalid_set):
             raise ValueError("A topic cannot be allowed and invalid at the same time.")
 
-        # Only add "other" to invalid_set if it's not explicitly in allowed_topics
         if "other" not in allowed_set and "other" not in invalid_set:
             invalid_set.add("other")
             self.logger.debug("Added 'other' to invalid_set")
@@ -113,7 +111,6 @@ class TopicValidatorService:
                 f"Topic '{topic}' (normalized: '{normalized_topic}') in allowed_topics: {is_allowed}"
             )
 
-            # Find the original topic name for consistent response
             if is_allowed:
                 original_topic = None
                 for orig_topic in allowed_topics:

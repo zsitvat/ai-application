@@ -87,7 +87,6 @@ class LoggerService:
         if logger_name in self._loggers:
             return self._loggers[logger_name]
 
-        # Create logger with default settings if it doesn't exist
         return self.setup_logger(logger_name=logger_name)
 
     def update_log_level(self, log_level: str, logger_name: str = "logger"):

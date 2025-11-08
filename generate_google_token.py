@@ -37,7 +37,6 @@ def main():
             print("Or use this manual method:")
             print()
 
-            # Manual authorization flow with OOB redirect
             flow = InstalledAppFlow.from_client_secrets_file(credentials_file, SCOPES)
             flow.redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
             auth_url, _ = flow.authorization_url(prompt="consent")

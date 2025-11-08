@@ -76,7 +76,6 @@ class DocumentService:
         Raises:
             Exception: When document processing or ingestion fails
         """
-        # Use config defaults if not provided
         chunk_size = chunk_size or config.document.chunk_size
         chunk_overlap = chunk_overlap or config.document.chunk_overlap
 
@@ -217,17 +216,17 @@ class DocumentService:
         documents = []
         temp_files_to_cleanup = []
 
-        expanded_files = []
+        files_with_links = []
         for file_path in files:
             if os.path.isdir(file_path):
                 for entry in os.listdir(file_path):
                     full_path = os.path.join(file_path, entry)
                     if os.path.isfile(full_path):
-                        expanded_files.append(full_path)
+                        files_with_links.append(full_path)
             else:
-                expanded_files.append(file_path)
+                files_with_links.append(file_path)
 
-        for file_path in expanded_files:
+        for file_path in files_with_links:
 
             try:
                 current_file_path = file_path.strip()

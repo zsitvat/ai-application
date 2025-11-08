@@ -3,6 +3,7 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from fastapi.testclient import TestClient
 
+import src.routes.document_routes as document_routes
 from src.app import create_app
 
 client = TestClient(create_app())
@@ -18,8 +19,6 @@ def mock_document_service():
 
 
 def test_routes_module_exists():
-    import src.routes.document_routes as document_routes
-
     assert hasattr(document_routes, "router") or hasattr(document_routes, "app")
 
 

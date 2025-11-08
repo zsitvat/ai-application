@@ -149,13 +149,11 @@ class GraphService:
         """
         self.logger.debug(f"Executing graph for app_id={app_id}, user_id={user_id}")
         try:
-            # Prepare graph configuration
             graph_config = parameters.get("graph_config") if parameters else None
             prepared_input = await self.graph.prepare_graph_execution(
                 graph_config, user_input
             )
 
-            # Execute workflow
             initial_state = self._prepare_initial_state(
                 prepared_input, app_id, user_id, context, parameters
             )
@@ -202,13 +200,11 @@ class GraphService:
             f"Streaming graph execution for app_id={app_id}, user_id={user_id}"
         )
         try:
-            # Prepare graph configuration
             graph_config = parameters.get("graph_config") if parameters else None
             prepared_input = await self.graph.prepare_graph_execution(
                 graph_config, user_input
             )
 
-            # Execute workflow
             initial_state = self._prepare_initial_state(
                 prepared_input, app_id, user_id, context, parameters
             )

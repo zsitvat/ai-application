@@ -1,10 +1,13 @@
 import asyncio
+import json
 import logging
 import os
 import time
 from datetime import datetime
+from pathlib import Path
 
 import psutil
+import redis
 
 from src.config.constants import (
     DEFAULT_LIMIT,
@@ -111,10 +114,7 @@ class SystemService:
         """Check connectivity to external services."""
         services = []
         services_status = HEALTH_STATUS_HEALTHY
-
-        # Redis check
         try:
-            import redis
 
             redis_client = redis.Redis(
                 host=os.getenv("REDIS_HOST", "localhost"),
@@ -243,7 +243,7 @@ class SystemService:
                 end_date,
                 source,
             )
-            if isinstance(logs, dict):  # Error response
+            if isinstance(logs, dict):
                 return logs
 
             paginated_result = self._paginate_logs(logs, page, limit)
@@ -270,8 +270,6 @@ class SystemService:
                 "message": "File logging not configured (LOG_FILE_PATH not set)",
             }
 
-        from pathlib import Path
-
         log_file = Path(log_file_path)
         if not log_file.exists():
             return {
@@ -292,8 +290,6 @@ class SystemService:
         source: str | None,
     ) -> list[dict] | dict:
         """Read and filter log entries from file."""
-        import json
-        from pathlib import Path
 
         logs = []
         log_file = Path(log_file_path)

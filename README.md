@@ -68,8 +68,8 @@ For production environments with AWS infrastructure:
 ```bash
 # Required environment variables in .env
 AWS_S3_BUCKET=your-bucket-name
-AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
-AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
 AWS_REGION=us-east-1
 ```
 
@@ -85,7 +85,7 @@ For Google Workspace integration:
 ```bash
 # Required environment variables in .env
 GOOGLE_OAUTH_CREDENTIALS_FILE=credentials.json
-GOOGLE_DRIVE_FOLDER_ID=1ap2VA2V7sOPLCGwf7FxwRIsEENI0c4lR
+GOOGLE_DRIVE_FOLDER_ID=
 ```
 
 **Setup Steps:**

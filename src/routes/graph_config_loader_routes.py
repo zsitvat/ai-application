@@ -27,7 +27,6 @@ class GraphConfigLoaderSchema(BaseModel):
 def get_graph_service():
     app_settings_service = AppSettingsService()
 
-    # Provide a minimal mock graph for tests
     class MockGraph:
         async def prepare_graph_execution(self, graph_config, user_input):
             return user_input

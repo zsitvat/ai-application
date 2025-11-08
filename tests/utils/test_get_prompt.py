@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import pytest
 
 from src.utils.get_prompt import _is_integer, get_prompt_by_type
@@ -5,7 +7,6 @@ from src.utils.get_prompt import _is_integer, get_prompt_by_type
 
 @pytest.mark.asyncio
 async def test_get_prompt_by_type_basic():
-    from unittest.mock import patch
 
     with patch("langchain.hub.pull", return_value=["prompt"]):
         result = await get_prompt_by_type(
@@ -16,7 +17,6 @@ async def test_get_prompt_by_type_basic():
 
 @pytest.mark.asyncio
 async def test_get_prompt_by_type_invalid():
-    from unittest.mock import patch
 
     with patch("langchain.hub.pull", side_effect=Exception("fail")):
         with pytest.raises(Exception):
@@ -25,7 +25,6 @@ async def test_get_prompt_by_type_invalid():
 
 @pytest.mark.asyncio
 async def test_get_prompt_by_type_other_tracer():
-    from unittest.mock import patch
 
     with patch("langchain.hub.pull", return_value=["prompt"]):
         result = await get_prompt_by_type("default", tracer_type="other", cache_ttl=60)
@@ -34,7 +33,6 @@ async def test_get_prompt_by_type_other_tracer():
 
 @pytest.mark.asyncio
 async def test_get_prompt_by_type_other_tracer_exception():
-    from unittest.mock import patch
 
     with patch("langchain.hub.pull", side_effect=Exception("fail")):
         with pytest.raises(Exception):

@@ -60,7 +60,7 @@
                     "provider": "azure",
                     "name": "gpt-4o-mini",
                     "deployment": "attr-gpt4.1mini-aicore",
-                    "temperature": 0.25
+                    "temperature": 0
                 },
                 "prompt_id": "recruiter",
                 "description": "Assists users with job searching, finding positions, and providing career guidance based on location, field, and job type preferences, apply to the positions and asking prefilter questions or getting user application informations (name,email,phone etc.)"

@@ -59,7 +59,7 @@ class AppSettingsService:
                     for setting in response.json():
                         if setting["key"] == key:
                             return setting
-                    # If key not found
+
                     error_msg = f"App setting with key '{key}' not found"
                     logging.getLogger("uvicorn").warning(error_msg)
                     return None

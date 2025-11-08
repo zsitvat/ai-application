@@ -29,7 +29,6 @@ def test_web_scraping_route_error(monkeypatch):
     app = create_app()
     client = TestClient(app)
 
-    # Patch the service to raise an exception
     class FailingService:
         async def scrape_websites(self, *args, **kwargs):
             raise RuntimeError("Service error")

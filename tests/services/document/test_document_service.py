@@ -232,11 +232,9 @@ def test_is_url_edge_cases(service):
 
 
 def test_flatten_labels_edge_cases(service):
-    # No labels key
     pos = {"foo": 1}
     out = service._flatten_labels(pos.copy())
     assert out["foo"] == 1
-    # labels not dict
     pos = {"labels": "notadict", "bar": 2}
     out = service._flatten_labels(pos.copy())
     assert "labels" in out or "labels" not in out

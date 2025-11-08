@@ -1,4 +1,5 @@
 import asyncio
+import os
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -69,8 +70,6 @@ def test_save_inputs_to_db(chat_service):
 
 
 def test_get_conversations(chat_service):
-    # Set required env vars for the test
-    import os
 
     os.environ["CHAT_HISTORY_REST_API_ROUTE_PATH"] = (
         "/api/chat/{uuid}?limit={limit}&page={page}&size={size}"
@@ -96,7 +95,6 @@ def test_get_conversations(chat_service):
         assert result == mock_response
 
 
-# New unit tests for edge cases and error handling
 def test_get_history_messages_as_string_empty(chat_service):
     with patch.object(
         chat_service,

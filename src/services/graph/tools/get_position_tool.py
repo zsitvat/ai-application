@@ -107,7 +107,6 @@ def get_position_tool(input_fields: list[str]) -> Any:
         query = Query(query_str).paging(0, 100)
         results = redis.ft(index_name).search(query)
 
-        # If no results found and job_type was included, try again without job_type
         if results.total == 0 and any(
             "labels_job_type" in part for part in query_parts
         ):

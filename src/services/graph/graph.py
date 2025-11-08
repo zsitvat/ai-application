@@ -47,7 +47,6 @@ class Graph:
         self.workflow = None
         self.tracer_type = tracer_type
 
-        # Initialize tool handler
         self.tool_handler = ToolHandler()
 
     async def get_compiled_workflow(
@@ -86,7 +85,6 @@ class Graph:
         try:
             graph_config_data = None
 
-            # 1. Try parameters
             if parameters:
                 if "graph_config" in parameters:
                     graph_config_data = parameters["graph_config"]
@@ -103,7 +101,6 @@ class Graph:
                     )
                     return
 
-            # 2. Try app settings (with error handling)
             try:
                 app_settings = await self.app_settings_service.get_app_settings(app_id)
                 graph_config_data = app_settings.get("graph_config")
@@ -121,7 +118,6 @@ class Graph:
                     f"[GraphService] Failed to load app settings for app_id: {app_id}, error: {str(app_settings_ex)}. Will attempt fallback."
                 )
 
-            # 3. Fallback: try file from .env
             graph_config_path = os.getenv("GRAPH_CONFIG_PATH")
             if graph_config_path:
                 if os.path.isfile(graph_config_path):
@@ -143,7 +139,6 @@ class Graph:
                         f"[GraphService] GRAPH_CONFIG_PATH is set but file does not exist: {graph_config_path}"
                     )
 
-            # 4. If nothing found, raise
             raise ValueError(
                 "No graph configuration found in parameters, app settings, or fallback file"
             )
@@ -223,7 +218,6 @@ class Graph:
                     if key in state.application_attributes and value:
                         state.application_attributes[key] = str(value)
 
-                # Check if all required fields are present and call endpoint if so
                 if self._check_required_fields_complete(state.application_attributes):
                     await self._submit_application_data(state.application_attributes)
 
@@ -620,7 +614,6 @@ Select one of: {available_options}"""
                     tools=[tool_def], tool_choice="required"
                 )
 
-                # Filter out ToolMessage objects to avoid OpenAI API errors
                 filtered_messages = self._filter_problematic_messages(state.messages)
                 response = await chain.ainvoke({"messages": filtered_messages})
 
@@ -697,17 +690,14 @@ Select one of: {available_options}"""
         """Process AIMessage that has tool_calls."""
         tool_call_ids = self._extract_tool_call_ids(msg.tool_calls)
 
-        # Collect following ToolMessages
         found_tool_messages, found_tool_call_ids, next_index = (
             self._collect_tool_messages(messages, i + 1, tool_call_ids)
         )
 
-        # If we have unmatched tool_calls, convert this AIMessage to a regular message
         if tool_call_ids and tool_call_ids != found_tool_call_ids:
             content = msg.content if msg.content else "Tool execution completed."
             filtered.append(AIMessage(content=content))
         else:
-            # Keep the AIMessage and its corresponding ToolMessages
             filtered.append(msg)
             filtered.extend(found_tool_messages)
 
@@ -802,7 +792,6 @@ Select one of: {available_options}"""
         """
         Configure conditional edges for the workflow graph, including supervisor and topic_validator nodes.
         """
-        # Supervisor conditional mapping
         conditional_mapping = {
             agent_name: agent_name for agent_name in enabled_agents.keys()
         }
@@ -814,7 +803,6 @@ Select one of: {available_options}"""
             conditional_mapping,
         )
 
-        # Topic validator conditional mapping (if topic validator is enabled)
         if self._is_topic_validator_enabled():
             topic_conditional_mapping = {
                 "supervisor": "supervisor",
@@ -1024,7 +1012,6 @@ Select one of: {available_options}"""
         try:
             chain = prompt | llm
 
-            # Filter out ToolMessage objects to avoid OpenAI API errors
             filtered_messages = self._filter_problematic_messages(state["messages"])
             response = await chain.ainvoke({"messages": filtered_messages})
             state["messages"] = add_messages(state["messages"], [response])

@@ -13,7 +13,6 @@ from src.services.logger.logger_service import LoggerService
 router = APIRouter(prefix="/api/files", tags=["file_upload"])
 logger = LoggerService().setup_logger()
 
-# Initialize file upload service with default configuration
 file_upload_service = FileUploadService(StorageBackendConfig())
 
 
@@ -25,7 +24,6 @@ async def upload_file(
     if not file.filename:
         raise HTTPException(status_code=400, detail="No filename provided")
 
-    # Read file content
     file_content = await file.read()
     mime_type = file.content_type or "application/octet-stream"
 

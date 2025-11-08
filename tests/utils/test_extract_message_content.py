@@ -2,11 +2,10 @@ from src.utils.extract_message_content import extract_message_content
 
 
 def test_extract_message_content_basic():
-    # Should handle basic string input
+
     result = extract_message_content("hello world")
     assert result == "hello world"
 
-    # Should handle dict input
     result = extract_message_content({"content": "test"})
     assert result == "test"
 

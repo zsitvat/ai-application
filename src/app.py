@@ -47,7 +47,7 @@ def _setup_logging() -> None:
 
 def _setup_middleware(app: FastAPI) -> None:
     """Setup middleware for the FastAPI application."""
-    # Add CORS middleware to allow frontend connections
+
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[
@@ -61,7 +61,6 @@ def _setup_middleware(app: FastAPI) -> None:
         allow_headers=["*"],
     )
 
-    # Add rate limiting middleware
     default_limit = config.rate_limit
     paths_to_limit = [
         "/api/graph",
@@ -75,7 +74,6 @@ def _setup_middleware(app: FastAPI) -> None:
     )
 
 
-# Initialize Langfuse if needed
 langfuse = _initialize_langfuse()
 
 
@@ -88,7 +86,6 @@ def create_app() -> FastAPI:
         description="Multi-agent AI system app with document processing and web scraping capabilities",
     )
 
-    # Include routers
     routers = [
         graph_router,
         graph_config_loader_router,

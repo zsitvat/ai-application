@@ -12,18 +12,18 @@ The `DocumentService` class provides the complete range of document operations, 
 
 #### Main Features
 
-- **Document ingestion**: Support for multiple formats (PDF, DOCX, TXT, Excel)
-- **Text chunking**: Intelligent chunking based on configuration
-- **Vectorization**: Embedding generation and Redis storage
-- **Index management**: Dynamic index creation and management
-- **File validation**: Secure file processing
+- Document ingestion: Support for multiple formats (PDF, DOCX, TXT, Excel)
+- Text chunking: Intelligent chunking based on configuration
+- Vectorization: Embedding generation and Redis storage
+- Index management: Dynamic index creation and management
+- File validation: Secure file processing
 
 ## Supported File Formats
 
-- **PDF**: Using PyPDFLoader
-- **DOCX**: Using Docx2txtLoader  
-- **TXT**: Using TextLoader
-- **Excel**: Using UnstructuredExcelLoader
+- PDF: Using PyPDFLoader
+- DOCX: Using Docx2txtLoader  
+- TXT: Using TextLoader
+- Excel: Using UnstructuredExcelLoader
 
 ## Usage
 
@@ -50,7 +50,7 @@ document_service = DocumentService()
 
 Document ingestion and storage in vector database.
 
-**Parameters:**
+Parameters:
 - `model` (Model|None): Embedding model configuration
 - `files` (list[str]): List of files to process
 - `vector_db_index` (str): Vector DB index name
@@ -58,10 +58,10 @@ Document ingestion and storage in vector database.
 - `chunk_overlap` (int): Overlap between chunks
 - `index_schema` (list[dict]): Optional index schema
 
-**Return Value:**
+Return Value:
 - Tuple: `(success, message, processed_files, failed_files)`
 
-**Example:**
+Example:
 ```python
 from schemas.model_schema import Model
 
@@ -83,17 +83,17 @@ success, message, processed, failed = await document_service.ingest_documents(
 
 List available vector DB indices.
 
-**Return Value:**
+Return Value:
 - List of index names
 
 #### `delete_vector_db_index(index_name)`
 
 Delete vector DB index.
 
-**Parameters:**
+Parameters:
 - `index_name` (str): Name of index to delete
 
-**Return Value:**
+Return Value:
 - Tuple: `(success, message)`
 
 ## Text Chunking
@@ -113,9 +113,9 @@ text_splitter = RecursiveCharacterTextSplitter(
 
 ### Chunking Strategy
 
-- **Chunk size**: Maximum characters per chunk
-- **Overlap**: Overlap to preserve context
-- **Recursive**: Intelligent splitting along natural boundaries
+- Chunk size: Maximum characters per chunk
+- Overlap: Overlap to preserve context
+- Recursive: Intelligent splitting along natural boundaries
 
 ## Redis Vector Store Integration
 
@@ -200,10 +200,10 @@ return (
 
 ## Logging
 
-- **Info level**: Processing progress
-- **Debug level**: Chunk size and processing details
-- **Error level**: Errors with detailed information
-- **Warning level**: Warning messages
+- Info level: Processing progress
+- Debug level: Chunk size and processing details
+- Error level: Errors with detailed information
+- Warning level: Warning messages
 
 ## Performance Optimization
 

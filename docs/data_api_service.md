@@ -12,10 +12,10 @@ The `AppSettingsService` class manages application settings through communicatio
 
 #### Main Features
 
-- **Application settings retrieval**: Retrieving settings based on App ID
-- **Key-based settings**: Querying values based on specific keys
-- **HTTP client management**: Asynchronous HTTP communication
-- **Error handling**: Robust error and timeout handling
+- Application settings retrieval: Retrieving settings based on App ID
+- Key-based settings: Querying values based on specific keys
+- HTTP client management: Asynchronous HTTP communication
+- Error handling: Robust error and timeout handling
 
 ## Usage
 
@@ -40,16 +40,16 @@ app_settings_service = AppSettingsService()
 
 Retrieves all settings for an application.
 
-**Parameters:**
+Parameters:
 - `app_id` (int): Application identifier
 
-**Return Value:**
+Return Value:
 - Dictionary with settings (key-value pairs)
 
-**Exceptions:**
+Exceptions:
 - `DataApiException`: In case of API error
 
-**Example:**
+Example:
 ```python
 settings = await app_settings_service.get_app_settings(123)
 # Returns: {"db_host": "localhost", "max_connections": "100", ...}
@@ -59,13 +59,13 @@ settings = await app_settings_service.get_app_settings(123)
 
 Retrieves a specific setting based on key.
 
-**Parameters:**
+Parameters:
 - `key` (str): Setting key
 
-**Return Value:**
+Return Value:
 - Value associated with the key
 
-**Example:**
+Example:
 ```python
 db_host = await app_settings_service.get_app_settings_by_key("db_host")
 ```
@@ -74,11 +74,11 @@ db_host = await app_settings_service.get_app_settings_by_key("db_host")
 
 ### HTTP Configurations
 
-- **Timeout**: 30 seconds
-- **Headers**: 
+- Timeout: 30 seconds
+- Headers: 
   - `Content-Type: application/json`
   - `Connection: close`
-- **HTTP Client**: httpx AsyncClient
+- HTTP Client: httpx AsyncClient
 
 ### Response Format
 
@@ -100,11 +100,11 @@ The Data API returns settings in the following format:
 
 Custom exception class for handling Data API errors.
 
-**Error Types:**
-- **HTTP errors**: 4xx/5xx status codes
-- **Connection errors**: Network problems
-- **Timeout errors**: Exceeded waiting time
-- **General errors**: Other unexpected problems
+Error Types:
+- HTTP errors: 4xx/5xx status codes
+- Connection errors: Network problems
+- Timeout errors: Exceeded waiting time
+- General errors: Other unexpected problems
 
 ### Error Reporting
 
@@ -115,21 +115,21 @@ All errors are logged in detail:
 
 ## Logging
 
-- **Info level**: Successful API calls
-- **Error level**: Failed API calls with detailed information
-- **Debug level**: HTTP request/response details
+- Info level: Successful API calls
+- Error level: Failed API calls with detailed information
+- Debug level: HTTP request/response details
 
 ## Security Considerations
 
-- **Connection close**: Secure connection termination
-- **Timeout settings**: Protection against DoS attacks
-- **Error information limiting**: Hiding internal system details
+- Connection close: Secure connection termination
+- Timeout settings: Protection against DoS attacks
+- Error information limiting: Hiding internal system details
 
 ## Performance
 
-- **Asynchronous operation**: Non-blocking I/O operations
-- **Connection reuse**: HTTP keep-alive optimization
-- **Timeout handling**: Fast error handling for slow APIs
+- Asynchronous operation: Non-blocking I/O operations
+- Connection reuse: HTTP keep-alive optimization
+- Timeout handling: Fast error handling for slow APIs
 
 ## Dependencies
 

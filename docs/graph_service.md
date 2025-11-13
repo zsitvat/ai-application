@@ -12,13 +12,13 @@ The `GraphService` class provides multi-agent system functionality using the Lan
 
 #### Main Features
 
-- **Multi-agent orchestration**: Coordination of multiple AI agents
-- **Supervisor pattern**: Central control and decision making
-- **State management**: State tracking and persistence
-- **Streaming support**: Real-time responses
-- **Checkpoint system**: Process saving and restoration
-- **Tool integration**: External tool integration
-- **Personal data filtering**: Automatic personal data filtering
+- Multi-agent orchestration: Coordination of multiple AI agents
+- Supervisor pattern: Central control and decision making
+- State management: State tracking and persistence
+- Streaming support: Real-time responses
+- Checkpoint system: Process saving and restoration
+- Tool integration: External tool integration
+- Personal data filtering: Automatic personal data filtering
 
 ## Architecture
 
@@ -34,11 +34,11 @@ class AgentState(TypedDict):
 
 ### Workflow Structure
 
-1. **START** → **Supervisor** → **Agents** → **Personal Data Filter** → **END**
-2. **Exception handling**: Error handling chain
-3. **Tool calling**: External tool invocation
-4. **State persistence**: State saving to checkpoints
-5. **Data filtering**: Automatic personal data filtering
+1. START → Supervisor → Agents → Personal Data Filter → END
+2. Exception handling: Error handling chain
+3. Tool calling: External tool invocation
+4. State persistence: State saving to checkpoints
+5. Data filtering: Automatic personal data filtering
 
 ## Usage
 
@@ -58,17 +58,17 @@ graph_service = GraphService(app_settings_service)
 
 Graph execution with specified parameters.
 
-**Parameters:**
+Parameters:
 - `user_input` (str): User input
 - `app_id` (int): Application identifier
 - `user_id` (str|None): User identifier
 - `context` (dict): Context information
 - `parameters` (dict): Runtime parameters
 
-**Return Value:**
+Return Value:
 - AI response text
 
-**Example:**
+Example:
 ```python
 response = await graph_service.execute_graph(
     user_input="What's the status of the project?",
@@ -83,12 +83,12 @@ response = await graph_service.execute_graph(
 
 Streaming graph execution for real-time responses.
 
-**Parameters:** Same as `execute_graph`
+Parameters: Same as `execute_graph`
 
-**Return Value:** 
+Return Value:
 - `AsyncGenerator[str, None]`: Streaming response
 
-**Example:**
+Example:
 ```python
 async for chunk in graph_service.execute_graph_stream(...):
     print(chunk, end="", flush=True)
@@ -123,8 +123,8 @@ class Agent(BaseModel):
 
 ### Supported Types
 
-- **Memory**: `InMemorySaver` - in-memory storage
-- **Redis**: `RedisSaver` - Redis database storage
+- Memory: `InMemorySaver` - in-memory storage
+- Redis: `RedisSaver` - Redis database storage
 
 ### Thread Management
 
@@ -148,10 +148,10 @@ def _load_tool_class(self, tool_config: dict):
 
 ### Supported Tool Types
 
-- **Search tools**: Vector DB search
-- **Database tools**: SQL queries  
-- **API tools**: External API calls
-- **Custom tools**: Project-specific tools
+- Search tools: Vector DB search
+- Database tools: SQL queries  
+- API tools: External API calls
+- Custom tools: Project-specific tools
 
 ## Supervisor Logic
 
@@ -159,10 +159,10 @@ def _load_tool_class(self, tool_config: dict):
 
 The supervisor decides based on the following logic:
 
-1. **User input analysis**: Intent recognition
-2. **Agent selection**: Appropriate expert agent
-3. **Tool usage**: Activating necessary tools
-4. **Response aggregation**: Combining multiple responses
+1. User input analysis: Intent recognition
+2. Agent selection: Appropriate expert agent
+3. Tool usage: Activating necessary tools
+4. Response aggregation: Combining multiple responses
 
 ### Routing Logic
 
@@ -205,9 +205,9 @@ def _personal_data_filter_node(self, state: AgentState) -> AgentState:
 
 The filter node is integrated at the following position:
 
-1. **Applicant Attributes Extractor** → extracts applicant data
-2. **Personal Data Filter Node** → filters personal data
-3. **END** → completes the workflow
+1. Applicant Attributes Extractor → extracts applicant data
+2. Personal Data Filter Node → filters personal data
+3. END → completes the workflow
 
 ### Configuration Options
 
@@ -234,9 +234,9 @@ if "exception_chain" in self.graph_config:
 
 ### Error Reporting
 
-- **Detailed logging**: Documentation of every step
-- **Stack trace**: Developer information
-- **User-friendly messages**: User-friendly errors
+- Detailed logging: Documentation of every step
+- Stack trace: Developer information
+- User-friendly messages: User-friendly errors
 
 ## Streaming Implementation
 
@@ -252,9 +252,9 @@ async def execute_graph_stream(self, ...):
 
 ### Real-time Responses
 
-- **Chunk-based**: Detailed response chunks
-- **Progress tracking**: Progress monitoring
-- **Error handling**: Error handling during streaming
+- Chunk-based: Detailed response chunks
+- Progress tracking: Progress monitoring
+- Error handling: Error handling during streaming
 
 ## Performance Optimization
 
@@ -267,44 +267,44 @@ results = await asyncio.gather(*agent_tasks)
 
 ### Caching
 
-- **State caching**: State caching
-- **Model caching**: Model response caching
-- **Tool result caching**: Tool response storage
+- State caching: State caching
+- Model caching: Model response caching
+- Tool result caching: Tool response storage
 
 ### Memory Management
 
-- **State cleanup**: Clearing unnecessary state
-- **Checkpoint rotation**: Deleting old checkpoints
-- **Message pruning**: Message history optimization
+- State cleanup: Clearing unnecessary state
+- Checkpoint rotation: Deleting old checkpoints
+- Message pruning: Message history optimization
 
 ## Security Considerations
 
 ### Input Validation
 
-- **Prompt injection protection**: Filtering malicious prompts
-- **Input length limitation**: `max_input_length` validation
-- **Content filtering**: Filtering inappropriate content
+- Prompt injection protection: Filtering malicious prompts
+- Input length limitation: `max_input_length` validation
+- Content filtering: Filtering inappropriate content
 
 ### Agent Isolation
 
-- **Resource limiting**: Resource limitations
-- **Timeout handling**: Protection against overruns
-- **Error containment**: Error isolation
+- Resource limiting: Resource limitations
+- Timeout handling: Protection against overruns
+- Error containment: Error isolation
 
 ## Logging and Monitoring
 
 ### Detailed Logging
 
-- **Agent activity**: All agent operations
-- **State changes**: State changes
-- **Performance metrics**: Performance indicators
-- **Error tracking**: Error tracking
+- Agent activity: All agent operations
+- State changes: State changes
+- Performance metrics: Performance indicators
+- Error tracking: Error tracking
 
 ### Debug Information
 
-- **Graph topology**: Graph structure
-- **Message flow**: Message flow
-- **Decision points**: Decision points
+- Graph topology: Graph structure
+- Message flow: Message flow
+- Decision points: Decision points
 
 ## Dependencies
 

@@ -8,11 +8,11 @@ The `SystemService` class provides comprehensive system monitoring and diagnosti
 
 #### Main Functions
 
-- **Health check**: Application and system status verification
-- **System metrics**: CPU, memory, disk usage monitoring
-- **Environment variables**: Configuration validation
-- **External services**: Dependencies status verification
-- **Log management**: Log files listing and content retrieval
+- Health check: Application and system status verification
+- System metrics: CPU, memory, disk usage monitoring
+- Environment variables: Configuration validation
+- External services: Dependencies status verification
+- Log management: Log files listing and content retrieval
 
 ## Usage
 
@@ -30,16 +30,16 @@ system_service = SystemService()
 
 Performs comprehensive application health check.
 
-**Return Value:**
+Return Value:
 - Dictionary with detailed health information
 
-**Example:**
+Example:
 ```python
 health_status = await system_service.health_check()
 print(health_status)
 ```
 
-**Response Structure:**
+Response Structure:
 ```python
 {
     "status": "healthy",  # "healthy", "degraded", "unhealthy"
@@ -58,18 +58,18 @@ print(health_status)
 
 Lists available log files.
 
-**Return Value:**
+Return Value:
 - List of log file names
 
 #### `get_log_content(filename, lines)`
 
 Retrieves log file content.
 
-**Parameters:**
+Parameters:
 - `filename` (str): Log file name
 - `lines` (int): Number of lines to return (last N lines)
 
-**Return Value:**
+Return Value:
 - Log content in string format
 
 ## Health Check Components

@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document provides an overview of all service components in the Recruiter AI application. Each service has its own dedicated documentation that details functionality, usage, and configuration options.
+Overview of all service components in the Recruiter AI application. Each service has its own dedicated documentation that details functionality, usage, and configuration options.
 
 ## Service Architecture
 
@@ -10,67 +10,69 @@ The application follows a Service-Oriented Architecture (SOA) where each service
 
 ## Service Catalog
 
-### 🗨️ [Chat History Service](./chat_history_service.md)
+### Chat History Service
 
-**Responsibility**: Managing user conversation histories
+[Documentation](./chat_history_service.md)
 
-**Main Features**:
+Responsibility: Managing user conversation histories
+
+Main Features:
 - Chat history storage in Redis
 - Session management
 - Conversation metadata
 - User-specific histories
 
-**Technologies**: Redis, AsyncIO, JSON
+Technologies: Redis, AsyncIO, JSON
 
----
+### Data API Service
 
-### 🔧 [Data API Service](./data_api_service.md)
+[Documentation](./data_api_service.md)
 
-**Responsibility**: Communication with external Data API and settings management
+Responsibility: Communication with external Data API and settings management
 
-**Main Features**:
+Main Features:
 - Application settings retrieval
 - HTTP client management
 - Configuration validation
 - API error handling
 
-**Technologies**: httpx, AsyncIO, Environment Variables
+Technologies: httpx, AsyncIO, Environment Variables
 
----
+### Dataset Service
 
-### 📊 [Dataset Service](./dataset_service.md)
+[Documentation](./dataset_service.md)
 
-**Responsibility**: ML dataset management with LangSmith integration
+Responsibility: ML dataset management with LangSmith integration
 
-**Main Features**:
+Main Features:
 - Dataset creation and management
 - Async/sync execution
 - Model evaluation
 - Background task coordination
 
-**Technologies**: LangSmith, LangChain, AsyncIO
+Technologies: LangSmith, LangChain, AsyncIO
 
----
+### Document Service
 
-### 📄 [Document Service](./document_service.md)
+[Documentation](./document_service.md)
 
-**Responsibility**: Document processing and vector database storage
+Responsibility: Document processing and vector database storage
 
-**Main Features**:
+Main Features:
 - Multi-format file support (PDF, DOCX, TXT, Excel)
 - Intelligent text chunking
 - Redis Vector Store integration
 - Embedding generation
 
-**Technologies**: LangChain, Redis Vector Store, PyPDF, Docx2txt
+Technologies: LangChain, Redis Vector Store, PyPDF, Docx2txt
 
----
+### Graph Service
 
-### 🤖 [Graph Service](./graph_service.md)
+[Documentation](./graph_service.md)
 
-**Responsibility**: Multi-agent graph execution with supervisor pattern
+Responsibility: Multi-agent graph execution with supervisor pattern
 
-**Main Features**:
+Main Features:
 - Multi-agent orchestration
 - LangGraph workflow management
 - State management and checkpointing
@@ -78,76 +80,76 @@ The application follows a Service-Oriented Architecture (SOA) where each service
 - Tool integration
 - Personal data filtering
 
-**Technologies**: LangGraph, LangChain, Redis, importlib, Personal Data Filter
+Technologies: LangGraph, LangChain, Redis, importlib, Personal Data Filter
 
----
+### Logger Service
 
-### 📝 [Logger Service](./logger_service.md)
+[Documentation](./logger_service.md)
 
-**Responsibility**: Structured application logging
+Responsibility: Structured application logging
 
-**Main Features**:
+Main Features:
 - JSON formatted logging
 - File rotation
 - Multi-level output (console + file)
 - Configurable log levels
 
-**Technologies**: Python logging, RotatingFileHandler, JSON
+Technologies: Python logging, RotatingFileHandler, JSON
 
----
+### Rate Limit Service
 
-### 🚦 [Rate Limit Service](./rate_limit_service.md)
+[Documentation](./rate_limit_service.md)
 
-**Responsibility**: API rate limiting with Token Bucket algorithm
+Responsibility: API rate limiting with Token Bucket algorithm
 
-**Main Features**:
+Main Features:
 - IP-based rate limiting
 - Token bucket algorithm
 - FastAPI middleware integration
 - Asynchronous waiting
 
-**Technologies**: FastAPI, AsyncIO, Token Bucket, Middleware
+Technologies: FastAPI, AsyncIO, Token Bucket, Middleware
 
----
+### System Service
 
-### 🖥️ [System Service](./system_service.md)
+[Documentation](./system_service.md)
 
-**Responsibility**: System monitoring and health checks
+Responsibility: System monitoring and health checks
 
-**Main Features**:
+Main Features:
 - Comprehensive health checks
 - System metrics (CPU, memory, disk)
 - External service monitoring
 - Log file management
 
-**Technologies**: psutil, pathlib, httpx, asyncio
+Technologies: psutil, pathlib, httpx, asyncio
 
----
+### Web Scraper Service
 
-### 🌐 [Web Scraper Service](./web_scraper_service.md)
+[Documentation](./web_scraper_service.md)
 
-**Responsibility**: Automated web data extraction
+Responsibility: Automated web data extraction
 
-**Main Features**:
+Main Features:
 - Scrapy-based web scraping
 - Multi-format output (JSON, PDF, DOCX, Vector DB)
 - Domain restrictions and robots.txt respect
 - Content filtering and cleaning
 
-**Technologies**: Scrapy, Twisted, ReportLab, Python-docx, LangChain
+Technologies: Scrapy, Twisted, ReportLab, Python-docx, LangChain
 
----
+### Validator Services
 
-### ✅ [Validator Services](./validator_services.md)
+[Documentation](./validator_services.md)
 
-**Responsibility**: Various validation operations
+Responsibility: Various validation operations
 
-**Main Components**:
-- **Token Validation**: Token counting and text truncation
-- **Personal Data Filter**: Dual-mode personal data detection and filtering (regex + AI)
-- **Topic Validator**: Topic relevance validation
+Main Components:
+- Token Validation: Token counting and text truncation
+- Personal Data Filter: Dual-mode personal data detection and filtering (regex + AI)
+- Topic Validator: Topic relevance validation
 
-**Technologies**: tiktoken, spaCy, Transformers, AsyncIO, regex pattern matching
+Technologies: tiktoken, spaCy, Transformers, AsyncIO, regex pattern matching
 
 ## Configuration Overview
 
@@ -203,46 +205,46 @@ Services are designed to run in Kubernetes environments:
 
 ### Monitoring Integration
 
-- **Prometheus**: Metrics export
-- **Grafana**: Visualization
-- **ELK Stack**: Log aggregation
-- **Jaeger**: Distributed tracing
+- Prometheus: Metrics export
+- Grafana: Visualization
+- ELK Stack: Log aggregation
+- Jaeger: Distributed tracing
 
 ## Development Guidelines
 
 ### Coding Standards
 
-- **Type hints**: All functions and methods
-- **Docstrings**: Google style documentation
-- **Error handling**: Comprehensive exception handling
-- **Async/await**: Asynchronous programming patterns
+- Type hints: All functions and methods
+- Docstrings: Google style documentation
+- Error handling: Comprehensive exception handling
+- Async/await: Asynchronous programming patterns
 
 ### Testing
 
-- **Unit tests**: Every service function
-- **Integration tests**: Inter-service communication
-- **Performance tests**: Load and speed testing
-- **Security tests**: Vulnerability scanning
+- Unit tests: Every service function
+- Integration tests: Inter-service communication
+- Performance tests: Load and speed testing
+- Security tests: Vulnerability scanning
 
 ### Code Review
 
-- **Pull requests**: All changes through review
-- **Static analysis**: SonarQube or similar tools
-- **Automated testing**: CI/CD pipeline integration
+- Pull requests: All changes through review
+- Static analysis: SonarQube or similar tools
+- Automated testing: CI/CD pipeline integration
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **Redis Connection Errors**
+1. Redis Connection Errors
    - Check connection string
    - Verify Redis server status
 
-2. **API Timeout Errors**
+2. API Timeout Errors
    - Increase timeout values
    - Check network connectivity
 
-3. **Memory Leaks**
+3. Memory Leaks
    - Use memory profiling tools
    - Check object references
 
@@ -273,4 +275,4 @@ To add a new service or modify existing ones:
 
 ## License
 
-This documentation is under the application's license. See LICENSE file for details.
+Documentation is under the application's license. See LICENSE file for details.

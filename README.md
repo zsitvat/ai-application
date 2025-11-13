@@ -55,14 +55,16 @@ This application is a multi-agent artificial intelligence system capable of proc
 
 The application supports multiple file storage backends with automatic selection based on your configuration. The system prioritizes cloud storage over local storage.
 
-### Storage Backend Priority:
-1. **AWS S3** (highest priority)
-2. **Google Drive** (medium priority)  
-3. **Local Storage** (fallback - always available)
+### Storage Backend Priority
 
-### Configuration Options:
+1. AWS S3 (highest priority)
+2. Google Drive (medium priority)  
+3. Local Storage (fallback - always available)
 
-#### 🗄️ **AWS S3 Storage**
+### Configuration Options
+
+#### AWS S3 Storage
+
 For production environments with AWS infrastructure:
 
 ```bash
@@ -73,13 +75,14 @@ AWS_SECRET_ACCESS_KEY=
 AWS_REGION=us-east-1
 ```
 
-**Setup Steps:**
+Setup:
 1. Create an S3 bucket in AWS Console
 2. Create IAM user with S3 permissions
 3. Add credentials to `.env` file
 4. Files will be automatically uploaded to S3
 
-#### 📁 **Google Drive Storage**
+#### Google Drive Storage
+
 For Google Workspace integration:
 
 ```bash
@@ -88,25 +91,27 @@ GOOGLE_OAUTH_CREDENTIALS_FILE=credentials.json
 GOOGLE_DRIVE_FOLDER_ID=
 ```
 
-**Setup Steps:**
+Setup:
 1. Create Google Cloud Project and enable Drive API
 2. Create OAuth 2.0 credentials and download `credentials.json`
 3. Create a Google Drive folder and copy its ID from the URL
 4. Run `uv run python generate_google_token.py` to authenticate
 5. Files will be named as: `{thread_id}_{timestamp}_{filename}`
 
-#### 💾 **Local Storage (Default)**
+#### Local Storage (Default)
+
 No configuration needed - works out of the box:
 
 - Files stored in: `./files/uploads/`
 - Automatic directory creation
 - UUID-based filenames
-- Perfect for development and testing
+- Suitable for development and testing
 
-### Supported File Types:
-- **Images**: JPEG, PNG, GIF, WEBP
-- **Documents**: PDF
-- **Max file size**: 15MB (configurable)
+### Supported File Types
+
+- Images: JPEG, PNG, GIF, WEBP
+- Documents: PDF
+- Max file size: 15MB (configurable)
 
 ### Testing File Upload:
 ```bash
@@ -256,33 +261,39 @@ This provides a user-friendly interface for testing your multi-agent workflows, 
 
 This repository contains comprehensive examples and research notebooks related to the thesis work:
 
-### 📁 Examples Directory (`/examples/`)
-- **Configuration Examples**: Sample graph configurations for different AI providers (OpenAI, Azure OpenAI)
-- **Document Examples**: Sample position descriptions and company documents for testing
-- **API Examples**: Postman collection with ready-to-use API requests
+### Examples Directory (`/examples/`)
 
-### 📓 Research Notebooks (`/notebooks/`)
+- Configuration Examples: Sample graph configurations for different AI providers (OpenAI, Azure OpenAI)
+- Document Examples: Sample position descriptions and company documents for testing
+- API Examples: Postman collection with ready-to-use API requests
+
+### Research Notebooks (`/notebooks/`)
+
 The notebooks directory contains detailed research and experimentation work for the thesis:
 
-- **`graphs.ipynb`** - Multi-agent graph workflow development and testing
-- **`fine_tunning.ipynb`** - Model fine-tuning experiments and analysis
-- **`guardrails.ipynb`** - AI safety and content filtering research
-- **`local_llms.ipynb`** - Local language model integration and benchmarking
-- **`retriver_test.ipynb`** - Vector database and retrieval system optimization
-- **`redis_filter.ipynb`** - Redis-based filtering and caching mechanisms
-- **`prompt_copy_script.ipynb`** - Prompt engineering and optimization techniques
+- `graphs.ipynb` - Multi-agent graph workflow development and testing
+- `fine_tunning.ipynb` - Model fine-tuning experiments and analysis
+- `guardrails.ipynb` - AI safety and content filtering research
+- `local_llms.ipynb` - Local language model integration and benchmarking
+- `retriver_test.ipynb` - Vector database and retrieval system optimization
+- `redis_filter.ipynb` - Redis-based filtering and caching mechanisms
+- `prompt_copy_script.ipynb` - Prompt engineering and optimization techniques
 
 #### Intent Recognition Research (`/notebooks/intent_recognition/`)
-Specialized notebooks for natural language understanding:
-- **`BERT.ipynb`** - BERT model implementation for intent classification
-- **`HuBERT.ipynb`** - Hungarian BERT model adaptation
-- **`HuSpaCy.ipynb`** - Hungarian language processing with spaCy
-- **`tensorflow_IR.ipynb`** - TensorFlow-based intent recognition
-- **`whisper_openai.ipynb`** - Speech-to-text integration with OpenAI Whisper
-- **`rasa.ipynb`** - Conversational AI development with Rasa framework
 
-### 📋 Documentation (`/docs/`)
+Specialized notebooks for natural language understanding:
+
+- `BERT.ipynb` - BERT model implementation for intent classification
+- `HuBERT.ipynb` - Hungarian BERT model adaptation
+- `HuSpaCy.ipynb` - Hungarian language processing with spaCy
+- `tensorflow_IR.ipynb` - TensorFlow-based intent recognition
+- `whisper_openai.ipynb` - Speech-to-text integration with OpenAI Whisper
+- `rasa.ipynb` - Conversational AI development with Rasa framework
+
+### Documentation (`/docs/`)
+
 Comprehensive API and service documentation:
+
 - Service architecture overview
 - API endpoint specifications
 - Implementation guides for each component

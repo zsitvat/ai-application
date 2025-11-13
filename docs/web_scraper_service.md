@@ -16,11 +16,11 @@ Scrapy spider implementation that respects domain restrictions and depth limits.
 
 #### Key Features
 
-- **Multi-format output**: JSON, PDF, DOCX, Vector DB
-- **Domain restrictions**: Secure scraping rules
-- **Depth control**: Configurable crawling depth
-- **Content filtering**: Relevant content extraction
-- **Asynchronous processing**: Efficient parallel execution
+- Multi-format output: JSON, PDF, DOCX, Vector DB
+- Domain restrictions: Secure scraping rules
+- Depth control: Configurable crawling depth
+- Content filtering: Relevant content extraction
+- Asynchronous processing: Efficient parallel execution
 
 ## Usage
 

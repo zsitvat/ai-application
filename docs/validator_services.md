@@ -26,10 +26,10 @@ The `TokenValidationService` is responsible for text token counting and truncati
 
 ### Main Features
 
-- **Token counting**: Support for different encodings
-- **Intelligent truncation**: Respecting sentence and word boundaries
-- **Batch processing**: Handling multiple texts at once
-- **Estimation**: Token count estimation for long texts
+- Token counting: Support for different encodings
+- Intelligent truncation: Respecting sentence and word boundaries
+- Batch processing: Handling multiple texts at once
+- Estimation: Token count estimation for long texts
 
 ### Usage
 
@@ -104,23 +104,23 @@ The `PersonalDataFilterService` detects and filters personal data from texts to 
 ### Dual Filtering Architecture
 
 #### 1. Regex-based Filtering
-- **Fast processing**: Deterministic pattern matching
-- **High performance**: No AI model overhead
-- **Precise patterns**: Email, phone, ID number formats
+- Fast processing: Deterministic pattern matching
+- High performance: No AI model overhead
+- Precise patterns: Email, phone, ID number formats
 
 #### 2. AI-powered Filtering  
-- **Contextual understanding**: Considers text context
-- **Complex cases**: Cases not handled by regex
-- **Language variations**: Different expression patterns
+- Contextual understanding: Considers text context
+- Complex cases: Cases not handled by regex
+- Language variations: Different expression patterns
 
 ### Detected Data Types
 
-- **Names**: Person name detection (regex + AI)
-- **Email addresses**: Email pattern matching (regex primary)
-- **Phone numbers**: Hungarian and international formats (regex)
-- **Addresses**: Postal addresses (AI primary)
-- **Personal IDs**: TAJ number, personal identifiers (regex)
-- **Bank accounts**: Account numbers and IBAN (regex)
+- Names: Person name detection (regex + AI)
+- Email addresses: Email pattern matching (regex primary)
+- Phone numbers: Hungarian and international formats (regex)
+- Addresses: Postal addresses (AI primary)
+- Personal IDs: TAJ number, personal identifiers (regex)
+- Bank accounts: Account numbers and IBAN (regex)
 
 ### Usage
 
@@ -221,10 +221,10 @@ The `TopicValidatorService` validates whether user input is relevant to the appl
 
 ### Main Features
 
-- **Topic recognition**: HR/recruitment topic identification
-- **Relevance scoring**: Relevance score calculation
-- **Keyword analysis**: Topic-specific keyword analysis
-- **Intent classification**: Intent categorization
+- Topic recognition: HR/recruitment topic identification
+- Relevance scoring: Relevance score calculation
+- Keyword analysis: Topic-specific keyword analysis
+- Intent classification: Intent categorization
 
 ### Usage
 
@@ -405,15 +405,15 @@ async def process_multiple_validations(requests):
 
 ### Data Protection
 
-- **Memory cleanup**: Clearing sensitive data after processing
-- **Audit log**: Logging personal data handling
-- **Encryption**: Encrypting sensitive data
+- Memory cleanup: Clearing sensitive data after processing
+- Audit log: Logging personal data handling
+- Encryption: Encrypting sensitive data
 
 ### Compliance
 
-- **GDPR**: EU data protection regulation compliance
-- **Privacy by design**: Built-in data protection principle
-- **Data minimization**: Minimal data collection principle
+- GDPR: EU data protection regulation compliance
+- Privacy by design: Built-in data protection principle
+- Data minimization: Minimal data collection principle
 
 ## Dependencies
 

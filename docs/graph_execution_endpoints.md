@@ -1,20 +1,22 @@
 # Graph Execution Endpoints
 
-This document describes the two graph execution endpoints available in the recruiter AI application.
+The recruiter AI application provides two graph execution endpoints for different use cases.
 
 ## Endpoints Overview
 
 ### 1. Standard Graph Execution
-**Endpoint:** `POST /api/graph`  
-**Response Type:** JSON String  
-**Use Case:** When you need the complete result after all agents have finished processing.
-**Data Protection:** Automatic personal data filtering applied to responses.
 
-### 2. Streaming Graph Execution  
-**Endpoint:** `POST /api/graph/stream`  
-**Response Type:** Server-Sent Events (SSE)  
-**Use Case:** When you want real-time updates as each agent processes the request.
-**Data Protection:** Personal data filtering applied before final response.
+Endpoint: `POST /api/graph`  
+Response Type: JSON String  
+Use Case: When you need the complete result after all agents have finished processing.  
+Data Protection: Automatic personal data filtering applied to responses.
+
+### 2. Streaming Graph Execution
+
+Endpoint: `POST /api/graph/stream`  
+Response Type: Server-Sent Events (SSE)  
+Use Case: When you want real-time updates as each agent processes the request.  
+Data Protection: Personal data filtering applied before final response.
 
 ## Request Schema
 
@@ -35,12 +37,12 @@ Both endpoints use the same request schema (`RestOperationPostSchema`):
 
 ### Request Fields
 
-- **applicationIdentifier**: Object containing the app ID as a string
-- **uuid**: Unique identifier for the user session
-- **user_input**: The user's question or input text
-- **platform**: Platform type (defaults to "WEBCHAT")
-- **context**: Additional context dictionary (optional)
-- **parameters**: Runtime parameters including graph configurations (optional)
+- applicationIdentifier: Object containing the app ID as a string
+- uuid: Unique identifier for the user session
+- user_input: The user's question or input text
+- platform: Platform type (defaults to "WEBCHAT")
+- context: Additional context dictionary (optional)
+- parameters: Runtime parameters including graph configurations (optional)
 
 ## Response Formats
 
@@ -230,10 +232,10 @@ Graph configurations can be provided in the request parameters or loaded from ap
 
 Both endpoints automatically filter personal data from responses:
 
-- **Regex-based filtering**: Fast pattern matching for emails, phone numbers, IDs
-- **AI-powered filtering**: Contextual detection of names and sensitive information  
-- **Configurable strategies**: Mask, remove, or anonymize detected data
-- **GDPR compliance**: Ensures personal data protection in API responses
+- Regex-based filtering: Fast pattern matching for emails, phone numbers, IDs
+- AI-powered filtering: Contextual detection of names and sensitive information
+- Configurable strategies: Mask, remove, or anonymize detected data
+- GDPR compliance: Ensures personal data protection in API responses
 
 ### Filter Configuration Options
 
@@ -248,7 +250,7 @@ Both endpoints automatically filter personal data from responses:
 
 ## Performance Considerations
 
-- **Standard endpoint**: Use when you only need the final result and don't require real-time updates
-- **Streaming endpoint**: Use when you want to show progress to users or need intermediate results
+- Standard endpoint: Use when you only need the final result and don't require real-time updates
+- Streaming endpoint: Use when you want to show progress to users or need intermediate results
 - The streaming endpoint may use more resources due to maintaining open connections
 - Consider implementing proper timeout and reconnection logic for streaming clients

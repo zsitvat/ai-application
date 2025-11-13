@@ -1,6 +1,6 @@
 # Multi-Agent Graph Execution API
 
-This document provides usage examples for the multi-agent graph execution system with both standard and streaming capabilities.
+Usage examples for the multi-agent graph execution system with both standard and streaming capabilities.
 
 ## Endpoints
 
@@ -8,7 +8,7 @@ This document provides usage examples for the multi-agent graph execution system
 
 Executes the multi-agent graph and returns the final result.
 
-**Request Body:**
+Request Body:
 ```json
 {
   "applicationIdentifier": {
@@ -26,7 +26,7 @@ Executes the multi-agent graph and returns the final result.
 }
 ```
 
-**Response:**
+Response:
 ```json
 "Based on current research and industry developments, here are the key machine learning trends..."
 ```
@@ -35,9 +35,9 @@ Executes the multi-agent graph and returns the final result.
 
 Executes the multi-agent graph with real-time streaming of agent updates and final results.
 
-**Request Body:** Same as standard execution.
+Request Body: Same as standard execution.
 
-**Response:** Server-Sent Events (SSE) stream with the following event types:
+Response: Server-Sent Events (SSE) stream with the following event types:
 
 #### Agent Update Events
 ```json
@@ -82,9 +82,9 @@ data: {
 
 Executes the multi-agent graph with granular event streaming using LangChain's `astream_events`. Provides token-level streaming and detailed component events.
 
-**Request Body:** Same as standard execution.
+Request Body: Same as standard execution.
 
-**Response:** Server-Sent Events (SSE) stream with granular event types:
+Response: Server-Sent Events (SSE) stream with granular event types:
 
 #### Token Events (Real-time token streaming)
 ```json
@@ -130,7 +130,7 @@ data: {
 
 Execute a graph using a dynamically loaded configuration from file or URL.
 
-**Request Body:**
+Request Body:
 ```json
 {
   "user_input": "Analyze this job posting",
@@ -286,11 +286,11 @@ curl -X POST "http://localhost:5000/api/graph/stream-events" \
 
 The system supports various graph configurations including:
 
-- **OpenAI Models**: GPT-4, GPT-3.5-turbo
-- **Azure OpenAI**: Azure-hosted OpenAI models
-- **Topic Validation**: Restrict queries to specific topics
-- **Personal Data Filtering**: Automatic PII detection and filtering
-- **Custom Agents**: Researcher, Writer, Supervisor patterns
+- OpenAI Models: GPT-4, GPT-3.5-turbo
+- Azure OpenAI: Azure-hosted OpenAI models
+- Topic Validation: Restrict queries to specific topics
+- Personal Data Filtering: Automatic PII detection and filtering
+- Custom Agents: Researcher, Writer, Supervisor patterns
 
 See example configurations in the `/examples/` directory:
 - `graph_config_example.json` - OpenAI configuration
@@ -316,10 +316,10 @@ All graph execution endpoints are rate-limited to prevent abuse:
 
 The implementation follows LangChain's recommended streaming patterns:
 
-1. **`astream()` for Graph Streaming**: Uses LangGraph's `astream()` for step-by-step execution streaming
-2. **AsyncGenerator Pattern**: Proper async generator implementation for efficient streaming
-3. **Event-Based Architecture**: Structured events for different stages of execution
-4. **Server-Sent Events**: Standard SSE format for web compatibility
-5. **Error Handling**: Graceful error handling with fallback responses
+1. `astream()` for Graph Streaming: Uses LangGraph's `astream()` for step-by-step execution streaming
+2. AsyncGenerator Pattern: Proper async generator implementation for efficient streaming
+3. Event-Based Architecture: Structured events for different stages of execution
+4. Server-Sent Events: Standard SSE format for web compatibility
+5. Error Handling: Graceful error handling with fallback responses
 
 For more advanced streaming needs (token-level events), the system can be extended with `astream_events()` for granular control over streaming events.

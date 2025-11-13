@@ -12,11 +12,11 @@ The `LoggerService` class provides centralized logging functionality for the ent
 
 #### Main Features
 
-- **Structured logging**: JSON-formatted log messages
+- Structured logging: JSON-formatted log messages
 - **Multi-level output**: Console and file logging
-- **File rotation**: Automatic log file rotation
-- **Configurable levels**: Flexible log level settings
-- **Singleton pattern**: One logger instance per name
+- File rotation: Automatic log file rotation
+- Configurable levels: Flexible log level settings
+- Singleton pattern: One logger instance per name
 
 ### JSONFormatter
 
@@ -58,11 +58,11 @@ logger.critical("Critical error")
 
 ### Log Levels
 
-- **DEBUG**: Detailed developer information
-- **INFO**: General informational messages
-- **WARNING**: Warning messages
-- **ERROR**: Error messages
-- **CRITICAL**: Critical errors
+- DEBUG: Detailed developer information
+- INFO: General informational messages
+- WARNING: Warning messages
+- ERROR: Error messages
+- CRITICAL: Critical errors
 
 ### File Configuration
 
@@ -126,8 +126,8 @@ file_handler = RotatingFileHandler(
 ### Rotation Logic
 
 - **Size-based**: File reaches maximum size
-- **Automatic**: Start new file and rename old one
-- **Backup limit**: Maximum number of backup files
+- Automatic: Start new file and rename old one
+- Backup limit: Maximum number of backup files
 - **UTF-8 encoding**: Unicode character support
 
 ## Singleton Pattern
@@ -146,9 +146,9 @@ def setup_logger(self, log_level: str = "DEBUG", logger_name: str = "logger"):
 
 ### Benefits
 
-- **Memory efficiency**: One instance per logger name
-- **Consistency**: Same settings throughout
-- **Performance**: Faster access
+- Memory efficiency: One instance per logger name
+- Consistency: Same settings throughout
+- Performance: Faster access
 
 ## Error Handling
 
@@ -173,15 +173,15 @@ except Exception as e:
 
 ### Buffering
 
-- **Automatic buffer**: OS-level optimization
-- **Flush policy**: Immediate writing for critical messages
-- **Async logging**: Non-blocking log writing
+- Automatic buffer: OS-level optimization
+- Flush policy: Immediate writing for critical messages
+- Async logging: Non-blocking log writing
 
 ### Memory Usage
 
-- **Circular buffer**: Limited memory usage
-- **Lazy initialization**: Logger creation on-demand
-- **Cleanup**: Automatic resource cleanup
+- Circular buffer: Limited memory usage
+- Lazy initialization: Logger creation on-demand
+- Cleanup: Automatic resource cleanup
 
 ## Security Considerations
 
@@ -195,9 +195,9 @@ def _ensure_log_directory(self, log_file_path: str):
 
 ### Sensitive Data
 
-- **Data masking**: Masking sensitive data
-- **PII filtering**: Personal data filtering
-- **Secure deletion**: Secure log deletion
+- Data masking: Masking sensitive data
+- PII filtering: Personal data filtering
+- Secure deletion: Secure log deletion
 
 ## Monitoring and Analysis
 
@@ -205,10 +205,10 @@ def _ensure_log_directory(self, log_file_path: str):
 
 The JSON format enables:
 
-- **ELK Stack**: Elasticsearch, Logstash, Kibana
-- **Splunk**: Enterprise log management
-- **Grafana**: Visualization and alerting
-- **Custom parsers**: Custom analysis tools
+- ELK Stack: Elasticsearch, Logstash, Kibana
+- Splunk: Enterprise log management
+- Grafana: Visualization and alerting
+- Custom parsers: Custom analysis tools
 
 ### Metrics Extraction
 

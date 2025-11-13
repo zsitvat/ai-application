@@ -12,10 +12,10 @@ The `TokenBucket` class implements the token bucket algorithm logic for rate lim
 
 #### Operating Principle
 
-- **Capacity**: Maximum number of tokens
-- **Refill rate**: Token generation per second
-- **Token consumption**: Tokens required for request execution
-- **Wait time**: Calculated delay when insufficient tokens
+- Capacity: Maximum number of tokens
+- Refill rate: Token generation per second
+- Token consumption: Tokens required for request execution
+- Wait time: Calculated delay when insufficient tokens
 
 ### RateLimitMiddleware
 
@@ -23,10 +23,10 @@ FastAPI middleware for limiting incoming HTTP request rates.
 
 #### Main Features
 
-- **IP-based limiting**: Based on client IP addresses
-- **Automatic token refill**: Time-based token regeneration
-- **Asynchronous waiting**: Non-blocking delay handling
-- **Dynamic bucket management**: Client-specific token buckets
+- IP-based limiting: Based on client IP addresses
+- Automatic token refill: Time-based token regeneration
+- Asynchronous waiting: Non-blocking delay handling
+- Dynamic bucket management: Client-specific token buckets
 
 ## Usage
 
@@ -70,10 +70,10 @@ app.add_middleware(RateLimitMiddleware, capacity=10, refill_rate=0.167)
 
 ### Principles
 
-1. **Token pool**: Each client has a token pool
-2. **Token consumption**: Each request consumes one token
-3. **Automatic refill**: Tokens are regularly replenished
-4. **Waiting**: Request waits when insufficient tokens
+1. Token pool: Each client has a token pool
+2. Token consumption: Each request consumes one token
+3. Automatic refill: Tokens are regularly replenished
+4. Waiting: Request waits when insufficient tokens
 
 ### Implementation Details
 
@@ -101,11 +101,11 @@ def consume(self, tokens: int = 1) -> float:
 
 ### Request Processing
 
-1. **Client identification**: IP-based bucket retrieval
-2. **Token bucket creation**: For new clients
-3. **Token consumption**: For request execution
-4. **Waiting**: Asynchronous delay when needed
-5. **Request forwarding**: After rate limit check
+1. Client identification: IP-based bucket retrieval
+2. Token bucket creation: For new clients
+3. Token consumption: For request execution
+4. Waiting: Asynchronous delay when needed
+5. Request forwarding: After rate limit check
 
 ### IP-based Bucket Management
 
@@ -130,15 +130,15 @@ async def dispatch(self, request: Request, call_next):
 
 ### Capacity
 
-- **Meaning**: Maximum number of tokens in the bucket
-- **Effect**: Burst traffic handling
-- **Recommendation**: Based on expected peak traffic
+- Meaning: Maximum number of tokens in the bucket
+- Effect: Burst traffic handling
+- Recommendation: Based on expected peak traffic
 
 ### Refill Rate
 
-- **Meaning**: Token generation per second
-- **Effect**: Sustained throughput
-- **Recommendation**: Based on desired QPS (Queries Per Second)
+- Meaning: Token generation per second
+- Effect: Sustained throughput
+- Recommendation: Based on desired QPS (Queries Per Second)
 
 ## Performance Considerations
 
@@ -168,9 +168,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
 ### Scaling Considerations
 
-- **Memory growth**: Bucket count increase with high traffic
-- **CPU usage**: Token calculation overhead
-- **Network latency**: Effect of wait times
+- Memory growth: Bucket count increase with high traffic
+- CPU usage: Token calculation overhead
+- Network latency: Effect of wait times
 
 ## Error Handling
 
@@ -191,9 +191,9 @@ async def dispatch(self, request: Request, call_next):
 
 ### Graceful Degradation
 
-- **On error**: Pass through all requests
-- **Partial operation**: Handle token bucket errors
-- **Monitoring**: Log errors
+- On error: Pass through all requests
+- Partial operation: Handle token bucket errors
+- Monitoring: Log errors
 
 ## Security Considerations
 

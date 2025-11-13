@@ -12,11 +12,11 @@ The `DatasetService` class provides the complete spectrum of dataset operations 
 
 #### Main Features
 
-- **Dataset creation**: Creating new datasets with test data
-- **Dataset execution**: Asynchronous and synchronous execution modes
-- **Evaluation**: Automatic model evaluation on datasets
-- **Background task management**: Handling long-running tasks
-- **Error handling**: Detailed error reporting and exception handling
+- Dataset creation: Creating new datasets with test data
+- Dataset execution: Asynchronous and synchronous execution modes
+- Evaluation: Automatic model evaluation on datasets
+- Background task management: Handling long-running tasks
+- Error handling: Detailed error reporting and exception handling
 
 ## Usage
 
@@ -34,18 +34,18 @@ dataset_service = DatasetService()
 
 Creates a new dataset in LangSmith.
 
-**Parameters:**
+Parameters:
 - `name` (str): Dataset name
 - `description` (str|None): Optional description
 - `test_cases` (list[dict]): List of test cases
 
-**Return Value:**
+Return Value:
 - Dictionary with dataset information
 
-**Exceptions:**
+Exceptions:
 - `DatasetCreationError`: Dataset creation error
 
-**Example:**
+Example:
 ```python
 test_cases = [
     {"input": "What is the capital?", "expected_output": "Budapest"},
@@ -63,14 +63,14 @@ dataset_info = dataset_service.create_dataset(
 
 Asynchronous dataset execution in background.
 
-**Parameters:**
+Parameters:
 - `dataset_name` (str): Dataset name
 - `run_config` (DatasetRunConfigSchema): Execution configuration
 
-**Return Value:**
+Return Value:
 - Dictionary with execution ID and status
 
-**Example:**
+Example:
 ```python
 from schemas.dataset_schema import DatasetRunConfigSchema
 
@@ -87,11 +87,11 @@ result = await dataset_service.run_dataset_async("test_dataset", run_config)
 
 Synchronous dataset execution waiting for results.
 
-**Parameters:**
+Parameters:
 - `dataset_name` (str): Dataset name
 - `run_config` (DatasetRunConfigSchema): Execution configuration
 
-**Return Value:**
+Return Value:
 - Dictionary with execution results
 
 ## Configuration Schema
@@ -111,10 +111,10 @@ class DatasetRunConfigSchema(BaseModel):
 
 ### Custom Exceptions
 
-- **DatasetCreationError**: Dataset creation errors
-- **DatasetNotFoundError**: Dataset not found
-- **DatasetUpdateError**: Dataset update errors
-- **DatasetRunError**: Execution errors
+- DatasetCreationError: Dataset creation errors
+- DatasetNotFoundError: Dataset not found
+- DatasetUpdateError: Dataset update errors
+- DatasetRunError: Execution errors
 
 ### Error Reporting
 
@@ -154,23 +154,23 @@ self.client = Client()
 
 ## Logging
 
-- **Info level**: Start/end of dataset operations
-- **Debug level**: Detailed execution information
-- **Error level**: Errors and exceptions
-- **Warning level**: Potential issues
+- Info level: Start/end of dataset operations
+- Debug level: Detailed execution information
+- Error level: Errors and exceptions
+- Warning level: Potential issues
 
 ## Performance Optimization
 
-- **Asynchronous execution**: For non-blocking operations
-- **Concurrency control**: Limiting parallel executions
-- **Background tasks**: Avoiding UI blocking
-- **Memory management**: Automatic task reference cleanup
+- Asynchronous execution: For non-blocking operations
+- Concurrency control: Limiting parallel executions
+- Background tasks: Avoiding UI blocking
+- Memory management: Automatic task reference cleanup
 
 ## Security Considerations
 
-- **API key management**: LangSmith authentication
-- **Input validation**: Input data verification
-- **Error information filtering**: Hiding internal details
+- API key management: LangSmith authentication
+- Input validation: Input data verification
+- Error information filtering: Hiding internal details
 
 ## Dependencies
 

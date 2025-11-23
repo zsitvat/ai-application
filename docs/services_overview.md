@@ -2,52 +2,32 @@
 
 ## Overview
 
-Overview of all service components in the Recruiter AI application. Each service has its own dedicated documentation that details functionality, usage, and configuration options.
+This document provides a high-level look at the service components within the Recruiter AI application. For detailed information on specific services, please refer to their individual documentation files.
 
-## Service Architecture
+## Architecture
 
-The application follows a Service-Oriented Architecture (SOA) where each service is responsible for a specific business logic area. Services operate asynchronously and communicate through well-defined interfaces.
+The application is built on a Service-Oriented Architecture (SOA). Each service handles a specific domain of business logic, operating asynchronously and communicating via defined interfaces.
 
 ## Service Catalog
 
 ### Chat History Service
+[Read more](./chat_history_service.md)
 
-[Documentation](./chat_history_service.md)
+Manages user conversation histories using Redis. It handles session management, metadata storage, and retrieval of user-specific chat logs.
 
-Responsibility: Managing user conversation histories
-
-Main Features:
-- Chat history storage in Redis
-- Session management
-- Conversation metadata
-- User-specific histories
-
-Technologies: Redis, AsyncIO, JSON
+**Key Tech:** Redis, AsyncIO, JSON
 
 ### Data API Service
+[Read more](./data_api_service.md)
 
-[Documentation](./data_api_service.md)
+Handles communication with external Data APIs and manages application settings. It's responsible for retrieving configuration, validating settings, and managing HTTP clients.
 
-Responsibility: Communication with external Data API and settings management
-
-Main Features:
-- Application settings retrieval
-- HTTP client management
-- Configuration validation
-- API error handling
-
-Technologies: httpx, AsyncIO, Environment Variables
+**Key Tech:** httpx, AsyncIO, Environment Variables
 
 ### Dataset Service
+[Read more](./dataset_service.md)
 
-[Documentation](./dataset_service.md)
-
-Responsibility: ML dataset management with LangSmith integration
-
-Main Features:
-- Dataset creation and management
-- Async/sync execution
-- Model evaluation
+Manages ML datasets and integrates with LangSmith for model evaluation and dataset creation.
 - Background task coordination
 
 Technologies: LangSmith, LangChain, AsyncIO
